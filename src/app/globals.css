@@ -3,22 +3,36 @@
 @tailwind utilities;
 
 :root {
-  --color-brand: 40 39 110;
-  --color-brand-strong: 30 29 85;
+  --color-brand: 46 44 125;
+  --color-brand-strong: 37 35 102;
   --color-accent: 234 45 46;
   --color-surface: 255 255 255;
-  --color-page: 246 247 251;
-  --color-text: 25 29 45;
-  --color-muted: 101 110 129;
-  --color-border: 221 225 235;
+  --color-page: 247 247 252;
+  --color-text: 31 30 53;
+  --color-muted: 101 100 123;
+  --color-border: 226 225 237;
   --color-on-brand: 255 255 255;
   --color-on-brand-muted: 255 255 255 / 0.75;
   --color-on-brand-subtle: 255 255 255 / 0.55;
-  --shadow-card: 0 18px 48px rgb(22 25 45 / 0.10);
+  --shadow-card: 0 18px 48px rgb(32 29 83 / 0.10);
+}
+
+html.dark {
+  color-scheme: dark;
+  --color-brand: 118 115 220;
+  --color-brand-strong: 145 142 236;
+  --color-accent: 255 94 94;
+  --color-surface: 30 29 51;
+  --color-page: 20 19 35;
+  --color-text: 244 243 255;
+  --color-muted: 181 178 207;
+  --color-border: 67 64 98;
+  --color-on-brand: 255 255 255;
+  --shadow-card: 0 18px 48px rgb(0 0 0 / 0.25);
 }
 
 * { box-sizing: border-box; }
 html { min-height: 100%; }
-body { margin: 0; min-height: 100vh; background: rgb(var(--color-page)); color: rgb(var(--color-text)); font-family: Arial, Helvetica, sans-serif; }
+body { margin: 0; min-height: 100vh; background: rgb(var(--color-page)); color: rgb(var(--color-text)); font-family: Arial, Helvetica, sans-serif; transition: background-color 180ms ease, color 180ms ease; }
 button, input { font: inherit; }
 button { cursor: pointer; }

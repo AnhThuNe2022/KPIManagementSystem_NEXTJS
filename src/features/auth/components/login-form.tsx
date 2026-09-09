@@ -18,7 +18,6 @@ export function LoginForm() {
     if (Object.keys(nextErrors).length) { setErrors(nextErrors); return; }
     setErrors({}); setServerError(""); setLoading(true);
     try { 
-    console.log("→ userName7878:", username);
 
       const response = await fetch("/api/auth/login", 
         { method: "POST", headers: { "Content-Type": "application/json" },

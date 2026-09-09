@@ -12,9 +12,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
+    <html lang="vi" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: "try { const theme = localStorage.getItem('dcg-theme'); const isDark = theme ? theme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches; document.documentElement.classList.toggle('dark', isDark); } catch {}" }} />
+      </head>
       <body>{children}</body>
     </html>
   );
 }
-

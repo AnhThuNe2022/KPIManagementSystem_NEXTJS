@@ -4,7 +4,6 @@ import type { LoginCredentials } from "@/types/auth";
 
 export async function POST(request: Request) {
   try {
-    console.log("========== API LOGIN ==========");
 
     const body = (await request.json()) as Partial<LoginCredentials>;
 
