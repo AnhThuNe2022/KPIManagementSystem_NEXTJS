@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cookies } from "next/headers";
+import { appConfig } from "@/config/app";
 
 const API_URL = process.env.AUTH_API_URL?.replace(/\/$/, "");
 
@@ -14,7 +15,7 @@ export async function apiClient<T>(
 
   // Lấy token từ HttpOnly Cookie
   const cookieStore = await cookies();
-  const token = cookieStore.get("access_token")?.value;
+  const token = cookieStore.get(appConfig.authCookieName)?.value;
 
   const headers = new Headers(options.headers);
 
@@ -34,9 +35,9 @@ export async function apiClient<T>(
     if (response.status === 401) {
       throw new Error("UNAUTHORIZED");
     }
-
+    console.log(`API Error: ${response.status} ${response.statusText}`);
     throw new Error(`API_ERROR_${response.status}`);
   }
-
+  
   return response.json() as Promise<T>;
 }
