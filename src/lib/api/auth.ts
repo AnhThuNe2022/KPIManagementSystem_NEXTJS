@@ -58,6 +58,13 @@ export async function authenticate(
     path: "/",
     maxAge: 60 * 60 * 12, // 12 giờ
   });
+  cookieStore.set(appConfig.userNameCookieName, credentials.username, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 12,
+  });
 
   console.log("→ Access token saved to HttpOnly Cookie");
 
