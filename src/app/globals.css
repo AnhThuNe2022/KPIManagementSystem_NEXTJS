@@ -15,6 +15,9 @@
   --color-on-brand-muted: 255 255 255 / 0.75;
   --color-on-brand-subtle: 255 255 255 / 0.55;
   --shadow-card: 0 18px 48px rgb(32 29 83 / 0.10);
+  --color-table-row: 255 255 255;
+  --color-table-row-alt: 247 247 252;
+  --color-table-header: 247 247 252;
 }
 
 html.dark {
@@ -27,6 +30,9 @@ html.dark {
   --color-text: 244 243 255;
   --color-muted: 181 178 207;
   --color-border: 67 64 98;
+  --color-table-row: 30 29 51;
+  --color-table-row-alt: 76 76 87;
+  --color-table-header: 30 29 51;
   --color-on-brand: 255 255 255;
   --shadow-card: 0 18px 48px rgb(0 0 0 / 0.25);
 }
