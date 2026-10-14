@@ -3,8 +3,7 @@ import { cookies } from "next/headers";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { UserMenu } from "@/features/auth/components/user-menu";
 import { appConfig } from "@/config/app";
-
-const navigation = ["Dashboard", "Đánh giá KPI", "Nhân sự", "Báo cáo"];
+import { Sidebar } from "@/features/layout/components/sidebar";
 
 export default async function MainLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const userName = (await cookies()).get(appConfig.userNameCookieName)?.value ?? "Người dùng";
@@ -17,7 +16,7 @@ export default async function MainLayout({ children }: Readonly<{ children: Reac
           <div className="flex items-center gap-4"><ThemeToggle /><div className="border-l border-[rgb(var(--color-border))] pl-3"><UserMenu userName={userName} /></div></div>
         </div>
       </header>
-      <div className="flex"><aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 border-r border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] lg:block"><nav className="flex flex-col gap-1 p-4"><p className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-[rgb(var(--color-muted))]">Tổng quan</p>{navigation.map((item, index) => <a key={item} href="#" className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${index === 0 ? "bg-[rgb(var(--color-brand)/.12)] text-[rgb(var(--color-brand))]" : "text-[rgb(var(--color-muted))] hover:bg-[rgb(var(--color-brand)/.08)] hover:text-[rgb(var(--color-brand))]"}`}>{item}</a>)}</nav></aside><main className="min-w-0 flex-1 p-8"><div className="mx-auto max-w-6xl">{children}</div></main></div>
+      <div className="flex"><Sidebar /><main className="min-w-0 flex-1 p-8"><div className="mx-auto max-w-6xl">{children}</div></main></div>
     </div>
   );
 }
