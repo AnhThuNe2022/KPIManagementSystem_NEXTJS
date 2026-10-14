@@ -3,30 +3,46 @@
 @tailwind utilities;
 
 :root {
-  --color-brand: 46 44 125;
-  --color-brand-strong: 37 35 102;
-  --color-accent: 234 45 46;
+  /* Deoca palette from QLTS.Web; RGB channels support Tailwind opacity. */
+  --deoca-primary-rgb: 19 31 107;             /* #131F6B */
+  --deoca-primary-light-rgb: 26 42 138;       /* #1A2A8A */
+  --deoca-primary-highlight-rgb: 42 63 155;  /* #2A3F9B */
+  --deoca-accent-rgb: 212 32 32;              /* #D42020 */
+  --deoca-accent-hover-rgb: 184 26 26;        /* #B81A1A */
+  --primary: rgb(var(--deoca-primary-rgb));
+  --primary-light: rgb(var(--deoca-primary-light-rgb));
+  --primary-highlight: rgb(var(--deoca-primary-highlight-rgb));
+  --accent: rgb(var(--deoca-accent-rgb));
+  --accent-hover: rgb(var(--deoca-accent-hover-rgb));
+
+  --color-brand: var(--deoca-primary-rgb);
+  --color-brand-strong: var(--deoca-primary-light-rgb);
+  --color-accent: var(--deoca-accent-rgb);
+  --color-button-start: var(--deoca-primary-light-rgb);
+  --color-button-end: var(--deoca-primary-rgb);
   --color-surface: 255 255 255;
-  --color-page: 247 247 252;
-  --color-text: 31 30 53;
-  --color-muted: 101 100 123;
-  --color-border: 226 225 237;
+  --color-page: 244 246 249;
+  --color-text: 33 37 41;
+  --color-muted: 108 117 125;
+  --color-border: 219 226 234;
   --color-on-brand: 255 255 255;
   --color-on-brand-muted: 255 255 255 / 0.75;
   --color-on-brand-subtle: 255 255 255 / 0.55;
-  --shadow-card: 0 18px 48px rgb(32 29 83 / 0.10);
+  --shadow-card: 0 18px 48px rgb(var(--deoca-primary-rgb) / 0.10);
 }
 
 html.dark {
   color-scheme: dark;
-  --color-brand: 118 115 220;
-  --color-brand-strong: 145 142 236;
-  --color-accent: 255 94 94;
-  --color-surface: 30 29 51;
-  --color-page: 20 19 35;
-  --color-text: 244 243 255;
-  --color-muted: 181 178 207;
-  --color-border: 67 64 98;
+  --color-brand: 125 157 255;
+  --color-brand-strong: 155 176 255;
+  --color-accent: 255 126 126;
+  --color-button-start: 38 59 155;
+  --color-button-end: 49 89 237;
+  --color-surface: 15 23 36;
+  --color-page: 11 15 24;
+  --color-text: 230 238 248;
+  --color-muted: 183 194 214;
+  --color-border: 51 65 85;
   --color-on-brand: 255 255 255;
   --shadow-card: 0 18px 48px rgb(0 0 0 / 0.25);
 }

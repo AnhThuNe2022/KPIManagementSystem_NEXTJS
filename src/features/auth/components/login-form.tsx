@@ -17,14 +17,27 @@ export function LoginForm() {
     if (!password) nextErrors.password = "Vui lòng nhập mật khẩu.";
     if (Object.keys(nextErrors).length) { setErrors(nextErrors); return; }
     setErrors({}); setServerError(""); setLoading(true);
-    try { 
+    try {
 
-      const response = await fetch("/api/auth/login", 
+      const response = await fetch("/api/auth/login",
         { method: "POST", headers: { "Content-Type": "application/json" },
-         credentials: "include", body: JSON.stringify({ username, password }) }); 
+         credentials: "include", body: JSON.stringify({ username, password }) });
       const data = await response.json() as { message?: string }; if (!response.ok) throw new Error(data.message); router.replace(params.get("next") || "/dashboard"); router.refresh(); }
     catch (error) { setServerError(error instanceof Error ? error.message : "Không thể đăng nhập. Vui lòng thử lại."); }
     finally { setLoading(false); }
   }
-  return <form className="space-y-5" onSubmit={submit} noValidate><TextField id="username" label="Tên đăng nhập hoặc email" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" placeholder="Nhập tên đăng nhập hoặc email" error={errors.username}/><TextField id="password" label="Mật khẩu" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" placeholder="Nhập mật khẩu" error={errors.password} endAdornment={<button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-3 text-xs font-medium text-[rgb(var(--color-brand))] hover:underline" aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}>{showPassword ? "Ẩn" : "Hiện"}</button>}/>{serverError && <p className="rounded-lg border border-[rgb(var(--color-accent)/.25)] bg-[rgb(var(--color-accent)/.08)] px-3 py-2 text-sm text-[rgb(var(--color-accent))]" role="alert">{serverError}</p>}<Button type="submit" loading={loading}>Đăng nhập</Button></form>;
+  return (
+    <form className="login-form" onSubmit={submit} noValidate aria-label="Đăng nhập hệ thống KPI" aria-busy={loading}>
+      <TextField id="username" name="username" label="Tài khoản" value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" autoCapitalize="none" autoCorrect="off" enterKeyHint="next" spellCheck={false} placeholder="Email hoặc tên đăng nhập" className="login-input" error={errors.username} aria-invalid={Boolean(errors.username)} aria-describedby={errors.username ? "username-error" : undefined} disabled={loading} />
+      <TextField id="password" name="password" label="Mật khẩu" type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" enterKeyHint="done" placeholder="Nhập mật khẩu" className="login-input" error={errors.password} aria-invalid={Boolean(errors.password)} aria-describedby={errors.password ? "password-error" : undefined} disabled={loading} endAdornment={
+        <button type="button" onClick={() => setShowPassword(!showPassword)} className="login-password-toggle" aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} aria-pressed={showPassword} disabled={loading}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" /><circle cx="12" cy="12" r="2.5" />{showPassword && <path d="m3 3 18 18" />}</svg>
+        </button>
+      } />
+      {serverError && <p className="login-server-error" role="alert">{serverError}</p>}
+      <Button type="submit" loading={loading} className="login-submit" aria-busy={loading}>
+        <span>Đăng nhập</span><span className="login-submit-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M4 12h15m-6-6 6 6-6 6" /></svg></span>
+      </Button>
+    </form>
+  );
 }
