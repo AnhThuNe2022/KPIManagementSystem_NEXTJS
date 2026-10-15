@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { ActivityLogIcon, ArrowLeftIcon, ArrowRightIcon, CalendarIcon, FileTextIcon, LayersIcon, MixIcon, PlusIcon } from "@radix-ui/react-icons";
+import styles from "../evaluation-list.module.css";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -75,80 +78,53 @@ export default function EvaluationList() {
 
   if (loading) {
     return (
-      <div className="relative min-h-[300px] w-full">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-3">
-            <div
-              className="
-                h-7 w-7 animate-spin rounded-full border-4
-                border-[rgb(var(--color-border))]
-                border-t-[rgb(var(--color-brand))]
-              "
-            />
-
-            <span className="text-xs text-[rgb(var(--color-muted))]">
-              Đang tải dữ liệu...
-            </span>
-          </div>
+      <div className={styles.page} role="status" aria-label="Đang tải bản đánh giá" aria-busy="true">
+        <div className={styles.loadingHeader} />
+        <div className={styles.loadingTable}>
+          <div /><div /><div />
         </div>
+        <span className="sr-only">Đang tải dữ liệu...</span>
       </div>
     );
   }
 
   return (
-    <div className="w-full text-[rgb(var(--color-text))]">
-      {/* TITLE */}
-      <h3
-        className="
-          mb-2
-          text-[24px]
-          font-semibold
-          uppercase
-          leading-tight
-        "
-      >
-        Danh sách bản đánh giá
-      </h3>
+    <div className={styles.page}>
+      <header className={styles.header}>
+        <div className={styles.headerContent}>
+          <span className={styles.eyebrow}>Đánh giá KPI</span>
+          {/* TITLE */}
+          <h1
+            className={styles.title}
+          >
+            Danh sách bản đánh giá
+          </h1>
+          <p className={styles.description}>Theo dõi và cập nhật các bản đánh giá KPI của bạn.</p>
 
-      {/* CREATE BUTTON */}
-      <div className="mb-3 flex justify-start">
-        <button
-          type="button"
-          onClick={createNew}
-          title="Tạo mới"
-          className="
-            flex
-            h-12
-            w-12
-            items-center
-            justify-center
-            rounded-full
-            bg-[rgb(var(--color-brand))]
-            text-[25px]
-            font-light
-            leading-none
-            text-white
-            shadow-md
-            transition
-            hover:bg-[rgb(var(--color-brand-strong))]
-          "
-        >
-          +
-        </button>
-      </div>
+          {/* CREATE BUTTON */}
+          <div className={styles.createAction}>
+            <button
+              type="button"
+              onClick={createNew}
+              title="Tạo mới"
+              className={styles.createButton}
+            >
+              <PlusIcon aria-hidden="true" />
+              Tạo bản đánh giá
+            </button>
+          </div>
+        </div>
+        <div className={styles.illustration} aria-hidden="true">
+          <Image src="/images/evaluation-mole.webp" alt="" width={640} height={533} sizes="(max-width: 520px) 112px, (max-width: 1024px) 152px, 176px" />
+        </div>
+      </header>
 
       {/* TABLE */}
       <div
-        className="
-          w-full
-          overflow-hidden
-          border
-          border-[rgb(var(--color-border))]
-          bg-[rgb(var(--color-surface))]
-        "
+        className={styles.list}
       >
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+        <div className={styles.tableWrap}>
+          <table className={styles.table} aria-label="Danh sách bản đánh giá">
             {/* HEADER */}
             <thead>
               <tr
@@ -168,7 +144,7 @@ export default function EvaluationList() {
                     font-semibold
                   "
                 >
-                  Loại kỳ
+                  <span className={styles.columnLabel}><LayersIcon aria-hidden="true" />Loại kỳ</span>
                 </th>
 
                 <th
@@ -182,7 +158,7 @@ export default function EvaluationList() {
                     font-semibold
                   "
                 >
-                  Tên bản đánh giá
+                  <span className={styles.columnLabel}><FileTextIcon aria-hidden="true" />Tên bản đánh giá</span>
                 </th>
 
                 <th
@@ -197,7 +173,7 @@ export default function EvaluationList() {
                     whitespace-nowrap
                   "
                 >
-                  Ngày nộp
+                  <span className={styles.columnLabel}><CalendarIcon aria-hidden="true" />Ngày nộp</span>
                 </th>
 
                 <th
@@ -211,7 +187,7 @@ export default function EvaluationList() {
                     font-semibold
                   "
                 >
-                  Trạng thái
+                  <span className={styles.columnLabel}><ActivityLogIcon aria-hidden="true" />Trạng thái</span>
                 </th>
 
                 <th
@@ -226,7 +202,7 @@ export default function EvaluationList() {
                     font-semibold
                   "
                 >
-                  Thao tác
+                  <span className={styles.columnLabel}><MixIcon aria-hidden="true" />Thao tác</span>
                 </th>
               </tr>
             </thead>
@@ -245,7 +221,11 @@ export default function EvaluationList() {
                       text-[rgb(var(--color-muted))]
                     "
                   >
-                    Không có dữ liệu
+                    <div className={styles.empty}>
+                      <FileTextIcon aria-hidden="true" />
+                      <strong>Chưa có bản đánh giá</strong>
+                      <p>Chọn “Tạo bản đánh giá” để bắt đầu.</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -255,7 +235,6 @@ export default function EvaluationList() {
                     className={`
                       text-[13px]
                       transition-colors
-                      hover:bg-[rgb(var(--color-border)/0.25)]
                       ${
                         index % 2 === 1
                           ? "bg-[rgb(var(--color-border)/0.28)]"
@@ -264,7 +243,7 @@ export default function EvaluationList() {
                     `}
                   >
                     {/* LOẠI KỲ */}
-                    <td
+                    <td data-label="Loại kỳ"
                       className="
                         border-b
                         border-[rgb(var(--color-border))]
@@ -273,11 +252,11 @@ export default function EvaluationList() {
                         align-middle
                       "
                     >
-                      {item.period}
+                      <span className={styles.period}>{item.period}</span>
                     </td>
 
                     {/* TÊN */}
-                    <td
+                    <td data-label="Tên bản đánh giá"
                       className="
                         border-b
                         border-[rgb(var(--color-border))]
@@ -286,11 +265,11 @@ export default function EvaluationList() {
                         align-middle
                       "
                     >
-                      {item.templateName}
+                      <span className={styles.templateName}><FileTextIcon aria-hidden="true" />{item.templateName}</span>
                     </td>
 
                     {/* NGÀY */}
-                    <td
+                    <td data-label="Ngày nộp"
                       className="
                         whitespace-nowrap
                         border-b
@@ -304,7 +283,7 @@ export default function EvaluationList() {
                     </td>
 
                     {/* STATUS */}
-                    <td
+                    <td data-label="Trạng thái"
                       className="
                         border-b
                         border-[rgb(var(--color-border))]
@@ -313,11 +292,13 @@ export default function EvaluationList() {
                         align-middle
                       "
                     >
-                      {convertStatusToDisplay(item.status)}
+                      <span className={styles.status} data-status={item.status?.toLowerCase()}>
+                        {convertStatusToDisplay(item.status)}
+                      </span>
                     </td>
 
                     {/* ACTION */}
-                    <td
+                    <td data-label="Thao tác"
                       className="
                         border-b
                         border-[rgb(var(--color-border))]
@@ -326,7 +307,7 @@ export default function EvaluationList() {
                         align-middle
                       "
                     >
-                      <div className="flex w-full flex-col gap-1">
+                      <div className={styles.rowActions}>
                         {/* VIEW */}
                         <button
                           type="button"
@@ -335,23 +316,7 @@ export default function EvaluationList() {
                               `/evaluationDetail/${item.id}`
                             )
                           }
-                          className="
-                            flex
-                            h-[28px]
-                            w-full
-                            items-center
-                            justify-center
-                            gap-1.5
-                            rounded-[4px]
-                            bg-[#2196f3]
-                            px-2
-                            text-[12px]
-                            font-semibold
-                            uppercase
-                            text-white
-                            transition
-                            hover:bg-[#1976d2]
-                          "
+                          className={styles.viewButton}
                         >
                           <EyeIcon />
                           Xem
@@ -366,23 +331,7 @@ export default function EvaluationList() {
                                 `/kpievaluation/${item.evalPeriodTemplateId}`
                               )
                             }
-                            className="
-                              flex
-                              h-[28px]
-                              w-full
-                              items-center
-                              justify-center
-                              gap-1.5
-                              rounded-[4px]
-                              bg-[#ffb000]
-                              px-2
-                              text-[12px]
-                              font-semibold
-                              uppercase
-                              text-white
-                              transition
-                              hover:bg-[#e99d00]
-                            "
+                            className={styles.editButton}
                           >
                             <EditIcon />
                             Cập nhật
@@ -400,65 +349,34 @@ export default function EvaluationList() {
 
       {/* PAGINATION */}
       <div
-        className="
-          mt-2
-          flex
-          items-center
-          justify-between
-        "
+        className={styles.pagination}
       >
         <div
-          className="
-            text-[13px]
-            text-[rgb(var(--color-muted))]
-          "
+          className={styles.pageInfo}
         >
-          Trang {page} / {totalPages}
+          <span>{totalCount} bản đánh giá</span>
+          <span className={styles.pageNumber}>Trang {page} / {totalPages}</span>
         </div>
 
-        <div className="flex gap-1">
+        <div className={styles.pageActions}>
           <button
             type="button"
             disabled={page <= 1}
             onClick={prevPage}
-            className="
-              h-[34px]
-              rounded
-              border
-              border-[rgb(var(--color-border))]
-              bg-transparent
-              px-2
-              text-[13px]
-              text-[rgb(var(--color-muted))]
-              transition
-              hover:bg-[rgb(var(--color-border)/0.3)]
-              disabled:cursor-not-allowed
-              disabled:opacity-40
-            "
+            className={styles.pageButton}
           >
-            ← Trước
+            <ArrowLeftIcon aria-hidden="true" />
+            Trước
           </button>
 
           <button
             type="button"
             disabled={page >= totalPages}
             onClick={nextPage}
-            className="
-              h-[34px]
-              rounded
-              border
-              border-[rgb(var(--color-border))]
-              bg-transparent
-              px-2
-              text-[13px]
-              text-[rgb(var(--color-muted))]
-              transition
-              hover:bg-[rgb(var(--color-border)/0.3)]
-              disabled:cursor-not-allowed
-              disabled:opacity-40
-            "
+            className={styles.pageButton}
           >
-            Sau →
+            Sau
+            <ArrowRightIcon aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -473,10 +391,25 @@ export default function EvaluationList() {
 function formatShortDate(value?: string | null) {
   if (!value) return "";
 
-  const date = new Date(value);
+  const parts = /^(\d{4})-(\d{2})-(\d{2})(?:$|T)/.exec(value.trim());
+  if (!parts) return "";
+
+  const [inputYear, inputMonth, inputDay] = parts.slice(1).map(Number);
+  // .NET DateTime.MinValue is an unset submission date.
+  if (inputYear <= 1) return "";
+
+  const calendar = new Date(0);
+  calendar.setUTCFullYear(inputYear, inputMonth - 1, inputDay);
+  if (
+    calendar.getUTCFullYear() !== inputYear ||
+    calendar.getUTCMonth() !== inputMonth - 1 ||
+    calendar.getUTCDate() !== inputDay
+  ) return "";
+
+  const date = new Date(value.trim());
 
   if (Number.isNaN(date.getTime())) {
-    return value;
+    return "";
   }
 
   const day = String(date.getDate()).padStart(2, "0");
