@@ -623,7 +623,7 @@ return (
         disabled={isLoading}
         title="Nếu sai thông tin, hãy gửi cho admin"
         aria-label="Báo lỗi thông tin"
-        className={styles.button}
+        className={styles.button + " " + styles.reportButton}
       >
         <ExclamationTriangleIcon aria-hidden="true" />
         Báo lỗi thông tin
