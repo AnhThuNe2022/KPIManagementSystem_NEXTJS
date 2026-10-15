@@ -21,9 +21,8 @@ export async function apiClient<T>(
 
   headers.set("Content-Type", "application/json");
 
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
+  if (!token) throw new Error("UNAUTHORIZED");
+  headers.set("Authorization", "Bearer " + token);
 
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,

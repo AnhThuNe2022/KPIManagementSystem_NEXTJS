@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   CompanyDto,
@@ -14,6 +14,17 @@ import {
 import {
   AssignmentType,
 } from "@/types/organization";
+import {
+  BackpackIcon,
+  CheckIcon,
+  Cross2Icon,
+  HomeIcon,
+  IdCardIcon,
+  LayersIcon,
+  MixIcon,
+  PersonIcon,
+} from "@radix-ui/react-icons";
+import styles from "../user-information.module.css";
 import { departmentApi } from "../service/departmentApi";
 import ManagerSearch, { ManagerOption } from "./ManagerSearch";
 
@@ -59,6 +70,21 @@ export default function AssignmentDialog({
   onClose,
   onSubmit,
 }: AssignmentDialogProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (!dialog.open) dialog.showModal();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
   const [form, setForm] =
     useState<UserOrganizationDto>(model);
 
@@ -384,36 +410,23 @@ if (!open) {
 }
 
 return (
-  <div
-    className="
-      fixed
-      inset-0
-      z-50
-      flex
-      items-center
-      justify-center
-      overflow-y-auto
-      bg-black/40
-      p-4
-    "
+  <dialog
+    className={styles.dialog}
+    ref={dialogRef}
+    aria-labelledby="AssignmentDialog-title"
+    onCancel={event => {
+      event.preventDefault();
+      if (!isSubmitting) handleClose();
+    }}
   >
     <div
-      className="
-        relative
-        w-full
-        max-w-[720px]
-        overflow-visible
-        rounded-md
-        bg-[rgb(var(--color-surface))]
-        text-[rgb(var(--color-text))]
-        shadow-[var(--shadow-card)]
-      "
+      className={styles.dialogSurface}
     >
       {/* =====================================================
           HEADER
       ===================================================== */}
-      <div className="px-6 pt-5 pb-3">
-        <h2
+      <div className={styles.dialogHeader}>
+        <h2 id="AssignmentDialog-title"
           className="
             text-[20px]
             font-semibold
@@ -430,8 +443,8 @@ return (
       {/* =====================================================
           BODY
       ===================================================== */}
-      <div className="px-6 pb-5">
-        <div className="space-y-3">
+      <div className={styles.dialogBody}>
+        <div className={styles.formFields}>
 
           {/* =================================================
               ROW 1
@@ -452,6 +465,7 @@ return (
                   text-[rgb(var(--color-muted))]
                 "
               >
+                <LayersIcon aria-hidden="true" />
                 Loại đơn vị công tác
                 <span className="ml-0.5 text-red-500">*</span>
               </label>
@@ -532,11 +546,11 @@ return (
                       value={AssignmentType.Primary}
                       disabled={hasPrimaryAssignment}
                     >
-                      ⭐ Chính
+                      Chính
                     </option>
 
                     <option value={AssignmentType.Concurrent}>
-                      ● Kiêm nhiệm
+                      Kiêm nhiệm
                     </option>
                   </select>
 
@@ -587,6 +601,7 @@ return (
                   text-[rgb(var(--color-muted))]
                 "
               >
+                <IdCardIcon aria-hidden="true" />
                 Mã NV
                 <span className="ml-0.5 text-red-500">*</span>
               </label>
@@ -649,6 +664,7 @@ return (
                   text-[rgb(var(--color-muted))]
                 "
               >
+                <HomeIcon aria-hidden="true" />
                 Công ty
                 <span className="ml-0.5 text-red-500">*</span>
               </label>
@@ -781,6 +797,7 @@ return (
                   text-[rgb(var(--color-muted))]
                 "
               >
+                <MixIcon aria-hidden="true" />
                 Phòng ban
                 <span className="ml-0.5 text-red-500">*</span>
               </label>
@@ -920,6 +937,7 @@ return (
                 text-[rgb(var(--color-muted))]
               "
             >
+              <BackpackIcon aria-hidden="true" />
               Chức danh
               <span className="ml-0.5 text-red-500">*</span>
             </label>
@@ -1020,6 +1038,7 @@ return (
                       text-[rgb(var(--color-muted))]
                     "
                   >
+                    <PersonIcon aria-hidden="true" />
                     Quản lý trực tiếp
                     <span className="ml-0.5 text-red-500">
                       *
@@ -1052,35 +1071,16 @@ return (
           FOOTER
       ===================================================== */}
       <div
-        className="
-          flex
-          items-center
-          justify-end
-          gap-3
-          px-4
-          pb-4
-          pt-1
-        "
+        className={styles.dialogFooter}
       >
         {/* HỦY */}
         <button
           type="button"
           onClick={handleClose}
           disabled={isSubmitting}
-          className="
-            rounded-md
-            px-4
-            py-2
-            text-sm
-            font-semibold
-            uppercase
-            text-[rgb(var(--color-text))]
-            transition
-            hover:bg-[rgb(var(--color-page))]
-            disabled:cursor-not-allowed
-            disabled:opacity-50
-          "
+          className={styles.button}
         >
+          <Cross2Icon aria-hidden="true" />
           Hủy
         </button>
 
@@ -1089,28 +1089,15 @@ return (
           type="button"
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className="
-            rounded-md
-            bg-[rgb(var(--color-brand))]
-            px-4
-            py-2
-            text-sm
-            font-semibold
-            uppercase
-            text-[rgb(var(--color-on-brand))]
-            shadow-sm
-            transition
-            hover:bg-[rgb(var(--color-brand-strong))]
-            disabled:cursor-not-allowed
-            disabled:opacity-50
-          "
+          className={styles.primaryButton}
         >
+          <CheckIcon aria-hidden="true" />
           {isSubmitting
             ? "Đang xử lý..."
             : "Lưu nháp thông tin"}
         </button>
       </div>
     </div>
-  </div>
+  </dialog>
 );
 }

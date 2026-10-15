@@ -1,6 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import {
+  CheckIcon,
+  DesktopIcon,
+  IdCardIcon,
+  LockClosedIcon,
+  PersonIcon,
+} from "@radix-ui/react-icons";
+import styles from "../user-information.module.css";
 import { ChangePasswordDto } from "@/types/employee";
 
 interface PasswordChangeProps {
@@ -126,8 +134,13 @@ return (
   <form
     id="password-form"
     onSubmit={handleSubmit}
-    className="space-y-5"
+    className={styles.passwordForm}
   >
+    <header className={styles.passwordHeader}>
+      <span className={styles.sectionIcon} aria-hidden="true"><LockClosedIcon /></span>
+      <div><h2>Đổi mật khẩu</h2><p>Xác thực tài khoản trước khi đặt mật khẩu mới.</p></div>
+    </header>
+
     {/* =========================
         METHOD
     ========================== */}
@@ -137,10 +150,10 @@ return (
           Phương thức đổi mật khẩu
         </label>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className={styles.methodOptions}>
           {/* CMS */}
           <label
-            className={`
+            className={`${styles.methodOption}
               flex
               cursor-pointer
               items-start
@@ -179,6 +192,8 @@ return (
               "
             />
 
+            <span className={styles.methodIcon} aria-hidden="true"><DesktopIcon /></span>
+
             <div>
               <div className="text-sm font-medium text-[rgb(var(--color-text))]">
                 Tài khoản CMS
@@ -192,7 +207,7 @@ return (
 
           {/* KPI */}
           <label
-            className={`
+            className={`${styles.methodOption}
               flex
               cursor-pointer
               items-start
@@ -231,6 +246,8 @@ return (
               "
             />
 
+            <span className={styles.methodIcon} aria-hidden="true"><IdCardIcon /></span>
+
             <div>
               <div className="text-sm font-medium text-[rgb(var(--color-text))]">
                 Mật khẩu KPI hiện tại
@@ -252,11 +269,14 @@ return (
       <div className="space-y-4">
         {/* CMS Username */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-[rgb(var(--color-text))]">
+          <label htmlFor="profile-cmsUsername" className="mb-1 block text-sm font-medium text-[rgb(var(--color-text))]">
+            <PersonIcon aria-hidden="true" />
             Tên người dùng CMS
           </label>
 
           <input
+            id="profile-cmsUsername"
+            autoComplete="username"
             type="text"
             value={form.cmsUsername ?? ""}
             onChange={e =>
@@ -285,12 +305,15 @@ return (
 
         {/* CMS Password */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-[rgb(var(--color-text))]">
+          <label htmlFor="profile-cmsPassword" className="mb-1 block text-sm font-medium text-[rgb(var(--color-text))]">
+            <LockClosedIcon aria-hidden="true" />
             Mật khẩu CMS
           </label>
 
           <div className="relative">
             <input
+            id="profile-cmsPassword"
+            autoComplete="current-password"
               type={
                 showCmsPassword
                   ? "text"
@@ -412,12 +435,15 @@ return (
     ========================== */}
     {!isAdmin && changeMethod === "kpi" && (
       <div>
-        <label className="mb-1 block text-sm font-medium text-[rgb(var(--color-text))]">
+        <label htmlFor="profile-currentPassword" className="mb-1 block text-sm font-medium text-[rgb(var(--color-text))]">
+          <LockClosedIcon aria-hidden="true" />
           Mật khẩu KPI hiện tại
         </label>
 
         <div className="relative">
           <input
+            id="profile-currentPassword"
+            autoComplete="current-password"
             type={
               showCurrentPassword
                 ? "text"
@@ -537,12 +563,15 @@ return (
         NEW PASSWORD
     ========================== */}
     <div>
-      <label className="mb-1 block text-sm font-medium text-[rgb(var(--color-text))]">
+      <label htmlFor="profile-newPassword" className="mb-1 block text-sm font-medium text-[rgb(var(--color-text))]">
+        <LockClosedIcon aria-hidden="true" />
         Mật khẩu mới
       </label>
 
       <div className="relative">
         <input
+            id="profile-newPassword"
+            autoComplete="new-password"
           type={
             showNewPassword
               ? "text"
@@ -667,12 +696,15 @@ return (
         CONFIRM PASSWORD
     ========================== */}
     <div>
-      <label className="mb-1 block text-sm font-medium text-[rgb(var(--color-text))]">
+      <label htmlFor="profile-confirmPassword" className="mb-1 block text-sm font-medium text-[rgb(var(--color-text))]">
+        <CheckIcon aria-hidden="true" />
         Xác nhận mật khẩu
       </label>
 
       <div className="relative">
         <input
+            id="profile-confirmPassword"
+            autoComplete="new-password"
           type={
             showConfirmPassword
               ? "text"
@@ -799,26 +831,10 @@ return (
     <button
       type="submit"
       disabled={isSaving}
-      className="
-        mt-5
-        flex
-        w-full
-        items-center
-        justify-center
-        rounded-md
-        bg-[rgb(var(--color-brand))]
-        px-4
-        py-3
-        text-sm
-        font-semibold
-        text-[rgb(var(--color-on-brand))]
-        transition
-        hover:bg-[rgb(var(--color-brand-strong))]
-        disabled:cursor-not-allowed
-        disabled:opacity-50
-      "
+      className={styles.primaryButton}
     >
-      {isSaving ? "ĐANG LƯU..." : "LƯU"}
+      <LockClosedIcon aria-hidden="true" />
+      {isSaving ? "Đang cập nhật…" : "Cập nhật mật khẩu"}
     </button>
   </form>
 );
