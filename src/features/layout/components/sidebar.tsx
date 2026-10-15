@@ -17,10 +17,10 @@ const navigation: NavigationItem[] = [
   {
     label: "Thông tin chung", href: "#",
     icon: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="9" r="3" /><path d="M5 18a7.5 7.5 0 0 1 14 0" /></>,
-    children: [{ label: "Thông tin tài khoản cá nhân", href: "#", icon: <><rect x="3" y="5" width="18" height="15" rx="3" /><path d="M9 5V3h6v2m1 6h2m-2 4h2" /><circle cx="8" cy="11" r="2" /><path d="M5 17a3 3 0 0 1 6 0" /></> }],
+    children: [{ label: "Thông tin tài khoản cá nhân", href: "/user-infor", icon: <><rect x="3" y="5" width="18" height="15" rx="3" /><path d="M9 5V3h6v2m1 6h2m-2 4h2" /><circle cx="8" cy="11" r="2" /><path d="M5 17a3 3 0 0 1 6 0" /></> }],
   },
   { label: "Nhập đánh giá", href: "#", icon: <><path d="M4 5h10M4 10h7M4 15h4m3 4 2.5-.5L21 11l-2-2-7.5 7.5L11 19Z" /><path d="m17 11 2 2" /></> },
-  { label: "Bản đánh giá của tôi", href: "#", icon: <><rect x="5" y="4" width="14" height="17" rx="3" /><path d="M9 4V3h6v1M9 10h6m-6 5 2 2 4-4" /></> },
+  { label: "Bản đánh giá của tôi", href: "/my-evaluation", icon: <><rect x="5" y="4" width="14" height="17" rx="3" /><path d="M9 4V3h6v1M9 10h6m-6 5 2 2 4-4" /></> },
 ];
 
 export function Sidebar() {
@@ -34,7 +34,7 @@ export function Sidebar() {
   const navRef = useRef<HTMLElement>(null);
   const itemRefs = useRef<(HTMLElement | null)[]>([]);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const activeIndex = navigation.findIndex((item) => item.href === pathname);
+  const activeIndex = navigation.findIndex((item) => item.href === pathname || item.children?.some((child) => child.href === pathname));
   const highlightedIndex = hoveredIndex ?? focusedIndex ?? Math.max(activeIndex, 0);
   const visiblyCollapsed = collapsed && !previewExpanded;
 

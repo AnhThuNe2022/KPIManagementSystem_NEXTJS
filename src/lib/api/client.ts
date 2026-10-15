@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cookies } from "next/headers";
+import { appConfig } from "@/config/app";
 
 const API_URL = process.env.AUTH_API_URL?.replace(/\/$/, "");
 
@@ -14,7 +15,7 @@ export async function apiClient<T>(
 
   // Lấy token từ HttpOnly Cookie
   const cookieStore = await cookies();
-  const token = cookieStore.get("access_token")?.value;
+  const token = cookieStore.get(appConfig.authCookieName)?.value;
 
   const headers = new Headers(options.headers);
 
@@ -30,13 +31,29 @@ export async function apiClient<T>(
     cache: "no-store",
   });
 
-  if (!response.ok) {
-    if (response.status === 401) {
-      throw new Error("UNAUTHORIZED");
-    }
+if (!response.ok) {
+  const errorText = await response.text();
 
-    throw new Error(`API_ERROR_${response.status}`);
+  console.error("API ERROR:", {
+    url: `${API_URL}${endpoint}`,
+    status: response.status,
+    statusText: response.statusText,
+    response: errorText,
+  });
+
+  if (response.status === 401) {
+    throw new Error("UNAUTHORIZED");
   }
 
+  throw new Error(`API_ERROR_${response.status}: ${errorText}`);
+}
+
+const contentType =
+  response.headers.get("content-type") ?? "";
+
+if (contentType.includes("application/json")) {
   return response.json() as Promise<T>;
+}
+
+return response.text() as Promise<T>;
 }
