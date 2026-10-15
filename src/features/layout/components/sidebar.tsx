@@ -30,13 +30,32 @@ export function Sidebar() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [generalOpen, setGeneralOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [highlightOffset, setHighlightOffset] = useState(0);
+  const mobileDialogRef = useRef<HTMLDialogElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const itemRefs = useRef<(HTMLElement | null)[]>([]);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeIndex = navigation.findIndex((item) => item.href === pathname || item.children?.some((child) => child.href === pathname));
   const highlightedIndex = hoveredIndex ?? focusedIndex ?? Math.max(activeIndex, 0);
-  const visiblyCollapsed = collapsed && !previewExpanded;
+  const visiblyCollapsed = collapsed && !previewExpanded && !mobileOpen;
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const dialog = mobileDialogRef.current;
+    if (!dialog) return;
+    dialog.showModal();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const viewport = window.matchMedia("(max-width: 1023px)");
+    const closeOnDesktop = () => { if (!viewport.matches) setMobileOpen(false); };
+    viewport.addEventListener("change", closeOnDesktop);
+    return () => {
+      viewport.removeEventListener("change", closeOnDesktop);
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileOpen]);
 
   useLayoutEffect(() => {
     const nav = navRef.current;
@@ -50,7 +69,7 @@ export function Sidebar() {
     const observer = new ResizeObserver(measure);
     observer.observe(nav);
     return () => observer.disconnect();
-  }, [highlightedIndex]);
+  }, [highlightedIndex, mobileOpen]);
 
   useEffect(() => () => {
     if (leaveTimer.current) clearTimeout(leaveTimer.current);
@@ -69,14 +88,14 @@ export function Sidebar() {
     }, 180);
   }
 
-  return (
+  const sidebar = (
     <aside
       className={styles.sidebar}
       data-compact={collapsed}
       data-collapsed={visiblyCollapsed}
       aria-label="Thanh điều hướng"
       onPointerEnter={(event) => {
-        if (event.pointerType === "touch") return;
+        if (event.pointerType === "touch" || !window.matchMedia("(min-width: 1024px) and (hover: hover) and (pointer: fine)").matches) return;
         cancelReturn();
         setPreviewExpanded(true);
       }}
@@ -103,16 +122,20 @@ export function Sidebar() {
               type="button"
               className={styles.collapse}
               onClick={() => {
+                if (mobileOpen) {
+                  setMobileOpen(false);
+                  return;
+                }
                 cancelReturn();
                 setCollapsed((value) => !value);
                 setPreviewExpanded(false);
               }}
-              aria-label={collapsed ? "Giữ thanh điều hướng mở" : "Thu gọn thanh điều hướng"}
+              aria-label={mobileOpen ? "Đóng menu điều hướng" : collapsed ? "Giữ thanh điều hướng mở" : "Thu gọn thanh điều hướng"}
               aria-expanded={!visiblyCollapsed}
               aria-controls="workspace-navigation"
-              title={collapsed ? "Giữ mở" : "Thu gọn"}
+              title={mobileOpen ? "Đóng menu" : collapsed ? "Giữ mở" : "Thu gọn"}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="4" /><path d="M9 4v16" /><path className={styles.collapseArrow} d="m16 9-3 3 3 3" /></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{mobileOpen ? <path d="m6 6 12 12M6 18 18 6" /> : <><rect x="3" y="4" width="18" height="16" rx="4" /><path d="M9 4v16" /><path className={styles.collapseArrow} d="m16 9-3 3 3 3" /></>}</svg>
             </button>
           </div>
 
@@ -150,11 +173,11 @@ export function Sidebar() {
               return <div key={item.label} className={styles.group}>
                 {item.children
                   ? <button {...interaction} type="button" aria-expanded={generalOpen && !visiblyCollapsed} aria-controls="sidebar-general-submenu" onClick={() => setGeneralOpen((value) => !value)}>{content}</button>
-                  : <Link {...interaction} href={item.href} aria-current={activeIndex === index ? "page" : undefined}>{content}</Link>}
+                  : <Link {...interaction} href={item.href} onClick={() => setMobileOpen(false)} aria-current={activeIndex === index ? "page" : undefined}>{content}</Link>}
                 {item.children && <div id="sidebar-general-submenu" className={styles.submenu} data-open={generalOpen} inert={!generalOpen || visiblyCollapsed}>
                   <div className={styles.submenuInner}>
                     <div className={styles.submenuContent}>
-                      {item.children.map((child) => <Link key={child.label} href={child.href} className={styles.subitem} onPointerEnter={interaction.onPointerEnter} onFocus={interaction.onFocus}>
+                      {item.children.map((child) => <Link key={child.label} href={child.href} className={styles.subitem} onClick={() => setMobileOpen(false)} onPointerEnter={interaction.onPointerEnter} onFocus={interaction.onFocus}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{child.icon}</svg>
                         <span>{child.label}</span>
                       </Link>)}
@@ -174,5 +197,21 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+  );
+
+  return (
+    <>
+      <button type="button" className={styles.mobileToggle} onClick={() => setMobileOpen(true)} aria-label="Mở menu điều hướng" aria-haspopup="dialog" aria-expanded={mobileOpen} aria-controls="mobile-navigation-dialog">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h14" /></svg>
+      </button>
+      {!mobileOpen && sidebar}
+      <dialog ref={mobileDialogRef} id="mobile-navigation-dialog" className={styles.mobileDialog} aria-label="Menu điều hướng" onCancel={() => setMobileOpen(false)} onClick={(event) => {
+        if (event.target !== event.currentTarget) return;
+        const bounds = event.currentTarget.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) setMobileOpen(false);
+      }}>
+        {mobileOpen && sidebar}
+      </dialog>
+    </>
   );
 }

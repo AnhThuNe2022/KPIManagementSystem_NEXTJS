@@ -1,5 +1,12 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import {
+  Cross2Icon,
+  PaperPlaneIcon,
+} from "@radix-ui/react-icons";
+import styles from "../user-information.module.css";
+
 interface ComplaintDialogProps {
   open: boolean;
   value: string;
@@ -17,25 +24,49 @@ export default function ComplaintDialog({
   onClose,
   onSubmit,
 }: ComplaintDialogProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (!dialog.open) dialog.showModal();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white shadow-xl dark:bg-gray-900">
+    <dialog
+      className={styles.dialog}
+      ref={dialogRef}
+      aria-labelledby="ComplaintDialog-title"
+      onCancel={event => {
+        event.preventDefault();
+        if (!loading) onClose();
+      }}
+    >
+      <div className={styles.dialogSurface}>
         {/* Header */}
-        <div className="border-b px-6 py-4">
-          <h2 className="text-lg font-semibold">
+        <div className={styles.dialogHeader}>
+          <h2 id="ComplaintDialog-title" className="text-lg font-semibold">
             Báo với admin
           </h2>
         </div>
 
         {/* Content */}
-        <div className="px-6 py-5">
+        <div className={styles.dialogBody}>
           <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
             Nhập thông tin sai hoặc cần báo với admin:
           </p>
 
           <textarea
+            aria-label="Thông tin cần điều chỉnh"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             rows={4}
@@ -64,23 +95,14 @@ export default function ComplaintDialog({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 border-t px-6 py-3">
+        <div className={styles.dialogFooter}>
           <button
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="
-              rounded-md
-              px-5
-              py-2
-              text-sm
-              text-gray-700
-              hover:bg-gray-100
-              disabled:opacity-50
-              dark:text-gray-200
-              dark:hover:bg-gray-800
-            "
+            className={styles.button}
           >
+            <Cross2Icon aria-hidden="true" />
             Hủy bỏ
           </button>
 
@@ -88,24 +110,13 @@ export default function ComplaintDialog({
             type="button"
             onClick={onSubmit}
             disabled={loading}
-            className="
-              rounded-md
-              bg-red-500
-              px-6
-              py-2
-              text-sm
-              font-semibold
-              text-white
-              shadow-sm
-              hover:bg-red-600
-              disabled:cursor-not-allowed
-              disabled:opacity-50
-            "
+            className={styles.primaryButton}
           >
+            <PaperPlaneIcon aria-hidden="true" />
             {loading ? "Đang gửi..." : "Xác nhận"}
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

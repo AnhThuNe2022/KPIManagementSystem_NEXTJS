@@ -1,5 +1,23 @@
 "use client";
 
+import Image from "next/image";
+import {
+  BackpackIcon,
+  CheckIcon,
+  DrawingPinFilledIcon,
+  EnvelopeClosedIcon,
+  ExclamationTriangleIcon,
+  HomeIcon,
+  IdCardIcon,
+  LayersIcon,
+  LockClosedIcon,
+  MixIcon,
+  Pencil1Icon,
+  PersonIcon,
+  PlusIcon,
+  TrashIcon,
+} from "@radix-ui/react-icons";
+import styles from "../user-information.module.css";
 import { useAuth } from "@/contexts/AuthContext";
 import AssignmentDialog from "./AssignmentDialog";
 import PasswordChange from "./PasswordChange";
@@ -538,24 +556,27 @@ const createComplaint = async (
    */
 if (authLoading || userInforLoading) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[rgb(var(--color-page))]">
-      <div className="flex flex-col items-center gap-3">
-        <div
-          className="
-            h-8
-            w-8
-            animate-spin
-            rounded-full
-            border-4
-            border-[rgb(var(--color-border))]
-            border-t-[rgb(var(--color-brand))]
-          "
-        />
-
-        <span className="text-sm text-[rgb(var(--color-muted))]">
-          Đang tải thông tin...
-        </span>
+    <div className={styles.page} role="status" aria-label="Đang tải thông tin nhân viên" aria-busy="true">
+      <header className={styles.pageHeader}>
+        <div>
+          <span className={styles.eyebrow}>Hồ sơ nhân viên</span>
+          <h1>Thông tin cá nhân</h1>
+          <p>Hồ sơ, đơn vị công tác và bảo mật tài khoản của bạn.</p>
+        </div>
+      </header>
+      <div className={styles.toolbar}>
+        <div className={styles.loadingTabs} />
       </div>
+      <div className={styles.generalPanel}>
+        <div className={styles.loadingProfile}>
+          <div className={styles.loadingAvatar} />
+          <div className={styles.loadingName} />
+        </div>
+        <div className={styles.loadingPanel}>
+          <div /><div /><div />
+        </div>
+      </div>
+      <span className="sr-only">Đang tải thông tin...</span>
     </div>
   );
 }
@@ -575,61 +596,37 @@ if (authLoading || userInforLoading) {
  */
 
 return (
-  <div className="min-h-screen bg-[rgb(var(--color-page))] p-4 transition-colors md:p-8">
+  <div className={styles.page}>
 
     <div
-      className="
-        mx-auto
-        max-w-[1860px]
-        rounded-md
-        border
-        border-[rgb(var(--color-border))]
-        bg-[rgb(var(--color-surface))]
-        shadow-[var(--shadow-card)]
-        transition-colors
-      "
+      className={styles.pageFrame}
     >
 
       {/* =====================================================
           HEADER
       ===================================================== */}
       <div
-        className="
-          flex
-          items-center
-          justify-between
-          border-b
-          border-[rgb(var(--color-border))]
-          px-6
-          py-5
-        "
+        className={styles.pageHeader}
       >
 
-        <h1 className="text-xl font-medium text-[rgb(var(--color-text))]">
-          Cập nhật thông tin nhân viên
-        </h1>
+        <div>
+          <span className={styles.eyebrow}>Hồ sơ nhân viên</span>
+          <h1 className="text-xl font-medium text-[rgb(var(--color-text))]">
+            Thông tin cá nhân
+          </h1>
+          <p>Hồ sơ, đơn vị công tác và bảo mật tài khoản của bạn.</p>
+        </div>
 
       <button
         type="button"
         onClick={handleComplaint}
         disabled={isLoading}
         title="Nếu sai thông tin, hãy gửi cho admin"
-        className="
-          rounded-md
-          bg-red-500
-          px-4
-          py-2
-          text-xs
-          font-semibold
-          text-white
-          shadow-sm
-          transition
-          hover:bg-red-600
-          disabled:cursor-not-allowed
-          disabled:opacity-50
-        "
+        aria-label="Báo lỗi thông tin"
+        className={styles.button}
       >
-        BÁO LỖI CHO ADMIN
+        <ExclamationTriangleIcon aria-hidden="true" />
+        Báo lỗi thông tin
       </button>
 
       </div>
@@ -640,20 +637,7 @@ return (
       ===================================================== */}
       {error && (
         <div
-          className="
-            mx-6
-            mt-4
-            rounded-md
-            border
-            border-red-300
-            bg-red-50
-            p-3
-            text-sm
-            text-red-600
-            dark:border-red-900
-            dark:bg-red-950/30
-            dark:text-red-400
-          "
+          className={styles.alert}
         >
           {error}
         </div>
@@ -663,19 +647,21 @@ return (
       {/* =====================================================
           CONTENT
       ===================================================== */}
-      <div className="px-6 pb-6">
+      <div className={styles.content}>
 
         {/* ===================================================
             TABS
         =================================================== */}
-        <div className="border-b border-[rgb(var(--color-border))]">
+        <div className={styles.toolbar}>
 
-          <div className="flex gap-8">
+          <div className={styles.tabTrack} data-tab={activeTab} role="tablist" aria-label="Thông tin tài khoản">
 
             {/* TAB THÔNG TIN */}
             <button
               type="button"
               onClick={() => setActiveTab(0)}
+              role="tab"
+              aria-selected={activeTab === 0}
               className={`
                 relative
                 px-3
@@ -690,7 +676,8 @@ return (
                 }
               `}
             >
-              THÔNG TIN CHUNG
+              <PersonIcon aria-hidden="true" />
+              Thông tin chung
 
               {activeTab === 0 && (
                 <span
@@ -711,6 +698,8 @@ return (
             <button
               type="button"
               onClick={() => setActiveTab(1)}
+              role="tab"
+              aria-selected={activeTab === 1}
               className={`
                 relative
                 px-3
@@ -725,7 +714,8 @@ return (
                 }
               `}
             >
-              ĐỔI MẬT KHẨU
+              <LockClosedIcon aria-hidden="true" />
+              Đổi mật khẩu
 
               {activeTab === 1 && (
                 <span
@@ -750,32 +740,56 @@ return (
             TAB THÔNG TIN CHUNG
         =================================================== */}
         {activeTab === 0 && (
-          <div className="pt-4">
+          <div className={styles.generalPanel}>
 
             {/* -----------------------------------------------
                 THÔNG TIN NHÂN VIÊN
             ------------------------------------------------ */}
-            <div className="grid grid-cols-1 gap-x-12 md:grid-cols-2">
+            <div className={styles.identityCard}>
+
+              <div className={styles.avatar} aria-hidden="true">
+                {employee?.fullName?.trim().split(/\s+/).slice(-2).map(part => part[0]).join("").toUpperCase() || "DC"}
+              </div>
 
               <InfoRow
                 label="Họ và tên"
+                icon={<PersonIcon aria-hidden="true" />}
                 value={employee?.fullName}
               />
 
               <InfoRow
                 label="Email"
+                icon={<EnvelopeClosedIcon aria-hidden="true" />}
                 value={employee?.email}
               />
 
               <InfoRow
                 label="Mã hệ thống"
+                icon={<IdCardIcon aria-hidden="true" />}
                 value={employee?.systemCode}
               />
 
               <InfoRow
                 label="Nhóm chức vụ"
+                icon={<BackpackIcon aria-hidden="true" />}
                 value={employee?.jobPosition?.name}
               />
+
+              <div className={styles.credentialScene} aria-hidden="true">
+                <div className={styles.credentialCard}>
+                  <div className={styles.credentialBrand}>
+                    <Image src="/brand/deoca-icon.png" alt="" width={34} height={34} />
+                    <span>ĐÈO CẢ GROUP<small>THẺ NHÂN SỰ · KPI</small></span>
+                    <IdCardIcon />
+                  </div>
+                  <div className={styles.credentialName}>{employee?.fullName || "Hồ sơ nhân viên"}</div>
+                  <div className={styles.credentialBottom}>
+                    <span>{employee?.systemCode || "Hồ sơ nội bộ"}</span>
+                    <span>Cùng kiến tạo giá trị.</span>
+                  </div>
+                </div>
+                <span className={styles.credentialSeal}><BackpackIcon /></span>
+              </div>
 
             </div>
 
@@ -783,18 +797,19 @@ return (
             {/* =================================================
                 ĐƠN VỊ CÔNG TÁC
             ================================================= */}
-            <div className="mt-7">
+            <div className={styles.panel}>
 
               {/* Header */}
-              <div className="mb-2 flex items-center justify-between">
+              <div className={styles.panelHeader}>
 
                 <div>
                   <h2 className="text-lg font-semibold text-[rgb(var(--color-text))]">
+                    <LayersIcon aria-hidden="true" />
                     Đơn vị công tác
                   </h2>
 
                   <p className="mt-1 text-xs text-[rgb(var(--color-accent))]">
-                    Danh sách các đơn vị công tác mà nhân viên đang được phân công.
+                    Các đơn vị bạn đang được phân công.
                   </p>
                 </div>
 
@@ -803,27 +818,10 @@ return (
                 <button
                   type="button"
                   onClick={openAddAssignment}
-                  className="
-                    inline-flex
-                    items-center
-                    gap-1
-                    rounded-md
-                    bg-[rgb(var(--color-brand))]
-                    px-4
-                    py-2
-                    text-sm
-                    font-semibold
-                    text-[rgb(var(--color-on-brand))]
-                    shadow-sm
-                    transition
-                    hover:bg-[rgb(var(--color-brand-strong))]
-                  "
+                  className={styles.button}
                 >
-                  <span className="text-base leading-none">
-                    +
-                  </span>
-
-                  THÊM
+                  <PlusIcon aria-hidden="true" />
+                  Thêm đơn vị
                 </button>
 
               </div>
@@ -862,21 +860,11 @@ return (
                 </div>
               ) : (
                 <div
-                  className="
-                    overflow-x-auto
-                    rounded-md
-                    border
-                    border-[rgb(var(--color-border))]
-                  "
+                  className={styles.tableWrap}
                 >
 
                   <table
-                    className="
-                      w-full
-                      min-w-[1100px]
-                      border-collapse
-                      text-sm
-                    "
+                    className={styles.table}
                   >
 
                     <thead>
@@ -898,6 +886,7 @@ return (
                             text-[rgb(var(--color-text))]
                           "
                         >
+                          <LayersIcon aria-hidden="true" />
                           Loại
                         </th>
 
@@ -909,6 +898,7 @@ return (
                             text-[rgb(var(--color-text))]
                           "
                         >
+                          <IdCardIcon aria-hidden="true" />
                           Mã NV
                         </th>
 
@@ -920,6 +910,7 @@ return (
                             text-[rgb(var(--color-text))]
                           "
                         >
+                          <HomeIcon aria-hidden="true" />
                           Công ty
                         </th>
 
@@ -931,6 +922,7 @@ return (
                             text-[rgb(var(--color-text))]
                           "
                         >
+                          <MixIcon aria-hidden="true" />
                           Phòng ban
                         </th>
 
@@ -942,6 +934,7 @@ return (
                             text-[rgb(var(--color-text))]
                           "
                         >
+                          <BackpackIcon aria-hidden="true" />
                           Chức danh
                         </th>
 
@@ -953,6 +946,7 @@ return (
                             text-[rgb(var(--color-text))]
                           "
                         >
+                          <PersonIcon aria-hidden="true" />
                           Quản lý
                         </th>
 
@@ -980,6 +974,7 @@ return (
                         .map((assignment, index) => (
 
                         <tr
+                          data-primary={assignment.assignmentType === AssignmentType.Primary}
                           key={
                             assignment.id ??
                             `${assignment.companyId}-${assignment.departmentId}`
@@ -994,15 +989,13 @@ return (
                         >
 
                           {/* Loại */}
-                          <td className="px-4 py-5">
+                          <td data-label="Loại" className="px-4 py-5">
 
                             <div className="flex items-center gap-2">
 
                               {assignment.assignmentType ===
                                 AssignmentType.Primary && (
-                                <span className="text-lg text-yellow-400">
-                                  ★
-                                </span>
+                                <DrawingPinFilledIcon className={styles.primaryPin} aria-hidden="true" />
                               )}
 
                               <span className="text-[rgb(var(--color-text))]">
@@ -1017,39 +1010,39 @@ return (
 
 
                           {/* Mã NV */}
-                          <td className="px-4 py-5 text-[rgb(var(--color-muted))]">
+                          <td data-label="Mã NV" className="px-4 py-5 text-[rgb(var(--color-muted))]">
                             {assignment.employeeCode ?? "-"}
                           </td>
 
 
                           {/* Công ty */}
-                          <td className="px-4 py-5 text-[rgb(var(--color-text))]">
+                          <td data-label="Công ty" className="px-4 py-5 text-[rgb(var(--color-text))]">
                             {assignment.companyName ?? "-"}
                           </td>
 
 
                           {/* Phòng ban */}
-                          <td className="px-4 py-5 text-[rgb(var(--color-text))]">
+                          <td data-label="Phòng ban" className="px-4 py-5 text-[rgb(var(--color-text))]">
                             {assignment.departmentName ?? "-"}
                           </td>
 
 
                           {/* Chức danh */}
-                          <td className="px-4 py-5 text-[rgb(var(--color-text))]">
+                          <td data-label="Chức danh" className="px-4 py-5 text-[rgb(var(--color-text))]">
                             {assignment.jobTitle ?? "-"}
                           </td>
 
 
                           {/* Quản lý */}
-                          <td className="px-4 py-5 text-[rgb(var(--color-text))]">
+                          <td data-label="Quản lý" className="px-4 py-5 text-[rgb(var(--color-text))]">
                             {assignment.managerName ?? "-"}
                           </td>
 
 
                           {/* Action */}
-                          <td className="px-4 py-5">
+                          <td data-label="Thao tác" className="px-4 py-5">
 
-                            <div className="flex flex-col items-center gap-4">
+                            <div className={styles.rowActions}>
 
                               {/* EDIT */}
                               <button
@@ -1059,33 +1052,25 @@ return (
                                     assignment
                                   )
                                 }
-                                className="
-                                  text-xl
-                                  text-[rgb(var(--color-muted))]
-                                  transition
-                                  hover:text-[rgb(var(--color-brand))]
-                                "
+                                className={styles.iconButton}
                                 title="Sửa"
+                                aria-label={"Chỉnh sửa " + (assignment.companyName || "đơn vị công tác")}
                               >
-                                ✎
+                                <Pencil1Icon aria-hidden="true" />
                               </button>
 
 
                               {/* DELETE */}
                               <button
                                 type="button"
-                                className="
-                                  text-lg
-                                  text-red-500
-                                  transition
-                                  hover:text-red-700
-                                "
+                                className={styles.iconButton + " " + styles.deleteButton}
                                 title="Xóa"
+                                aria-label={"Gỡ " + (assignment.companyName || "đơn vị công tác")}
                                 onClick={() =>
                                   handleDeleteAssignment(assignment)
                                 }
                               >
-                                ▮
+                                <TrashIcon aria-hidden="true" />
                               </button>
                             </div>
                           </td>
@@ -1103,25 +1088,7 @@ return (
               type="button"
               onClick={saveAssignments}
               disabled={isLoading || assignmentsLoading}
-              className="
-                mt-3
-                flex
-                w-full
-                items-center
-                justify-center
-                gap-2
-                rounded-md
-                bg-[rgb(var(--color-brand))]
-                px-4
-                py-3
-                text-sm
-                font-semibold
-                text-[rgb(var(--color-on-brand))]
-                transition
-                hover:bg-[rgb(var(--color-brand-strong))]
-                disabled:cursor-not-allowed
-                disabled:opacity-60
-              "
+              className={styles.primaryButton + " " + styles.saveButton}
             >
               {isLoading && (
                 <span
@@ -1137,7 +1104,8 @@ return (
                 />
               )}
 
-              {isLoading ? "ĐANG LƯU..." : "LƯU"}
+              {!isLoading && <CheckIcon aria-hidden="true" />}
+              {isLoading ? "Đang lưu…" : "Lưu thay đổi"}
             </button>
 
             </div>
@@ -1150,12 +1118,22 @@ return (
             TAB ĐỔI MẬT KHẨU
         =================================================== */}
         {activeTab === 1 && (
-          <div className="mx-auto max-w-2xl py-8">
+          <div className={styles.panel + " " + styles.passwordLayout}>
 
             <PasswordChange
               isAdmin={false}
               onPasswordSubmit={handlePasswordSubmit}
             />
+
+            <aside className={styles.passwordAside}>
+              <div className={styles.lockArt} aria-hidden="true"><LockClosedIcon /></div>
+              <h3>Một lớp bảo vệ.<br />An tâm làm việc.</h3>
+              <p>Giữ mật khẩu riêng cho tài khoản công việc, tránh dùng lại mật khẩu từ các dịch vụ khác.</p>
+              <ul>
+                <li><CheckIcon aria-hidden="true" />Không chia sẻ thông tin đăng nhập</li>
+                <li><CheckIcon aria-hidden="true" />Đăng xuất khi dùng thiết bị chung</li>
+              </ul>
+            </aside>
 
           </div>
         )}
@@ -1206,19 +1184,17 @@ return (
 function InfoRow({
   label,
   value,
+  icon,
 }: {
   label: string;
   value?: string | null;
+  icon?: React.ReactNode;
 }) {
   return (
     <div
-      className="
-        border-b
-        border-dotted
-        border-[rgb(var(--color-border))]
-        py-3
-      "
+      className={styles.infoRow}
     >
+      <span className={styles.factIcon} aria-hidden="true">{icon}</span>
       <div
         className="
           mb-1
@@ -1230,6 +1206,8 @@ function InfoRow({
       </div>
 
       <div
+        role={label === "Họ và tên" ? "heading" : undefined}
+        aria-level={label === "Họ và tên" ? 2 : undefined}
         className="
           text-sm
           text-[rgb(var(--color-text))]

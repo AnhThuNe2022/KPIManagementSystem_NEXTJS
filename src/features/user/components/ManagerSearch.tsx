@@ -6,6 +6,7 @@ import {
   useState,
 } from "react";
 
+import styles from "../user-information.module.css";
 import { organizationApi } from "../service/organizationApi";
 
 export interface ManagerOption {
@@ -375,7 +376,7 @@ const inputValue =
 return (
   <div
     ref={wrapperRef}
-    className="relative w-full"
+    className={styles.managerSearch}
   >
     {/* =====================================================
         SEARCH INPUT
