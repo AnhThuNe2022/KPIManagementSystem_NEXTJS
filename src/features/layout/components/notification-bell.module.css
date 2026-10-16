@@ -103,8 +103,11 @@
 .empty p { margin: 0; color: rgb(var(--color-text)); font-size: 14px; font-weight: 600; }
 .empty > span:last-of-type { max-width: 260px; font-size: 12px; line-height: 1.7; }
 .empty .textButton { margin-top: 2px; }
-.footer { display: flex; flex: 0 0 auto; align-items: center; justify-content: center; min-height: 36px; padding: 9px 20px; border-top: 1px solid rgb(var(--color-border) / .6); border-radius: 0 0 22px 22px; background: rgb(var(--color-page) / .45); }
+.footer { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 12px; min-height: 46px; padding: 4px 18px; border-top: 1px solid rgb(var(--color-border) / .6); border-radius: 0 0 22px 22px; background: rgb(var(--color-page) / .45); }
 .footer > span { color: rgb(var(--color-muted)); font-size: 11px; }
+.viewAll { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 4px 6px; border-radius: 7px; color: rgb(var(--color-brand)); font-size: 12px; font-weight: 600; text-decoration: none; }
+.viewAll svg { width: 15px; height: 15px; }
+.viewAll:focus-visible { outline: 2px solid rgb(var(--color-brand)); outline-offset: 2px; }
 .skeletons { padding: 0 22px; }
 .skeleton { display: flex; align-items: center; gap: 12px; padding: 21px 0; }
 .skeleton > i { width: 34px; height: 36px; border-radius: 11px; }
@@ -120,12 +123,14 @@
 
 @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 @media (hover: hover) and (pointer: fine) {
+  .viewAll:hover { background: rgb(var(--color-brand) / .07); }
   .bell:hover, .iconButton:hover, .textButton:hover, .clearSearch:hover { background: rgb(var(--color-brand) / .07); color: rgb(var(--color-brand)); }
   .filter:hover { color: rgb(var(--color-brand)); }
   .row:hover { background: rgb(var(--color-brand) / .065); border-color: rgb(var(--color-brand) / .08); }
   .deleteButton:hover { color: rgb(var(--color-accent)); background: rgb(var(--color-accent) / .09); }
 }
 @media (pointer: coarse) {
+  .viewAll { min-height: 44px; }
   .bell, .iconButton, .rowActions .iconButton { width: 44px; height: 44px; }
   .textButton, .filters { min-height: 44px; }
   .clearSearch { min-width: 32px; min-height: 44px; }
