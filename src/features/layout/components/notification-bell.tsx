@@ -2,11 +2,12 @@
 
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   BellIcon, CheckIcon, ClockIcon, Cross2Icon, MagnifyingGlassIcon,
-  EnvelopeClosedIcon, EnvelopeOpenIcon, InfoCircledIcon, TrashIcon,
+  ArrowRightIcon, EnvelopeClosedIcon, EnvelopeOpenIcon, InfoCircledIcon, TrashIcon,
 } from "@radix-ui/react-icons";
-import { notificationApi } from "@/features/user/service/notificationApi";
+import { notificationApi, NOTIFICATIONS_CHANGED } from "@/features/user/service/notificationApi";
 import type { NotificationItem, NotificationPage } from "@/types/notification";
 import styles from "./notification-bell.module.css";
 
@@ -65,6 +66,12 @@ export function NotificationBell() {
   // Search is scoped to the recent items returned by the existing API.
   const visibleItems = items.filter((item) => (!unreadOnly || !item.isRead) && searchText(item.message).includes(term));
 
+  useEffect(() => {
+    const refresh = () => setRevision((value) => value + 1);
+    window.addEventListener(NOTIFICATIONS_CHANGED, refresh);
+    return () => window.removeEventListener(NOTIFICATIONS_CHANGED, refresh);
+  }, []);
+
   useLayoutEffect(() => {
     if (!open) return;
     function alignPointer() {
@@ -89,8 +96,8 @@ export function NotificationBell() {
     const controller = new AbortController();
     setLoading(true);
     setError("");
-    notificationApi.getLatest(controller.signal)
-      .then((result) => { if (!controller.signal.aborted) setData(result); })
+    notificationApi.get({ pageSize: 5, signal: controller.signal })
+      .then((result) => { if (!controller.signal.aborted) setData({ ...result, items: result.items.slice(0, 5) }); })
       .catch((cause: unknown) => { if (!controller.signal.aborted) setError(errorMessage(cause)); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
@@ -128,7 +135,6 @@ export function NotificationBell() {
     setError("");
     try {
       await action();
-      setRevision((value) => value + 1);
       if (panelRef.current?.contains(document.activeElement)) panelRef.current.focus({ preventScroll: true });
       onSuccess?.();
     } catch (cause) {
@@ -244,6 +250,9 @@ export function NotificationBell() {
           <span role="status" aria-live="polite" aria-atomic="true">
             {loading && !data ? "Đang tải cập nhật…" : data ? `${visibleItems.length}/${items.length} thông báo gần đây` : "Thông báo gần đây"}
           </span>
+          <Link href="/notifications" className={styles.viewAll} onClick={() => setOpen(false)}>
+            Xem tất cả<ArrowRightIcon aria-hidden="true" />
+          </Link>
         </div>
       </section>
     </div>
