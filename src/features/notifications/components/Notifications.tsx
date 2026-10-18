@@ -1,14 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import localFont from "next/font/local";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeftIcon, ArrowRightIcon, BellIcon, CalendarIcon, CheckIcon, ClockIcon, Cross2Icon,
-  EnvelopeClosedIcon, EnvelopeOpenIcon, InfoCircledIcon, MagnifyingGlassIcon, TrashIcon,
+  DashboardIcon, EnvelopeClosedIcon, EnvelopeOpenIcon, FileTextIcon, InfoCircledIcon, MagnifyingGlassIcon, PersonIcon, TrashIcon,
 } from "@radix-ui/react-icons";
 import { notificationApi, NOTIFICATIONS_CHANGED } from "@/features/user/service/notificationApi";
 import type { NotificationItem, NotificationPage } from "@/types/notification";
 import styles from "../notifications.module.css";
+
+const inboxFont = localFont({ src: "../../../../public/fonts/manrope.ttf", weight: "200 800", display: "swap" });
 
 type Status = "all" | "unread" | "read";
 const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
@@ -125,31 +130,35 @@ export function Notifications() {
   }
 
   return (
-    <div className={styles.page} data-ui>
+    <div className={`${styles.page} ${inboxFont.className}`} data-ui>
       <header className={styles.heading}>
         <div className={styles.headingIdentity}>
           <div>
             <h1>Thông báo<span className={styles.headingCount}>{data?.total ?? "—"}</span></h1>
             <p className={styles.description}>{data ? data.unreadCount ? <><strong>{data.unreadCount} chưa đọc</strong><span aria-hidden="true"> · </span>Theo dõi các cập nhật của bạn.</> : "Bạn đã xem hết các cập nhật mới." : "Cập nhật công việc và hoạt động của bạn."}</p>
           </div>
+          <div className={styles.actions}>
+            <button type="button" className={`${styles.button} ${styles.primary}`} disabled={disabled || !data?.unreadCount}
+              onClick={() => void mutate(() => notificationApi.markAllRead())}><CheckIcon aria-hidden="true" />Đọc tất cả</button>
+            <button type="button" className={`${styles.button} ${styles.danger}`} disabled={disabled || !data?.total}
+              onClick={() => confirmRef.current?.showModal()}><TrashIcon aria-hidden="true" />Xóa tất cả</button>
+          </div>
         </div>
-        <div className={styles.actions}>
-          <button type="button" className={`${styles.button} ${styles.primary}`} disabled={disabled || !data?.unreadCount}
-            onClick={() => void mutate(() => notificationApi.markAllRead())}><CheckIcon aria-hidden="true" />Đọc tất cả</button>
-          <button type="button" className={`${styles.button} ${styles.danger}`} disabled={disabled || !data?.total}
-            onClick={() => confirmRef.current?.showModal()}><TrashIcon aria-hidden="true" />Xóa tất cả</button>
+        <div className={styles.heroArtwork} aria-hidden="true">
+          <Image src="/images/notifications/glass-inbox.png" alt="" width={1536} height={1024} sizes="(max-width: 450px) 120px, (max-width: 767px) 182px, 350px" priority />
         </div>
       </header>
 
       <div className={styles.workspace}>
         <aside className={styles.overview} aria-label="Tổng quan thông báo">
           <div className={styles.summary}>
-            <div className={styles.summaryLabel}><span>Hộp thư của bạn</span><BellIcon aria-hidden="true" /></div>
+            <div className={styles.summaryLabel}><span>Hộp thư của bạn</span><span className={styles.summaryBell}><BellIcon aria-hidden="true" /></span></div>
             <div className={styles.summaryCount}><strong>{data?.unreadCount ?? "—"}</strong><span>chưa đọc</span></div>
             <progress className={styles.readProgress} value={readCount} max={Math.max(data?.total ?? 0, 1)} aria-label="Số thông báo đã đọc" />
             <p>{readCount} / {data?.total ?? 0} thông báo đã đọc</p>
           </div>
-          <div className={styles.filters} role="group" aria-label="Lọc trạng thái thông báo">
+          <div className={styles.filters} role="group" aria-label="Lọc trạng thái thông báo" data-active={status}>
+            <span className={styles.filterIndicator} aria-hidden="true" />
             {([["all", "Tất cả", BellIcon], ["unread", "Chưa đọc", EnvelopeClosedIcon], ["read", "Đã đọc", CheckIcon]] as const).map(([value, label, Icon]) => (
               <button key={value} type="button" aria-pressed={status === value} disabled={busy}
                 onClick={() => { setStatus(value); setPage(1); }}>
@@ -157,12 +166,27 @@ export function Notifications() {
               </button>
             ))}
           </div>
-          <p className={styles.asideNote}><InfoCircledIcon aria-hidden="true" />Chọn thông báo chưa đọc để đánh dấu đã đọc.</p>
+          <nav className={styles.quickLinks} aria-label="Truy cập nhanh">
+            <h2>Truy cập nhanh</h2>
+            {([
+              ["/dashboard", "Tổng quan KPI", DashboardIcon],
+              ["/my-evaluation", "Bản đánh giá của tôi", FileTextIcon],
+              ["/user-infor", "Thông tin cá nhân", PersonIcon],
+            ] as const).map(([href, label, Icon]) => (
+              <Link key={href} href={href}>
+                <span className={styles.quickLinkIcon}><Icon aria-hidden="true" /></span>
+                <span>{label}</span><ArrowRightIcon aria-hidden="true" />
+              </Link>
+            ))}
+          </nav>
         </aside>
 
         <section className={styles.inbox} aria-label="Danh sách thông báo">
           <div className={styles.toolbar}>
-            <div className={styles.streamTitle}><h2>{status === "unread" ? "Chưa đọc" : status === "read" ? "Đã đọc" : "Tất cả thông báo"}</h2><span>{ready ? `${total} thông báo${term ? " phù hợp" : ""}` : "Đang tải…"}</span></div>
+            <div className={styles.streamHeading}>
+              <span className={styles.streamIcon}><EnvelopeOpenIcon aria-hidden="true" /></span>
+              <div className={styles.streamTitle}><h2>{status === "unread" ? "Chưa đọc" : status === "read" ? "Đã đọc" : "Tất cả thông báo"}</h2><span>{ready ? `${total} thông báo${term ? " phù hợp" : ""}` : error ? "Chưa tải được dữ liệu" : "Đang tải…"}</span></div>
+            </div>
             <div className={styles.search} role="search">
               <MagnifyingGlassIcon aria-hidden="true" />
               <label htmlFor="notifications-search" className={styles.srOnly}>Tìm thông báo</label>
@@ -215,7 +239,7 @@ export function Notifications() {
               </div>
             ) : (
               <div className={styles.empty}>
-                <span className={styles.emptyIcon}>{term ? <MagnifyingGlassIcon aria-hidden="true" /> : <BellIcon aria-hidden="true" />}</span>
+                <span className={styles.emptyIcon}>{error && !ready ? <InfoCircledIcon aria-hidden="true" /> : term ? <MagnifyingGlassIcon aria-hidden="true" /> : <BellIcon aria-hidden="true" />}</span>
                 <h2>{error && !ready ? "Chưa tải được thông báo" : term ? "Không tìm thấy thông báo" : status === "unread" ? "Bạn đã đọc hết rồi" : "Chưa có thông báo"}</h2>
                 <p>{error && !ready ? "Thử tải lại để xem các cập nhật mới nhất." : term ? "Thử từ khóa khác hoặc bỏ bộ lọc trạng thái." : status === "unread" ? "Mọi cập nhật đều đã được bạn xem." : "Các cập nhật công việc sẽ xuất hiện tại đây."}</p>
                 {filtering && !error && <button type="button" className={styles.button} onClick={() => { setQuery(""); setStatus("all"); setPage(1); }}>Xem tất cả thông báo</button>}
@@ -224,7 +248,7 @@ export function Notifications() {
           </div>
 
           <footer className={styles.footer}>
-            <p role="status" aria-live="polite">{!ready ? "Đang tải…" : total ? <><strong>{(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, total)}</strong> / {total} thông báo</> : "0 thông báo"}</p>
+            <p role="status" aria-live="polite">{!ready ? error ? "Chưa cập nhật" : "Đang tải…" : total ? <><strong>{(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, total)}</strong> / {total} thông báo</> : "0 thông báo"}</p>
             <label className={styles.pageSize}>Mỗi trang
               <select value={pageSize} disabled={busy} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }}>
                 {[10, 20].map((size) => <option key={size} value={size}>{size}</option>)}
