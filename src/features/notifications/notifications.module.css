@@ -7,6 +7,7 @@
   color: var(--inbox-ink);
   caret-color: var(--inbox-brand);
   scrollbar-color: rgb(var(--color-border)) transparent;
+  font-family: "DeocaUI", Arial, sans-serif;
 }
 .page ::selection {
   background: rgb(var(--color-brand) / 0.18);
@@ -138,6 +139,11 @@
 .overview {
   position: sticky;
   top: 88px;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.overviewBody {
   min-width: 0;
   padding: 8px;
   border-radius: 18px;
@@ -147,28 +153,57 @@
     inset 0 1px 0 rgb(var(--panel-light) / 0.8);
 }
 .summary {
+  --summary-text: #fff;
+  --summary-muted: #dce5ff;
+  --summary-progress: #a5e6d3;
+  --summary-track: rgb(4 13 57 / 0.65);
   position: relative;
-  padding: 12px 18px 20px;
-  border-bottom: 1px solid rgb(var(--color-border) / 0.55);
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 18px;
+  background: linear-gradient(
+    145deg,
+    rgb(var(--deoca-primary-highlight-rgb)),
+    rgb(var(--deoca-primary-rgb)) 75%
+  );
+  color: var(--summary-text);
+  box-shadow:
+    var(--panel-depth),
+    inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+:global(html.dark) .summary {
+  --summary-muted: #c7d5f8;
+  --summary-progress: #8bdcc9;
+  --summary-track: rgb(4 9 35 / 0.7);
+  border-color: rgb(var(--color-brand) / 0.24);
+  background: linear-gradient(
+    145deg,
+    rgb(var(--deoca-primary-light-rgb)),
+    rgb(var(--deoca-primary-rgb)) 80%
+  );
 }
 .summaryLabel {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  color: var(--panel-muted);
+  color: var(--summary-muted);
   font-size: 12px;
   font-weight: 600;
 }
 .summaryBell {
   display: grid;
   place-items: center;
+  flex-shrink: 0;
   width: 30px;
   height: 30px;
   border-radius: 10px;
-  color: var(--inbox-brand);
-  background: rgb(var(--color-brand) / 0.055);
-  box-shadow: var(--panel-recess);
+  color: var(--summary-text);
+  background: rgb(255 255 255 / 0.1);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    0 2px 6px rgb(0 0 0 / 0.12);
 }
 .summaryLabel svg {
   width: 16px;
@@ -180,7 +215,7 @@
   align-items: baseline;
   gap: 8px;
   margin-top: 10px;
-  color: var(--inbox-brand);
+  color: var(--summary-text);
 }
 .summaryCount strong {
   font-size: 40px;
@@ -190,7 +225,7 @@
   font-variant-numeric: tabular-nums;
 }
 .summaryCount > span {
-  color: var(--panel-muted);
+  color: var(--summary-muted);
   font-size: 12px;
 }
 .readProgress {
@@ -202,12 +237,12 @@
   overflow: hidden;
   border: 0;
   border-radius: 5px;
-  background: var(--panel-well);
-  color: var(--inbox-brand);
+  background: var(--summary-track);
+  color: var(--summary-progress);
   box-shadow:
-    inset 0 2px 4px rgb(var(--panel-shadow) / 0.4),
-    inset 0 1px 1px rgb(var(--panel-shadow) / 0.25),
-    0 1px 0 rgb(var(--panel-light) / 0.45);
+    inset 0 2px 4px rgb(0 0 0 / 0.4),
+    inset 0 1px 1px rgb(0 0 0 / 0.25),
+    0 1px 0 rgb(255 255 255 / 0.12);
 }
 .readProgress::-webkit-progress-bar {
   border-radius: inherit;
@@ -215,21 +250,23 @@
 }
 .readProgress::-webkit-progress-value {
   border-radius: inherit;
-  background: var(--inbox-brand);
+  background: var(--summary-progress);
   box-shadow:
-    inset 0 1px 1px rgb(255 255 255 / 0.25),
-    inset 0 -1px 1px rgb(var(--panel-shadow) / 0.2);
+    inset 0 2px 4px rgb(0 0 0 / 0.4),
+    inset 0 1px 1px rgb(0 0 0 / 0.25),
+    inset 0 -1px 1px rgb(255 255 255 / 0.18);
 }
 .readProgress::-moz-progress-bar {
   border-radius: inherit;
-  background: var(--inbox-brand);
+  background: var(--summary-progress);
   box-shadow:
-    inset 0 1px 1px rgb(255 255 255 / 0.25),
-    inset 0 -1px 1px rgb(var(--panel-shadow) / 0.2);
+    inset 0 2px 4px rgb(0 0 0 / 0.4),
+    inset 0 1px 1px rgb(0 0 0 / 0.25),
+    inset 0 -1px 1px rgb(255 255 255 / 0.18);
 }
 .summary > p {
   margin: 10px 0 0;
-  color: var(--panel-muted);
+  color: var(--summary-muted);
   font-size: 10px;
   line-height: 1.6;
 }
@@ -237,7 +274,6 @@
   position: relative;
   display: grid;
   gap: 4px;
-  margin-top: 14px;
   padding: 6px;
   border-radius: 16px;
   background: var(--panel-well);
@@ -1008,6 +1044,8 @@
   }
   .overview {
     position: static;
+  }
+  .overviewBody {
     padding: 0;
     border-radius: 0;
     background: transparent;
@@ -1263,6 +1301,10 @@
   }
 }
 @media (pointer: coarse) {
+  .search input,
+  .pageSize select {
+    font-size: 16px;
+  }
   .iconButton,
   .pagination button {
     min-width: 44px;
