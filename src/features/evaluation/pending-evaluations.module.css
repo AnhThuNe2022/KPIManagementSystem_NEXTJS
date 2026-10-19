@@ -1,0 +1,219 @@
+.employeeColumn {
+  width: 17%;
+}
+.companyColumn {
+  width: 56px;
+}
+.departmentColumn {
+  width: auto;
+}
+.periodColumn {
+  width: 18%;
+}
+.dateColumn {
+  width: 12%;
+}
+.statusColumn {
+  width: 116px;
+}
+.actionsColumn {
+  width: 188px;
+}
+.table .selectionCell {
+  width: 48px;
+  padding-inline: 8px;
+  text-align: center;
+}
+.checkboxControl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 32px;
+  min-height: 40px;
+  cursor: pointer;
+}
+.checkboxControl input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: rgb(var(--color-brand));
+  cursor: pointer;
+}
+.selectionLabel {
+  display: none;
+}
+.selectionCount {
+  color: var(--panel-muted);
+  font-size: 10px;
+}
+.company {
+  color: var(--panel-muted);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+.reason {
+  display: block;
+  margin-top: 6px;
+  color: var(--panel-muted);
+  font-size: 10px;
+}
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.rejectButton {
+  min-height: 36px;
+  padding: 7px 10px;
+  border-color: rgb(var(--color-accent) / 0.25);
+  color: rgb(var(--color-accent));
+  background: rgb(var(--color-accent) / 0.045);
+}
+.bulkReject {
+  min-height: 40px;
+  margin-left: auto;
+}
+.rejectDialog {
+  width: min(480px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid rgb(var(--color-border));
+  border-radius: 18px;
+  color: rgb(var(--color-text));
+  background: var(--panel-paper);
+  box-shadow: var(--panel-depth);
+  overscroll-behavior: contain;
+}
+.rejectDialog::backdrop {
+  background: rgb(7 16 41 / 0.5);
+}
+.rejectDialog[open] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity 250ms var(--ease-out),
+    transform 250ms var(--ease-out);
+}
+.rejectDialog[open]::backdrop {
+  opacity: 1;
+  transition: opacity 250ms var(--ease-out);
+}
+@starting-style {
+  .rejectDialog[open] {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  .rejectDialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+.rejectHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgb(var(--color-border));
+}
+.rejectHeader h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 750;
+}
+.rejectBody {
+  padding: 20px;
+}
+.rejectBody p {
+  margin: 0 0 16px;
+  color: var(--panel-muted);
+  font-size: 12px;
+}
+.rejectBody label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 650;
+}
+.rejectBody textarea {
+  display: block;
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border: 1px solid rgb(var(--color-border));
+  border-radius: 11px;
+  resize: vertical;
+  background: var(--panel-well);
+  color: rgb(var(--color-text));
+  box-shadow: var(--panel-recess);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.7;
+}
+.rejectFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 20px 20px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .rejectButton:not(:disabled):hover {
+    color: rgb(var(--color-accent));
+    background: rgb(var(--color-accent) / 0.1);
+  }
+}
+@container evaluationReview (max-width: 850px) {
+  .table thead,
+  .table thead tr {
+    display: block;
+  }
+  .table th:not(.selectionCell) {
+    display: none;
+  }
+  .table th.selectionCell {
+    display: block;
+    width: 100%;
+    height: auto;
+    padding: 8px 16px;
+    text-align: left;
+  }
+  .table td.selectionCell {
+    width: auto;
+    text-align: left;
+  }
+  .table .selectionCell,
+  .table .employeeCell,
+  .table .periodCell,
+  .table .actionsCell {
+    grid-column: 1 / -1;
+  }
+  .table .selectionCell::before,
+  .table .employeeCell::before,
+  .table .actionsCell::before {
+    display: none;
+  }
+  .selectionLabel {
+    display: inline;
+    font-size: 11px;
+  }
+  .checkboxControl {
+    min-height: 44px;
+  }
+  .rowActions > button {
+    flex: 1;
+    min-height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rejectDialog[open],
+  .rejectDialog[open]::backdrop {
+    transition: opacity 200ms var(--ease-out) !important;
+  }
+  @starting-style {
+    .rejectDialog[open] {
+      transform: translateY(0) scale(1);
+    }
+  }
+}
