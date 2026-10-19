@@ -1,0 +1,77 @@
+.dateControl input {
+  padding-left: 13px;
+  padding-right: 12px;
+  color-scheme: light;
+}
+:global(html.dark) .dateControl input {
+  color-scheme: dark;
+}
+.employeeColumn {
+  width: 15%;
+}
+.periodColumn {
+  width: 14%;
+}
+.statusColumn {
+  width: 100px;
+}
+.dateColumn {
+  width: 12%;
+}
+.actionsColumn {
+  width: 88px;
+}
+.status[data-status="Approved"] {
+  color: #166647;
+  background: #e6f5ec;
+}
+.status[data-status="Rejected"] {
+  color: #ad273e;
+  background: #fff0f2;
+}
+:global(html.dark) .status[data-status="Approved"] {
+  color: #96e5bf;
+  background: #19372f;
+}
+:global(html.dark) .status[data-status="Rejected"] {
+  color: #ffb6c1;
+  background: #402637;
+}
+.period {
+  display: block;
+}
+.periodLine {
+  display: block;
+  text-wrap: balance;
+  overflow-wrap: normal;
+}
+.score {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.reason {
+  white-space: pre-wrap;
+}
+@container evaluationReview (min-width: 851px) {
+  .table th,
+  .table td {
+    padding-inline: 8px;
+  }
+}
+@container evaluationReview (max-width: 850px) {
+  .table .employeeCell,
+  .table .periodCell,
+  .table .dateCell,
+  .table .reasonCell,
+  .table .actionsCell {
+    grid-column: 1 / -1;
+  }
+  .table .employeeCell::before,
+  .table .actionsCell::before {
+    display: none;
+  }
+  .table .actionsCell button {
+    width: 100%;
+    min-height: 44px;
+  }
+}
