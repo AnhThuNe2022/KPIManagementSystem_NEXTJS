@@ -146,6 +146,16 @@ const navigation: NavigationItem[] = [
       },
     ],
   },
+  {
+    label: "HR tổng hợp",
+    href: "#",
+    icon: <><rect x="3" y="3" width="18" height="18" rx="3" /><path d="M7 16v-4m5 4V8m5 8v-6" /></>,
+    children: [{
+      label: "Danh sách đánh giá",
+      href: "/hr/evaluations",
+      icon: <><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 8h6m-6 4h6m-6 4h3" /></>,
+    }],
+  },
 ];
 
 export function Sidebar() {

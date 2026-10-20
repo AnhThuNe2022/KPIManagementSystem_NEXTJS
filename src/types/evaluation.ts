@@ -156,3 +156,40 @@ export interface GeneralHrStatusChange {
   Status: number;
   Reason?: string | null;
 }
+
+export interface GeneralHrEvaluationDto {
+  id: number;
+  userId: string;
+  name: string;
+  status: string;
+  templateId?: number | null;
+  systemCode?: string | null;
+  companyCode?: string | null;
+  departmentName?: string | null;
+  period?: string | null;
+  templateName?: string | null;
+  submitDate?: string | null;
+  strDirectManager?: string | null;
+}
+
+export interface ApprovalHistoryEntry {
+  approvalId: number;
+  approverName?: string | null;
+  approverUserId?: string | null;
+  approvalLevel?: string | null;
+  status: string;
+  statusValue?: string | null;
+  comment?: string | null;
+  createdAt: string;
+}
+
+export interface EvaluationApprover {
+  id: number;
+  userName: string;
+  userId?: string | null;
+  systemCode?: string | null;
+  status: string;
+  isApprove: boolean;
+  approvalDate?: string | null;
+  message?: string | null;
+}
