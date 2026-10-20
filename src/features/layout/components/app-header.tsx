@@ -10,11 +10,11 @@ export function AppHeader({ userName }: { userName: string }) {
     <header className={styles.header}>
       <Link href="/dashboard" className={styles.brand} aria-label="Đèo Cả KPI — Trang tổng quan">
         <span className={styles.logo}>
-          <Image src="/brand/deoca-icon.png" alt="" width={36} height={36} priority />
+          <Image src="/brand/deoca-icon.png" alt="" width={44} height={44} priority />
         </span>
         <span className={styles.brandText}>
-          <span className={styles.company}>ĐÈO CẢ GROUP</span>
           <span className={styles.title}>Hệ thống KPI</span>
+          <span className={styles.company}>ĐÈO CẢ GROUP</span>
         </span>
       </Link>
 

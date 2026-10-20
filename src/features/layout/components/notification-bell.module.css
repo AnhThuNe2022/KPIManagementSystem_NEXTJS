@@ -67,14 +67,14 @@
 /* Keep the panel mounted so fast toggles smoothly reverse the transition. */
 .panel {
   position: absolute;
-  top: calc(100% + 18px);
+  top: calc(100% + 26px);
   right: -16px;
   z-index: 50;
   display: flex;
   flex-direction: column;
   width: 400px;
   max-width: calc(100vw - 24px);
-  max-height: min(590px, calc(100dvh - 90px - env(safe-area-inset-bottom, 0px)));
+  max-height: min(590px, calc(100dvh - var(--app-header-height) - 26px - env(safe-area-inset-bottom, 0px)));
   border: 1px solid rgb(var(--color-border) / 0.8);
   border-radius: 22px;
   background: rgb(var(--color-surface));
@@ -723,7 +723,7 @@
 @media (min-width: 768px) and (max-width: 1023px) {
   .panel {
     position: fixed;
-    top: 74px;
+    top: calc(var(--app-header-height) + 10px);
     left: 12px;
     right: 12px;
     width: auto;
@@ -734,13 +734,13 @@
 @media (max-width: 767px) {
   .panel {
     position: fixed;
-    top: 74px;
+    top: calc(var(--app-header-height) + 10px);
     left: 12px;
     right: 12px;
     width: auto;
     max-width: 400px;
     margin-left: auto;
-    max-height: calc(100dvh - 90px - env(safe-area-inset-bottom, 0px));
+    max-height: calc(100dvh - var(--app-header-height) - 26px - env(safe-area-inset-bottom, 0px));
     border-radius: 20px;
   }
   .heading {

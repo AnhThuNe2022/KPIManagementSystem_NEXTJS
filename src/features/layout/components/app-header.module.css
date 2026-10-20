@@ -1,66 +1,92 @@
 .header {
+  --brand-width: clamp(340px, 30vw, 500px);
   position: sticky;
   top: 0;
   z-index: 30;
+  isolation: isolate;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  height: 64px;
+  gap: 24px;
+  height: var(--app-header-height);
   padding-inline: 24px;
-  border-bottom: 1px solid rgb(var(--color-border) / 0.5);
-  background: rgb(var(--color-surface) / 0.76);
-  -webkit-backdrop-filter: blur(12px) saturate(120%);
-  backdrop-filter: blur(12px) saturate(120%);
+  background: var(--panel-paper);
   color: rgb(var(--color-text));
-  box-shadow: 0 4px 16px -12px rgb(var(--panel-shadow) / 0.2);
+  box-shadow:
+    0 8px 24px -12px rgb(var(--panel-shadow) / .28),
+    inset 0 -1px 0 rgb(var(--color-border) / .45),
+    inset 0 1px 0 rgb(var(--panel-light) / .65);
   font-family: "DeocaUI", Arial, sans-serif;
+}
+.header::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 auto 0 0;
+  width: var(--brand-width);
+  background: #182970;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 44px) 100%, 0 100%);
+  pointer-events: none;
+}
+.header::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--brand-width) - 24px);
+  width: 3px;
+  background: #e64658;
+  transform: skewX(-25deg);
+  pointer-events: none;
 }
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   min-width: 0;
   flex-shrink: 0;
-  border-radius: 6px;
-  color: inherit;
+  border-radius: 12px;
+  color: #fff;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
 }
 .brand:focus-visible {
-  outline: 2px solid rgb(var(--color-brand));
-  outline-offset: 4px;
+  outline: 2px solid #fff;
+  outline-offset: 6px;
 }
 .logo {
   display: grid;
   flex-shrink: 0;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid rgb(219 226 234);
-  border-radius: 6px;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
   background: #fff;
+  box-shadow: 0 5px 14px rgb(4 12 43 / .25), inset 0 -2px 0 #dfe5ef;
 }
 .logo img {
   display: block;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
 }
 .brandText {
   display: grid;
-  gap: 3px;
+  gap: 5px;
 }
 .company {
-  color: rgb(var(--color-muted));
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 14px;
-  letter-spacing: 0.12em;
+  color: #c3d1ff;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 18px;
+  letter-spacing: .12em;
 }
 .title {
-  font-size: 15px;
-  font-weight: 750;
-  line-height: 21px;
-  letter-spacing: -0.025em;
+  font-size: 22px;
+  font-weight: 780;
+  line-height: 28px;
+  letter-spacing: -.03em;
 }
 .actions,
 .tools {
@@ -69,52 +95,115 @@
 }
 .actions {
   flex-shrink: 0;
-  gap: 16px;
+  gap: 20px;
 }
 .tools {
-  gap: 6px;
+  gap: 8px;
+  padding: 5px;
+  border-radius: 14px;
+  background: var(--panel-well);
+  box-shadow: var(--panel-recess);
 }
 .tools > button,
 .tools > div > button {
   width: 44px;
   height: 44px;
-  border-radius: 6px;
-  border-color: rgb(var(--color-border) / 0.7);
-  background: rgb(var(--color-page) / 0.55);
+  border: 0;
+  border-radius: 10px;
+  background: var(--panel-paper);
+  color: var(--panel-muted);
+  box-shadow: 0 3px 7px rgb(var(--panel-shadow) / .08), inset 0 1px 0 rgb(var(--panel-light) / .65);
+}
+.tools > button > svg,
+.tools > div > button > svg {
+  width: 18px;
+  height: 18px;
 }
 .account {
-  padding-left: 16px;
-  border-left: 1px solid rgb(var(--color-border) / 0.75);
+  padding-left: 20px;
+  border-left: 1px solid rgb(var(--color-border) / .7);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tools > button:hover,
+  .tools > div > button:hover {
+    color: rgb(var(--color-brand));
+    background: rgb(var(--color-brand) / .07);
+  }
 }
 @media (max-width: 1023px) {
   .header {
+    --brand-width: 328px;
     padding-left: 68px;
-    padding-right: 16px;
+    padding-right: 20px;
+    gap: 16px;
+  }
+  .brand {
+    gap: 14px;
+  }
+  .logo {
+    width: 48px;
+    height: 48px;
+  }
+  .logo img {
+    width: 36px;
+    height: 36px;
+  }
+  .title {
+    font-size: 20px;
+    line-height: 26px;
+  }
+  .actions {
+    gap: 16px;
+  }
+  .account {
+    padding-left: 16px;
+  }
+}
+@media (max-width: 700px) {
+  .header {
+    --brand-width: 174px;
+  }
+  .brandText {
+    display: none;
   }
 }
 @media (max-width: 600px) {
   .header {
-    gap: 12px;
+    --brand-width: 156px;
+    gap: 8px;
     padding-right: 12px;
+  }
+  .header::before {
+    clip-path: polygon(0 0, 100% 0, calc(100% - 24px) 100%, 0 100%);
+  }
+  .header::after {
+    left: calc(var(--brand-width) - 12px);
+    transform: skewX(-16deg);
+  }
+  .logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+  }
+  .logo img {
+    width: 34px;
+    height: 34px;
   }
   .actions {
     gap: 10px;
   }
+  .tools {
+    gap: 4px;
+    padding: 4px;
+    border-radius: 12px;
+  }
+  .tools > button,
+  .tools > div > button {
+    width: 44px;
+    height: 44px;
+    border-radius: 9px;
+  }
   .account {
-    padding-left: 10px;
-  }
-  .brand {
-    gap: 9px;
-  }
-  .title {
-    font-size: 13px;
-  }
-  .company {
-    font-size: 9px;
-  }
-}
-@media (max-width: 480px) {
-  .brandText {
-    display: none;
+    padding-left: 8px;
   }
 }

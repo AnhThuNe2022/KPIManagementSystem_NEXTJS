@@ -10,6 +10,7 @@
 }
 
 :root {
+  --app-header-height: 84px;
   /* Deoca palette from QLTS.Web; RGB channels support Tailwind opacity. */
   --deoca-primary-rgb: 19 31 107; /* #131F6B */
   --deoca-primary-light-rgb: 26 42 138; /* #1A2A8A */
@@ -97,4 +98,11 @@ input {
 }
 button {
   cursor: pointer;
+}
+
+@media (max-width: 1023px) {
+  :root { --app-header-height: 80px; }
+}
+@media (max-width: 600px) {
+  :root { --app-header-height: 72px; }
 }
