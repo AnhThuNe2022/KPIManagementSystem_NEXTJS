@@ -122,3 +122,37 @@ export interface ReviewedEvaluationFilters {
   to: string;
   sortBy: string;
 }
+
+export const generalHrStatusOptions = [
+  { value: EvaluationStatus.Unknown, label: "Không xác định" },
+  { value: EvaluationStatus.Drafted, label: "Lưu nháp" },
+  { value: EvaluationStatus.Rejected, label: "Bị từ chối" },
+  { value: EvaluationStatus.DirectManagerReviewing, label: "Quản lý trực tiếp đang duyệt" },
+  { value: EvaluationStatus.HRReviewing, label: "HR đang duyệt" },
+  { value: EvaluationStatus.CompileHRList, label: "Đã đánh giá xong" },
+  { value: EvaluationStatus.ManagerSeniorReviewing, label: "Quản lý cấp cao đang duyệt" },
+  { value: EvaluationStatus.SentHR, label: "QLCC đã duyệt" },
+  { value: EvaluationStatus.Imported, label: "Đã được import" },
+] as const;
+
+export interface GeneralHrEvaluationRequest {
+  Page: number;
+  PageSize: number;
+  Filters: {
+    keyword?: string;
+    departmentid?: string;
+    status: string;
+    companyid?: string;
+    evaluationtypeid?: string;
+    periodid?: string;
+    userapprove?: string;
+    sortOrder?: "asc" | "desc";
+    sortBy?: string;
+  };
+}
+
+export interface GeneralHrStatusChange {
+  EvalId: number;
+  Status: number;
+  Reason?: string | null;
+}
