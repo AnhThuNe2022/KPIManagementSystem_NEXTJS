@@ -156,6 +156,7 @@
 .rejectFooter {
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
   padding: 0 20px 20px;
 }
 @media (hover: hover) and (pointer: fine) {

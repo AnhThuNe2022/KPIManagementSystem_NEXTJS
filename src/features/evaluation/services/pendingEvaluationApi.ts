@@ -5,6 +5,7 @@ import type {
   ReviewRole,
 } from "@/types/evaluation";
 import { request } from "./evaluationRequest";
+import { UserRoleSystem } from "@/types/evaluation";
 
 function isPendingEvaluation(item: PendingEvaluationDto) {
   if (!item) return false;
@@ -37,6 +38,18 @@ function isPendingEvaluation(item: PendingEvaluationDto) {
 }
 
 export const pendingEvaluationApi = {
+  async reject(item: Pick<PendingEvaluationDto, "id" | "stepId">, reason: string): Promise<void> {
+    await request(`/evaluation/review-action/${item.id}`, {
+      method: "POST",
+      body: JSON.stringify({
+        Action: 2, // ActionHistoty.Rejected
+        Level: UserRoleSystem.ManagerMid,
+        Comment: reason.trim(),
+        StepId: item.stepId,
+      }),
+    });
+  },
+
   async get({
     page = 1,
     pageSize = 20,

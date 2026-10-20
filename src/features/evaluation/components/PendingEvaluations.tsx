@@ -68,6 +68,10 @@ export function PendingEvaluations({
   const [lookupRevision, setLookupRevision] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
   const [rejectTargets, setRejectTargets] = useState<PendingEvaluationDto[] | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectBusy, setRejectBusy] = useState(false);
+  const [rejectError, setRejectError] = useState("");
+  const rejectInFlight = useRef(false);
   const rejectDialogRef = useRef<HTMLDialogElement>(null);
   const requestKey = JSON.stringify({ level, page, pageSize, sortBy: appliedSortBy, ...applied });
   const ready = snapshot?.key === requestKey;
@@ -190,6 +194,50 @@ export function PendingEvaluations({
     setApplied(emptyFilters);
     setPage(1);
     setRevision((value) => value + 1);
+  }
+
+  function openReject(targets: PendingEvaluationDto[]) {
+    if (hr || !targets.length) return;
+    setRejectReason("");
+    setRejectError("");
+    setRejectTargets(targets);
+  }
+
+  function closeReject() {
+    if (!rejectInFlight.current) setRejectTargets(null);
+  }
+
+  async function submitReject(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (hr || !rejectTargets || rejectInFlight.current) return;
+    if (!rejectReason.trim()) {
+      setRejectError("Vui lòng nhập lý do từ chối.");
+      rejectDialogRef.current?.querySelector("textarea")?.focus();
+      return;
+    }
+
+    rejectInFlight.current = true;
+    setRejectBusy(true);
+    setRejectError("");
+    let completed = 0;
+    try {
+      for (const item of rejectTargets) {
+        await pendingEvaluationApi.reject(item, rejectReason);
+        completed += 1;
+      }
+      setRejectTargets(null);
+    } catch (cause) {
+      setRejectTargets(rejectTargets.slice(completed));
+      const message =
+        cause instanceof Error && cause.message === "FORBIDDEN"
+          ? "Bạn chưa có quyền từ chối bản đánh giá này."
+          : requestMessage(cause, "Chưa từ chối được bản đánh giá. Vui lòng thử lại.");
+      setRejectError(completed ? `Đã từ chối ${completed} bản. ${message}` : message);
+    } finally {
+      if (completed) setRevision((value) => value + 1);
+      rejectInFlight.current = false;
+      setRejectBusy(false);
+    }
   }
 
   return (
@@ -400,21 +448,23 @@ export function PendingEvaluations({
               </span>
             )}
           </div>
-          <button
-            className={`${styles.button} ${pending.rejectButton} ${pending.bulkReject}`}
-            type="button"
-            disabled={loading || !data || Boolean(error) || !selected.length}
-            aria-haspopup="dialog"
-            onClick={() =>
-              setRejectTargets(
-                data?.items.filter((item) => selected.includes(`${item.id}:${item.stepId}`)) ??
-                  null,
-              )
-            }
-          >
-            <Cross2Icon aria-hidden="true" />
-            Từ chối ({selected.length})
-          </button>
+          {!hr && (
+            <button
+              className={`${styles.button} ${pending.rejectButton} ${pending.bulkReject}`}
+              type="button"
+              disabled={loading || !data || Boolean(error) || !selected.length}
+              aria-haspopup="dialog"
+              onClick={() =>
+                openReject(
+                  data?.items.filter((item) => selected.includes(`${item.id}:${item.stepId}`)) ??
+                    [],
+                )
+              }
+            >
+              <Cross2Icon aria-hidden="true" />
+              Từ chối ({selected.length})
+            </button>
+          )}
           <button
             className={styles.refresh}
             type="button"
@@ -611,7 +661,7 @@ export function PendingEvaluations({
                             type="button"
                             aria-label={`Từ chối bản đánh giá của ${item.userName || item.sysTemCode || "nhân viên"}`}
                             aria-haspopup="dialog"
-                            onClick={() => setRejectTargets([item])}
+                            onClick={() => openReject([item])}
                           >
                             <Cross2Icon aria-hidden="true" />
                             Từ chối
@@ -638,24 +688,28 @@ export function PendingEvaluations({
           }}
         />
       </div>
-      {rejectTargets && (
+      {!hr && rejectTargets && (
         <dialog
           ref={rejectDialogRef}
           className={pending.rejectDialog}
           aria-labelledby="reject-title"
-          onCancel={() => setRejectTargets(null)}
+          onCancel={(event) => {
+            event.preventDefault();
+            closeReject();
+          }}
           onClick={(event) => {
-            if (event.target === event.currentTarget) setRejectTargets(null);
+            if (event.target === event.currentTarget) closeReject();
           }}
         >
-          <div>
+          <form onSubmit={submitReject} aria-busy={rejectBusy}>
             <header className={pending.rejectHeader}>
               <h2 id="reject-title">Lý do từ chối</h2>
               <button
                 className={styles.refresh}
                 type="button"
                 aria-label="Đóng lý do từ chối"
-                onClick={() => setRejectTargets(null)}
+                disabled={rejectBusy}
+                onClick={closeReject}
               >
                 <Cross2Icon aria-hidden="true" />
               </button>
@@ -667,18 +721,40 @@ export function PendingEvaluations({
                   : `${rejectTargets.length} bản đánh giá đã chọn`}
               </p>
               <label htmlFor="reject-reason">Lý do</label>
-              <textarea id="reject-reason" rows={4} placeholder="Nhập lý do từ chối…" />
+              <textarea
+                id="reject-reason"
+                rows={4}
+                placeholder="Nhập lý do từ chối…"
+                required
+                value={rejectReason}
+                disabled={rejectBusy}
+                aria-describedby={rejectError ? "reject-error" : undefined}
+                onChange={(event) => setRejectReason(event.target.value)}
+              />
+              {rejectError && (
+                <div id="reject-error" className={styles.error} role="alert">
+                  {rejectError}
+                </div>
+              )}
             </div>
             <footer className={pending.rejectFooter}>
               <button
                 className={styles.button}
                 type="button"
-                onClick={() => setRejectTargets(null)}
+                disabled={rejectBusy}
+                onClick={closeReject}
               >
                 Đóng
               </button>
+              <button
+                className={`${styles.button} ${pending.rejectButton}`}
+                type="submit"
+                disabled={rejectBusy}
+              >
+                {rejectBusy ? "Đang từ chối…" : "Xác nhận từ chối"}
+              </button>
             </footer>
-          </div>
+          </form>
         </dialog>
       )}
     </section>
