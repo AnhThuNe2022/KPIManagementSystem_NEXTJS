@@ -150,8 +150,10 @@ const navigation: NavigationItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const activeIndex = navigation.findIndex(
+    (item) => item.href === pathname || item.children?.some((child) => child.href === pathname),
+  );
   const [collapsed, setCollapsed] = useState(false);
-  const [previewExpanded, setPreviewExpanded] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
@@ -159,15 +161,18 @@ export function Sidebar() {
   });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [highlightOffset, setHighlightOffset] = useState(0);
+  const [flyoutTop, setFlyoutTop] = useState(0);
+  const [lastFlyoutIndex, setLastFlyoutIndex] = useState(Math.max(activeIndex, 0));
+  const sidebarRef = useRef<HTMLElement>(null);
+  const flyoutRef = useRef<HTMLDivElement>(null);
   const mobileDialogRef = useRef<HTMLDialogElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const itemRefs = useRef<(HTMLElement | null)[]>([]);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const activeIndex = navigation.findIndex(
-    (item) => item.href === pathname || item.children?.some((child) => child.href === pathname),
-  );
   const highlightedIndex = hoveredIndex ?? focusedIndex ?? Math.max(activeIndex, 0);
-  const visiblyCollapsed = collapsed && !previewExpanded && !mobileOpen;
+  const visiblyCollapsed = collapsed && !mobileOpen;
+  const flyoutIndex = visiblyCollapsed ? (hoveredIndex ?? focusedIndex) : null;
+  const flyoutItem = visiblyCollapsed ? navigation[flyoutIndex ?? lastFlyoutIndex] : null;
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -189,19 +194,52 @@ export function Sidebar() {
   }, [mobileOpen]);
 
   useLayoutEffect(() => {
+    if (flyoutIndex !== null) setLastFlyoutIndex(flyoutIndex);
     const nav = navRef.current;
     if (!nav) return;
     const measure = () => {
       const item = itemRefs.current[highlightedIndex];
-      if (item)
-        setHighlightOffset(item.getBoundingClientRect().top - nav.getBoundingClientRect().top);
+      if (!item) return;
+      const bounds = item.getBoundingClientRect();
+      setHighlightOffset(bounds.top - nav.getBoundingClientRect().top);
+      const sidebar = sidebarRef.current;
+      const flyout = flyoutRef.current;
+      if (!sidebar || !flyout) return;
+      const sidebarTop = sidebar.getBoundingClientRect().top;
+      // Center the menu on its icon and keep it inside short viewports.
+      const centeredTop = bounds.top + bounds.height / 2 - flyout.offsetHeight / 2;
+      const top = Math.max(
+        12,
+        Math.min(centeredTop, window.innerHeight - flyout.offsetHeight - 12),
+      );
+      setFlyoutTop(top - sidebarTop);
     };
     measure();
     // Accordion height changes must move the notch with the actual menu row.
     const observer = new ResizeObserver(measure);
     observer.observe(nav);
-    return () => observer.disconnect();
-  }, [highlightedIndex, mobileOpen]);
+    if (flyoutRef.current) observer.observe(flyoutRef.current);
+    const surface = nav.parentElement;
+    surface?.addEventListener("scroll", measure, { passive: true });
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      surface?.removeEventListener("scroll", measure);
+      window.removeEventListener("resize", measure);
+    };
+  }, [highlightedIndex, mobileOpen, visiblyCollapsed, flyoutIndex]);
+
+  useEffect(() => {
+    if (flyoutIndex === null) return;
+    const dismiss = (event: PointerEvent) => {
+      if (!sidebarRef.current?.contains(event.target as Node)) {
+        setHoveredIndex(null);
+        setFocusedIndex(null);
+      }
+    };
+    document.addEventListener("pointerdown", dismiss);
+    return () => document.removeEventListener("pointerdown", dismiss);
+  }, [flyoutIndex]);
 
   useEffect(
     () => () => {
@@ -214,42 +252,84 @@ export function Sidebar() {
     if (leaveTimer.current) clearTimeout(leaveTimer.current);
   }
 
-  function scheduleReturn(sidebar: HTMLElement) {
+  function scheduleReturn() {
     cancelReturn();
     // A short exit grace period prevents flicker when the pointer crosses an edge quickly.
     leaveTimer.current = setTimeout(() => {
       setHoveredIndex(null);
-      setPreviewExpanded(
-        sidebar.contains(document.activeElement) &&
-          Boolean(document.activeElement?.matches(":focus-visible")),
-      );
+      if (!document.activeElement?.matches(":focus-visible")) setFocusedIndex(null);
     }, 180);
+  }
+
+  function navigate() {
+    cancelReturn();
+    setMobileOpen(false);
+    setHoveredIndex(null);
+    setFocusedIndex(null);
+  }
+
+  function renderSubitems(item: NavigationItem, index: number) {
+    return item.children?.map((child) => (
+      <Link
+        key={child.href}
+        href={child.href}
+        className={styles.subitem}
+        aria-current={child.href === pathname ? "page" : undefined}
+        onClick={navigate}
+        onPointerEnter={() => {
+          cancelReturn();
+          setHoveredIndex(index);
+        }}
+        onFocus={(event) => {
+          if (event.currentTarget.matches(":focus-visible")) setFocusedIndex(index);
+        }}
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          {child.icon}
+        </svg>
+        <span>{child.label}</span>
+      </Link>
+    ));
   }
 
   const sidebar = (
     <aside
+      ref={sidebarRef}
       className={styles.sidebar}
-      data-compact={collapsed}
       data-collapsed={visiblyCollapsed}
       aria-label="Thanh điều hướng"
-      onPointerEnter={(event) => {
-        if (
-          event.pointerType === "touch" ||
-          !window.matchMedia("(min-width: 1024px) and (hover: hover) and (pointer: fine)").matches
-        )
-          return;
-        cancelReturn();
-        setPreviewExpanded(true);
-      }}
-      onPointerLeave={(event) => scheduleReturn(event.currentTarget)}
-      onFocusCapture={(event) => {
-        cancelReturn();
-        if (event.target.matches(":focus-visible")) setPreviewExpanded(true);
+      onPointerEnter={cancelReturn}
+      onPointerLeave={scheduleReturn}
+      onFocusCapture={cancelReturn}
+      onKeyDown={(event) => {
+        if (flyoutIndex === null) return;
+        if (event.key === "ArrowRight" && event.target === itemRefs.current[flyoutIndex]) {
+          const firstLink = flyoutRef.current?.querySelector("a");
+          if (firstLink) {
+            event.preventDefault();
+            firstLink.focus();
+          }
+        }
+        if (event.key === "Escape" || event.key === "ArrowLeft") {
+          event.preventDefault();
+          itemRefs.current[flyoutIndex]?.focus();
+          cancelReturn();
+          setHoveredIndex(null);
+          setFocusedIndex(null);
+        }
       }}
       onBlurCapture={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) {
           setFocusedIndex(null);
-          scheduleReturn(event.currentTarget);
+          scheduleReturn();
         }
       }}
     >
@@ -277,18 +357,19 @@ export function Sidebar() {
                 }
                 cancelReturn();
                 setCollapsed((value) => !value);
-                setPreviewExpanded(false);
+                setHoveredIndex(null);
+                setFocusedIndex(null);
               }}
               aria-label={
                 mobileOpen
                   ? "Đóng menu điều hướng"
                   : collapsed
-                    ? "Giữ thanh điều hướng mở"
+                    ? "Mở rộng thanh điều hướng"
                     : "Thu gọn thanh điều hướng"
               }
               aria-expanded={!visiblyCollapsed}
               aria-controls="workspace-navigation"
-              title={mobileOpen ? "Đóng menu" : collapsed ? "Giữ mở" : "Thu gọn"}
+              title={mobileOpen ? "Đóng menu" : collapsed ? "Mở rộng" : "Thu gọn"}
             >
               <svg
                 viewBox="0 0 24 24"
@@ -341,7 +422,8 @@ export function Sidebar() {
                 ref: (element: HTMLElement | null) => {
                   itemRefs.current[index] = element;
                 },
-                onPointerEnter: () => {
+                onPointerEnter: (event: React.PointerEvent<HTMLElement>) => {
+                  if (event.pointerType === "touch") return;
                   cancelReturn();
                   setHoveredIndex(index);
                 },
@@ -400,11 +482,12 @@ export function Sidebar() {
                     <button
                       {...interaction}
                       type="button"
-                      aria-expanded={groupOpen && !visiblyCollapsed}
-                      aria-controls={submenuId}
-                      onClick={() =>
-                        setOpenGroups((value) => ({ ...value, [item.label]: !groupOpen }))
-                      }
+                      aria-expanded={visiblyCollapsed ? flyoutIndex === index : groupOpen}
+                      aria-controls={visiblyCollapsed ? "sidebar-flyout" : submenuId}
+                      onClick={() => {
+                        if (visiblyCollapsed) setFocusedIndex(index);
+                        else setOpenGroups((value) => ({ ...value, [item.label]: !groupOpen }));
+                      }}
                     >
                       {content}
                     </button>
@@ -412,7 +495,7 @@ export function Sidebar() {
                     <Link
                       {...interaction}
                       href={item.href}
-                      onClick={() => setMobileOpen(false)}
+                      onClick={navigate}
                       aria-current={activeIndex === index ? "page" : undefined}
                     >
                       {content}
@@ -426,32 +509,7 @@ export function Sidebar() {
                       inert={!groupOpen || visiblyCollapsed}
                     >
                       <div className={styles.submenuInner}>
-                        <div className={styles.submenuContent}>
-                          {item.children.map((child) => (
-                            <Link
-                              key={child.label}
-                              href={child.href}
-                              className={styles.subitem}
-                              aria-current={child.href === pathname ? "page" : undefined}
-                              onClick={() => setMobileOpen(false)}
-                              onPointerEnter={interaction.onPointerEnter}
-                              onFocus={interaction.onFocus}
-                            >
-                              <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1.6"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                aria-hidden="true"
-                              >
-                                {child.icon}
-                              </svg>
-                              <span>{child.label}</span>
-                            </Link>
-                          ))}
-                        </div>
+                        <div className={styles.submenuContent}>{renderSubitems(item, index)}</div>
                       </div>
                     </div>
                   )}
@@ -474,6 +532,39 @@ export function Sidebar() {
           </div>
         </div>
       </div>
+      {flyoutItem && (
+        <div
+          ref={flyoutRef}
+          id="sidebar-flyout"
+          className={styles.flyout}
+          data-open={flyoutIndex !== null}
+          inert={flyoutIndex === null}
+          style={{ "--flyout-top": `${flyoutTop}px` } as CSSProperties}
+        >
+          <span className={styles.flyoutArrow} aria-hidden="true">
+            <svg
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m12 6-4 4 4 4" />
+            </svg>
+          </span>
+          <div className={styles.flyoutBody}>
+            {flyoutItem.children ? (
+              <nav className={styles.flyoutLinks} aria-label={flyoutItem.label}>
+                {renderSubitems(flyoutItem, flyoutIndex ?? lastFlyoutIndex)}
+                {flyoutItem.children.length % 2 !== 0 && <span aria-hidden="true" />}
+              </nav>
+            ) : (
+              <span className={styles.flyoutHint}>{flyoutItem.label}</span>
+            )}
+          </div>
+        </div>
+      )}
     </aside>
   );
 

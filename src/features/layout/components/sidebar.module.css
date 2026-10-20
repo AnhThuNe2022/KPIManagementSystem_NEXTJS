@@ -11,41 +11,24 @@
   --bevel-light: rgb(255 255 255 / 0.65);
   --bevel-shadow: rgb(33 52 84 / 0.16);
   --motion: cubic-bezier(0.22, 0.8, 0.25, 1);
+  --travel-duration: 220ms;
   --frame-width: 244px;
   position: sticky;
   top: 80px;
   z-index: 20;
   flex: 0 0 auto;
-  /* Reserve the expanded width so hover neither covers nor moves the content. */
-  width: 244px;
+  width: var(--frame-width);
   height: calc(100dvh - 104px);
   min-height: 420px;
   margin: 16px 6px 24px 16px;
   pointer-events: none;
-}
-
-@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
-  .sidebar::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 100%;
-    width: 16px;
-    pointer-events: auto;
-  }
-  .sidebar[data-compact="true"] .frame {
-    transition: width 280ms var(--motion);
-  }
-  .sidebar:has(:focus-visible) .frame {
-    transition: none;
-  }
+  transition: width var(--travel-duration) var(--motion);
 }
 
 .frame {
   position: relative;
   isolation: isolate;
-  width: var(--frame-width);
+  width: 100%;
   height: 100%;
   border-radius: 24px;
   clip-path: inset(0 round 24px);
@@ -88,9 +71,7 @@
   align-items: center;
   gap: 10px;
   white-space: nowrap;
-  transition:
-    opacity 180ms ease,
-    transform 380ms var(--motion);
+  transition: transform var(--travel-duration) var(--motion);
 }
 .identity > div {
   display: grid;
@@ -142,10 +123,11 @@
   border-radius: 12px;
   background: transparent;
   color: var(--muted);
+  transform: translateX(0);
   transition:
     color 180ms,
     background-color 180ms,
-    right 380ms var(--motion);
+    transform var(--travel-duration) var(--motion);
 }
 .collapse:hover {
   color: var(--strong);
@@ -157,7 +139,7 @@
 }
 .collapseArrow {
   transform-origin: 15px 12px;
-  transition: transform 300ms var(--motion);
+  transition: transform var(--travel-duration) var(--motion);
 }
 .collapse:focus-visible {
   outline: 2px solid var(--selection-ink);
@@ -177,9 +159,6 @@
   text-transform: uppercase;
   letter-spacing: 1.6px;
   white-space: nowrap;
-}
-.sectionLabel span {
-  transition: opacity 180ms;
 }
 .sectionLabel i {
   flex: 1;
@@ -208,7 +187,7 @@
   left: 0;
   height: calc(var(--step) - 6px);
   transform: translateY(var(--highlight-offset, 0px));
-  transition: transform 380ms var(--motion);
+  transition: transform var(--travel-duration) var(--motion);
   pointer-events: none;
 }
 
@@ -288,7 +267,7 @@
   width: 21px;
   height: 21px;
   transform: translateX(0);
-  transition: transform 350ms var(--motion);
+  transition: transform var(--travel-duration) var(--motion);
 }
 .label {
   overflow: hidden;
@@ -297,9 +276,7 @@
   font-size: 13px;
   line-height: 18px;
   font-weight: 500;
-  transition:
-    opacity 180ms ease,
-    transform 380ms var(--motion);
+  transition: transform var(--travel-duration) var(--motion);
 }
 .itemArrow {
   position: absolute;
@@ -308,9 +285,7 @@
   height: 16px;
   opacity: 0;
   transform: translateX(-4px);
-  transition:
-    opacity 180ms,
-    transform 350ms var(--motion);
+  transition: transform var(--travel-duration) var(--motion);
 }
 .groupChevron {
   position: absolute;
@@ -318,9 +293,7 @@
   width: 16px;
   height: 16px;
   opacity: 0.65;
-  transition:
-    transform 320ms var(--motion),
-    opacity 180ms;
+  transition: transform var(--travel-duration) var(--motion);
 }
 .groupChevron[data-open="true"] {
   transform: rotate(180deg);
@@ -347,9 +320,7 @@
   display: grid;
   grid-template-rows: 0fr;
   opacity: 0;
-  transition:
-    grid-template-rows 320ms var(--motion),
-    opacity 180ms ease;
+  transition: grid-template-rows var(--travel-duration) var(--motion);
 }
 .submenu[data-open="true"] {
   grid-template-rows: 1fr;
@@ -436,7 +407,6 @@
   background: url("/images/sidebar-bridge.webp") center bottom / cover no-repeat;
   mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 55%, transparent 100%);
   pointer-events: none;
-  transition: opacity 220ms ease;
 }
 .footerRule {
   position: absolute;
@@ -456,7 +426,6 @@
   font-size: 10px;
   line-height: 1.8;
   white-space: nowrap;
-  transition: opacity 180ms;
 }
 .footer strong {
   color: var(--ink);
@@ -471,7 +440,6 @@
   font-weight: 600;
   letter-spacing: 1px;
   opacity: 0;
-  transition: opacity 180ms;
 }
 
 .sidebar[data-collapsed="true"] {
@@ -498,11 +466,9 @@
   right: 0;
 }
 .sidebar[data-collapsed="true"] .collapse {
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%);
+  transform: translateX(-13px);
 }
-.sidebar[data-compact="true"] .collapseArrow {
+.sidebar[data-collapsed="true"] .collapseArrow {
   transform: rotate(180deg);
 }
 .sidebar[data-collapsed="true"] .footerMonogram {
@@ -516,12 +482,11 @@
   margin-left: -11px;
 }
 .sidebar[data-collapsed="true"] .item {
-  justify-content: center;
-  padding: 0 12px 0 0;
+  padding: 0 12px 0 14px;
   gap: 0;
 }
 .sidebar[data-collapsed="true"] .icon {
-  transform: none;
+  transform: translateX(5px);
 }
 .sidebar[data-collapsed="true"] .label {
   position: absolute;
@@ -538,6 +503,117 @@
 }
 .sidebar[data-collapsed="true"] .label {
   white-space: nowrap;
+}
+
+.flyout {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 18px);
+  z-index: 3;
+  width: 280px;
+  border-radius: 6px;
+  transform: translate3d(-6px, var(--flyout-top), 0);
+  transform-origin: -36px 50%;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    transform var(--travel-duration) var(--motion),
+    visibility 0s var(--travel-duration);
+}
+.flyout[data-open="true"] {
+  transform: translate3d(0, var(--flyout-top), 0);
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+/* Keep the hit area steady while only the visible menu slides open. */
+.flyoutBody {
+  padding: 10px;
+  border: 1px solid var(--edge);
+  border-radius: inherit;
+  background: var(--panel);
+  box-shadow: 0 14px 30px -20px rgb(7 16 41 / 0.35);
+  clip-path: inset(-6px 100% -24px 0);
+  transition: clip-path var(--travel-duration) var(--motion);
+}
+.flyout[data-open="true"] .flyoutBody {
+  clip-path: inset(-6px -8px -24px -8px);
+}
+/* The transparent bridge keeps the menu open as the pointer leaves the rail. */
+.flyout::after {
+  content: "";
+  position: absolute;
+  inset: 0 100% 0 auto;
+  width: 20px;
+}
+.flyoutArrow {
+  position: absolute;
+  top: calc(50% - 10px);
+  left: -46px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  color: var(--selection-ink);
+  filter: drop-shadow(0 2px 3px var(--bevel-shadow));
+  pointer-events: none;
+}
+.flyoutArrow svg {
+  width: 18px;
+  height: 18px;
+}
+.flyoutHint {
+  display: block;
+  padding: 8px 12px;
+  color: var(--strong);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 20px;
+}
+.flyoutLinks {
+  position: relative;
+  display: grid;
+  grid-auto-rows: minmax(52px, 1fr);
+  gap: 8px;
+}
+.flyoutLinks::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  inset-inline: 12px;
+  height: 1px;
+  background: var(--line);
+  pointer-events: none;
+}
+.flyoutLinks .subitem {
+  min-height: 52px;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  background: transparent;
+  transition:
+    color 180ms,
+    background-color 180ms;
+}
+.flyoutLinks .subitem svg {
+  flex-basis: 20px;
+  width: 20px;
+  height: 20px;
+}
+.flyoutLinks .subitem:hover,
+.flyoutLinks .subitem:focus-visible {
+  background: rgb(var(--color-brand) / 0.08);
+  color: var(--selection-ink);
+}
+.flyoutLinks .subitem[aria-current="page"] {
+  background: rgb(var(--color-brand) / 0.14);
+  color: var(--strong);
+}
+.sidebar:has(:focus-visible) .indicator,
+.sidebar:has(:focus-visible) .flyout,
+.sidebar:has(:focus-visible) .flyoutBody {
+  transition: none;
 }
 
 :global(html.dark) .sidebar {
@@ -658,5 +734,9 @@
   .sidebar *::before,
   .sidebar *::after {
     transition: none !important;
+  }
+  .flyout,
+  .flyout[data-open="true"] {
+    transform: translate3d(0, var(--flyout-top), 0);
   }
 }
