@@ -343,7 +343,7 @@ export function Sidebar() {
                 <i />
               </span>
               <div>
-                <strong>Không gian KPI</strong>
+                <strong>Hệ thống KPI</strong>
                 <span>ĐÈO CẢ GROUP</span>
               </div>
             </div>

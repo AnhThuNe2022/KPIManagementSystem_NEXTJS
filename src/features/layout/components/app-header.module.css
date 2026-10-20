@@ -1,0 +1,120 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  height: 64px;
+  padding-inline: 24px;
+  border-bottom: 1px solid rgb(var(--color-border) / 0.5);
+  background: rgb(var(--color-surface) / 0.76);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  backdrop-filter: blur(12px) saturate(120%);
+  color: rgb(var(--color-text));
+  box-shadow: 0 4px 16px -12px rgb(var(--panel-shadow) / 0.2);
+  font-family: "DeocaUI", Arial, sans-serif;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex-shrink: 0;
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.brand:focus-visible {
+  outline: 2px solid rgb(var(--color-brand));
+  outline-offset: 4px;
+}
+.logo {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgb(219 226 234);
+  border-radius: 6px;
+  background: #fff;
+}
+.logo img {
+  display: block;
+  object-fit: contain;
+}
+.brandText {
+  display: grid;
+  gap: 3px;
+}
+.company {
+  color: rgb(var(--color-muted));
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+  letter-spacing: 0.12em;
+}
+.title {
+  font-size: 15px;
+  font-weight: 750;
+  line-height: 21px;
+  letter-spacing: -0.025em;
+}
+.actions,
+.tools {
+  display: flex;
+  align-items: center;
+}
+.actions {
+  flex-shrink: 0;
+  gap: 16px;
+}
+.tools {
+  gap: 6px;
+}
+.tools > button,
+.tools > div > button {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  border-color: rgb(var(--color-border) / 0.7);
+  background: rgb(var(--color-page) / 0.55);
+}
+.account {
+  padding-left: 16px;
+  border-left: 1px solid rgb(var(--color-border) / 0.75);
+}
+@media (max-width: 1023px) {
+  .header {
+    padding-left: 68px;
+    padding-right: 16px;
+  }
+}
+@media (max-width: 600px) {
+  .header {
+    gap: 12px;
+    padding-right: 12px;
+  }
+  .actions {
+    gap: 10px;
+  }
+  .account {
+    padding-left: 10px;
+  }
+  .brand {
+    gap: 9px;
+  }
+  .title {
+    font-size: 13px;
+  }
+  .company {
+    font-size: 9px;
+  }
+}
+@media (max-width: 480px) {
+  .brandText {
+    display: none;
+  }
+}
