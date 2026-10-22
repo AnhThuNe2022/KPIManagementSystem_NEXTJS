@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   CalendarIcon,
   ChevronDownIcon,
   Cross2Icon,
+  ClockIcon,
   EyeOpenIcon,
   FileTextIcon,
   InfoCircledIcon,
@@ -13,6 +15,7 @@ import {
   MixerHorizontalIcon,
   PersonIcon,
   ReloadIcon,
+  ResetIcon,
 } from "@radix-ui/react-icons";
 import { pendingEvaluationApi } from "../services/pendingEvaluationApi";
 import {
@@ -28,6 +31,8 @@ import pending from "../pending-evaluations.module.css";
 import { EvaluationPagination } from "./EvaluationPagination";
 import { evaluationLookupApi } from "../services/evaluationLookupApi";
 import { formatEvaluationDate, requestMessage } from "../evaluationDisplay";
+
+const companyLogos: Record<string, string> = { BGLS: "/brand/bgls.png", TLMT: "/brand/tlmt.png" };
 
 const emptyFilters: PendingEvaluationFilters = {
   keyword: "",
@@ -71,6 +76,8 @@ export function PendingEvaluations({
   const [rejectReason, setRejectReason] = useState("");
   const [rejectBusy, setRejectBusy] = useState(false);
   const [rejectError, setRejectError] = useState("");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const advancedCount = Number(Boolean(typeId)) + Number(Boolean(filters.periodId));
   const rejectInFlight = useRef(false);
   const rejectDialogRef = useRef<HTMLDialogElement>(null);
   const requestKey = JSON.stringify({ level, page, pageSize, sortBy: appliedSortBy, ...applied });
@@ -241,240 +248,82 @@ export function PendingEvaluations({
   }
 
   return (
-    <section className={styles.page} aria-labelledby="pending-title">
-      <header className={styles.heading}>
-        <div>
-          <p className={styles.eyebrow}>
-            <i aria-hidden="true" />
-            {hr ? "Quản lý nhân sự" : "Quản lý"}
-          </p>
+    <section className={styles.page + " " + pending.page} aria-labelledby="pending-title">
+      <header className={pending.heading}>
+        <div className={pending.titleLine}>
           <h1 id="pending-title">{title}</h1>
-          <p className={styles.description}>
-            {hr
-              ? "Theo dõi các bản đánh giá đang chờ ý kiến nhân sự."
-              : "Theo dõi các bản đánh giá của nhân sự đang chờ bạn xử lý."}
-          </p>
+          <span className={pending.total}><strong>{data?.total.toLocaleString("vi-VN") ?? "—"}</strong>{hr ? "bản chờ nhận xét" : "bản chờ đánh giá"}</span>
         </div>
-        <div className={styles.totalCard}>
-          <span className={styles.totalIcon}>
-            <FileTextIcon aria-hidden="true" />
-          </span>
-          <div>
-            <strong>{data?.total ?? "—"}</strong>
-            <span>{hr ? "bản chờ nhận xét" : "bản chờ đánh giá"}</span>
-          </div>
-        </div>
+        <p className={pending.description}>{hr ? "Theo dõi các bản đánh giá đang chờ ý kiến nhân sự." : "Theo dõi các bản đánh giá của nhân sự đang chờ bạn xử lý."}</p>
       </header>
 
-      <form className={styles.filters} onSubmit={applyFilters} aria-label="Lọc danh sách chờ duyệt">
-        <div className={styles.filterHeading}>
-          <span>
-            <MixerHorizontalIcon aria-hidden="true" />
-            Bộ lọc{activeFilters > 0 && <b>{activeFilters}</b>}
-          </span>
-          <span>Thu hẹp danh sách bạn cần xem</span>
-        </div>
-        <div className={styles.fields}>
-          <label>
-            <span>Nhân viên</span>
-            <div className={styles.control}>
-              <MagnifyingGlassIcon aria-hidden="true" />
-              <input
-                type="search"
-                value={filters.keyword}
-                maxLength={200}
-                placeholder="Tìm theo tên / mã NV"
-                onChange={(event) =>
-                  setFilters((value) => ({ ...value, keyword: event.target.value }))
-                }
-              />
-            </div>
-          </label>
-          <label>
-            <span>Công ty</span>
-            <div className={styles.control}>
-              <select
-                value={filters.companyId}
-                disabled={lookupsBusy || !companies.length}
-                onChange={(event) =>
-                  setFilters((value) => ({
-                    ...value,
-                    companyId: event.target.value,
-                    departmentId: "",
-                  }))
-                }
-              >
-                <option value="">{lookupsBusy ? "Đang tải…" : "Tất cả công ty"}</option>
-                {companies.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDownIcon aria-hidden="true" />
-            </div>
-          </label>
-          <label>
-            <span>Phòng ban</span>
-            <div className={styles.control}>
-              <select
-                value={filters.departmentId}
-                disabled={!filters.companyId || departmentBusy || !departments.length}
-                onChange={(event) =>
-                  setFilters((value) => ({ ...value, departmentId: event.target.value }))
-                }
-              >
-                <option value="">
-                  {departmentBusy
-                    ? "Đang tải…"
-                    : !filters.companyId
-                      ? "Chọn công ty trước"
-                      : "Tất cả phòng ban"}
-                </option>
-                {departments.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDownIcon aria-hidden="true" />
-            </div>
-          </label>
-          {hr && (
-            <label>
-              <span>Loại đánh giá</span>
-              <div className={styles.control}>
-                <select
-                  value={typeId}
-                  disabled={lookupsBusy || !evaluationTypes.length}
-                  onChange={(event) => {
-                    setTypeId(event.target.value);
-                    setFilters((value) => ({ ...value, periodId: "" }));
-                  }}
-                >
-                  <option value="">{lookupsBusy ? "Đang tải…" : "Tất cả loại đánh giá"}</option>
-                  {evaluationTypes.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDownIcon aria-hidden="true" />
-              </div>
-            </label>
-          )}
-          <label>
-            <span>Kỳ đánh giá{hr && typeId && " (bắt buộc)"}</span>
-            <div className={styles.control}>
-              <select
-                value={filters.periodId}
-                required={hr && Boolean(typeId)}
-                disabled={lookupsBusy || !availablePeriods.length}
-                onChange={(event) =>
-                  setFilters((value) => ({ ...value, periodId: event.target.value }))
-                }
-              >
-                <option value="">
-                  {lookupsBusy
-                    ? "Đang tải…"
-                    : hr && typeId
-                      ? availablePeriods.length
-                        ? "Chọn kỳ đánh giá"
-                        : "Loại này chưa có kỳ phù hợp"
-                      : "Tất cả kỳ đánh giá"}
-                </option>
-                {availablePeriods.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDownIcon aria-hidden="true" />
-            </div>
-          </label>
-          <label>
-            <span>Sắp xếp</span>
-            <div className={styles.control}>
-              <select
-                value={sortBy}
-                disabled={loading}
-                onChange={(event) => setSortBy(event.target.value)}
-              >
-                <option value="submittedDate_desc">Mới gửi gần đây</option>
-                <option value="submittedDate_asc">Gửi lâu trước</option>
-                <option value="employee_asc">Tên A→Z</option>
-                <option value="employee_desc">Tên Z→A</option>
-              </select>
-              <ChevronDownIcon aria-hidden="true" />
-            </div>
-          </label>
-        </div>
-        {(lookupError || departmentError) && (
-          <div className={styles.error} role="alert">
-            <InfoCircledIcon aria-hidden="true" />
-            <span>{lookupError || departmentError}</span>
-            <button type="button" onClick={() => setLookupRevision((value) => value + 1)}>
-              Thử lại
-            </button>
-          </div>
-        )}
-        <div className={styles.filterActions}>
-          <button className={styles.button} type="button" onClick={clearFilters}>
-            <Cross2Icon aria-hidden="true" />
-            Xóa lọc
-          </button>
-          <button
-            className={`${styles.button} ${styles.primary}`}
-            type="submit"
-            disabled={loading || Boolean(hr && typeId && !availablePeriods.length)}
-          >
+      <form className={styles.filters + " " + pending.filters} onSubmit={applyFilters} aria-label="Lọc danh sách chờ duyệt" onInvalid={(event) => { event.preventDefault(); setAdvancedOpen(true); }}>
+        <div className={pending.primaryFilters}>
+          <label><span className={styles.srOnly}>Nhân viên</span><div className={styles.control + " " + pending.searchControl}>
             <MagnifyingGlassIcon aria-hidden="true" />
-            {loading ? "Đang tải…" : "Lọc danh sách"}
-          </button>
+            <input type="search" value={filters.keyword} maxLength={200} placeholder="Tìm theo tên / mã NV" onChange={(event) => setFilters((value) => ({ ...value, keyword: event.target.value }))} />
+          </div></label>
+          <label><span className={styles.srOnly}>Công ty</span><div className={styles.control}>
+            <select value={filters.companyId} disabled={lookupsBusy || !companies.length} onChange={(event) => setFilters((value) => ({ ...value, companyId: event.target.value, departmentId: "" }))}>
+              <option value="">{lookupsBusy ? "Đang tải…" : "Tất cả công ty"}</option>
+              {companies.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
+            </select><ChevronDownIcon aria-hidden="true" />
+          </div></label>
+          <label><span className={styles.srOnly}>Phòng ban</span><div className={styles.control}>
+            <select value={filters.departmentId} disabled={!filters.companyId || departmentBusy || !departments.length} onChange={(event) => setFilters((value) => ({ ...value, departmentId: event.target.value }))}>
+              <option value="">{departmentBusy ? "Đang tải…" : !filters.companyId ? "Chọn công ty trước" : "Tất cả phòng ban"}</option>
+              {departments.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
+            </select><ChevronDownIcon aria-hidden="true" />
+          </div></label>
+          <div className={pending.filterButtons}>
+            <button className={styles.button + " " + pending.moreFilters} type="button" aria-expanded={advancedOpen} aria-controls="pending-extra-filters" onClick={() => setAdvancedOpen((value) => !value)}>
+              <MixerHorizontalIcon aria-hidden="true" />Lọc thêm{advancedCount > 0 && <b>{advancedCount}</b>}<ChevronDownIcon aria-hidden="true" />
+            </button>
+            <button className={styles.button + " " + pending.clearButton} type="button" onClick={clearFilters} aria-label="Xóa bộ lọc" title="Xóa bộ lọc"><ResetIcon aria-hidden="true" /></button>
+            <button className={styles.button + " " + pending.applyButton} type="submit" disabled={loading || Boolean(hr && typeId && !availablePeriods.length)}><MagnifyingGlassIcon aria-hidden="true" />{loading ? "Đang tải…" : "Áp dụng"}</button>
+          </div>
         </div>
+        <div id="pending-extra-filters" className={pending.advancedFilters} hidden={!advancedOpen}>
+          {hr && <label><span>Loại đánh giá</span><div className={styles.control}>
+            <select value={typeId} disabled={lookupsBusy || !evaluationTypes.length} onChange={(event) => { setTypeId(event.target.value); setFilters((value) => ({ ...value, periodId: "" })); }}>
+              <option value="">{lookupsBusy ? "Đang tải…" : "Tất cả loại đánh giá"}</option>
+              {evaluationTypes.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
+            </select><ChevronDownIcon aria-hidden="true" />
+          </div></label>}
+          <label><span>Kỳ đánh giá{hr && typeId && " (bắt buộc)"}</span><div className={styles.control}>
+            <select value={filters.periodId} required={hr && Boolean(typeId)} disabled={lookupsBusy || !availablePeriods.length} onChange={(event) => setFilters((value) => ({ ...value, periodId: event.target.value }))}>
+              <option value="">{lookupsBusy ? "Đang tải…" : hr && typeId ? availablePeriods.length ? "Chọn kỳ đánh giá" : "Loại này chưa có kỳ phù hợp" : "Tất cả kỳ đánh giá"}</option>
+              {availablePeriods.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
+            </select><ChevronDownIcon aria-hidden="true" />
+          </div></label>
+          {hr && typeId && !filters.periodId && <p className={pending.filterHint} role="status">Chọn kỳ đánh giá để áp dụng loại đánh giá này.</p>}
+        </div>
+        {(lookupError || departmentError) && <div className={styles.error} role="alert"><InfoCircledIcon aria-hidden="true" /><span>{lookupError || departmentError}</span><button type="button" onClick={() => setLookupRevision((value) => value + 1)}>Thử lại</button></div>}
+        {activeFilters > 0 && <div className={pending.appliedFilters}>
+          <span>Đang lọc</span>
+          {applied.keyword && <span>{applied.keyword}</span>}
+          {applied.companyId && <span>{companies.find((option) => option.id === applied.companyId)?.name || applied.companyId}</span>}
+          {applied.departmentId && <span>{departments.find((option) => option.id === applied.departmentId)?.name || applied.departmentId}</span>}
+          {applied.periodId && <span>{periods.find((option) => option.id === applied.periodId)?.name || applied.periodId}</span>}
+        </div>}
       </form>
 
       <div className={styles.inbox} aria-busy={loading}>
-        <div className={styles.listHeading}>
+        <div className={styles.listHeading + " " + pending.listHeading}>
           <div>
-            <span className={styles.listIcon}>
-              <FileTextIcon aria-hidden="true" />
-            </span>
-            <h2>Bản đánh giá</h2>
-            <span className={styles.count}>{data?.total ?? "—"}</span>
-            {selected.length > 0 && (
-              <span className={pending.selectionCount} role="status">
-                Đã chọn {selected.length}
-              </span>
-            )}
+            <span className={styles.listIcon + " " + pending.listIcon}><FileTextIcon aria-hidden="true" /></span>
+            <h2>Bản đánh giá</h2><span className={styles.count}>{data?.total ?? "—"}</span>
+            {selected.length > 0 && <span className={pending.selectionCount} role="status">Đã chọn {selected.length}</span>}
           </div>
-          {!hr && (
-            <button
-              className={`${styles.button} ${pending.rejectButton} ${pending.bulkReject}`}
-              type="button"
-              disabled={loading || !data || Boolean(error) || !selected.length}
-              aria-haspopup="dialog"
-              onClick={() =>
-                openReject(
-                  data?.items.filter((item) => selected.includes(`${item.id}:${item.stepId}`)) ??
-                    [],
-                )
-              }
-            >
-              <Cross2Icon aria-hidden="true" />
-              Từ chối ({selected.length})
-            </button>
-          )}
-          <button
-            className={styles.refresh}
-            type="button"
-            title="Tải lại danh sách"
-            aria-label="Tải lại danh sách"
-            disabled={loading}
-            onClick={() => setRevision((value) => value + 1)}
-          >
-            <ReloadIcon aria-hidden="true" />
-          </button>
+          <div className={pending.listTools} data-hr={hr}>
+            <label><span className={styles.srOnly}>Sắp xếp</span><div className={styles.control}>
+              <select value={appliedSortBy} disabled={loading} onChange={(event) => { setSortBy(event.target.value); setAppliedSortBy(event.target.value); setPage(1); }}>
+                <option value="submittedDate_desc">Mới gửi gần đây</option><option value="submittedDate_asc">Gửi lâu trước</option><option value="employee_asc">Tên A→Z</option><option value="employee_desc">Tên Z→A</option>
+              </select><ChevronDownIcon aria-hidden="true" />
+            </div></label>
+            {!hr && <button className={styles.button + " " + pending.rejectButton + " " + pending.bulkReject} type="button" disabled={loading || !data || Boolean(error) || !selected.length} aria-haspopup="dialog" onClick={() => openReject(data?.items.filter((item) => selected.includes(`${item.id}:${item.stepId}`)) ?? [])}><Cross2Icon aria-hidden="true" />Từ chối ({selected.length})</button>}
+            <button className={styles.refresh} type="button" title="Tải lại danh sách" aria-label="Tải lại danh sách" disabled={loading} onClick={() => setRevision((value) => value + 1)}><ReloadIcon aria-hidden="true" /></button>
+          </div>
         </div>
         {error ? (
           <div className={styles.empty} role="alert">
@@ -557,28 +406,21 @@ export function PendingEvaluations({
                     </label>
                   </th>
                   <th scope="col" className={pending.employeeColumn}>
-                    <PersonIcon aria-hidden="true" />
                     Nhân viên
                   </th>
                   <th scope="col" className={pending.companyColumn}>
                     Đơn vị
                   </th>
-                  <th scope="col" className={pending.departmentColumn}>
-                    Phòng ban
-                  </th>
                   <th scope="col" className={pending.periodColumn}>
-                    <FileTextIcon aria-hidden="true" />
                     Kỳ đánh giá
                   </th>
                   <th scope="col" className={pending.dateColumn}>
-                    <CalendarIcon aria-hidden="true" />
                     Ngày gửi / duyệt cuối
                   </th>
                   <th scope="col" className={pending.statusColumn}>
                     Trạng thái
                   </th>
                   <th scope="col" className={pending.actionsColumn}>
-                    <EyeOpenIcon aria-hidden="true" />
                     Thao tác
                   </th>
                 </tr>
@@ -609,7 +451,7 @@ export function PendingEvaluations({
                     <td data-label="Nhân viên" className={pending.employeeCell}>
                       <div className={styles.employee}>
                         <span className={styles.avatar} aria-hidden="true">
-                          {(item.userName || "N").trim().charAt(0).toLocaleUpperCase("vi")}
+                          <PersonIcon aria-hidden="true" />
                         </span>
                         <div>
                           <strong>{item.userName || "Chưa có tên"}</strong>
@@ -617,26 +459,25 @@ export function PendingEvaluations({
                         </div>
                       </div>
                     </td>
-                    <td data-label="Đơn vị">
-                      <span className={pending.company}>{item.companyCode || "—"}</span>
+                    <td data-label="Đơn vị" className={pending.organizationCell}>
+                      <span className={pending.companyIdentity}><Image className={pending.companyLogo} src={companyLogos[item.companyCode?.trim().toUpperCase() ?? ""] ?? "/brand/deoca-icon.png"} alt="" width={32} height={32} /><span className={pending.company}>{item.companyCode || "—"}</span></span><span className={pending.department}>{item.departmentName || "—"}</span>
                     </td>
-                    <td data-label="Phòng ban">{item.departmentName || "—"}</td>
                     <td data-label="Kỳ đánh giá" className={pending.periodCell}>
-                      <span className={styles.period}>{item.periodLabel || "—"}</span>
+                      <div className={pending.periodIdentity}><span className={pending.periodIcon} aria-hidden="true"><CalendarIcon /></span><span className={pending.period}>{item.periodLabel || "—"}</span></div>
                     </td>
-                    <td data-label="Ngày gửi / duyệt cuối">
-                      <time
+                    <td data-label="Ngày gửi / duyệt cuối" className={pending.dateCell}>
+                      <span className={pending.date}><ClockIcon aria-hidden="true" /><time
                         dateTime={
                           formatEvaluationDate(item.submittedDate, "")
                             ? item.submittedDate!
                             : undefined
                         }
                       >
-                        {formatEvaluationDate(item.submittedDate, "")}
-                      </time>
+                        {formatEvaluationDate(item.submittedDate, "") || "—"}
+                      </time></span>
                     </td>
-                    <td data-label="Trạng thái">
-                      <span className={styles.status} data-rejected={item.isRejected}>
+                    <td data-label="Trạng thái" className={pending.statusCell}>
+                      <span className={styles.status + " " + pending.status} data-rejected={item.isRejected}>
                         <i aria-hidden="true" />
                         {item.isRejected ? "Bị từ chối" : pendingLabel}
                       </span>

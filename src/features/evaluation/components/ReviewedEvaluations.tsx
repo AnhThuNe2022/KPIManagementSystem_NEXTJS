@@ -3,7 +3,10 @@
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
+  CalendarIcon,
   CheckCircledIcon,
+  CheckIcon,
+  ClockIcon,
   ChevronDownIcon,
   Cross2Icon,
   EyeOpenIcon,
@@ -11,6 +14,7 @@ import {
   InfoCircledIcon,
   MagnifyingGlassIcon,
   MixerHorizontalIcon,
+  PersonIcon,
   ReloadIcon,
 } from "@radix-ui/react-icons";
 import { evaluationLookupApi } from "../services/evaluationLookupApi";
@@ -42,15 +46,6 @@ const emptyFilters: ReviewedEvaluationFilters = {
 };
 const scoreFormatter = new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 });
 
-function periodLabelLines(value: string | null) {
-  const words = value?.match(/\S+/g) ?? [];
-  const lines: string[] = [];
-  for (let index = 0; index < words.length; index += 4) {
-    lines.push(words.slice(index, index + 4).join(" "));
-  }
-  return lines.length ? lines : ["—"];
-}
-
 export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
   const hr = level === UserRoleSystem.HR;
   const title = "Danh sách đã duyệt / từ chối";
@@ -72,6 +67,7 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
   const [types, setTypes] = useState<EvaluationTypeOption[]>([]);
   const [lookupsBusy, setLookupsBusy] = useState(true);
   const [lookupError, setLookupError] = useState("");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const requestKey = JSON.stringify({ level, page, pageSize, ...applied });
   const ready = snapshot?.key === requestKey;
   const data = ready ? snapshot.data : null;
@@ -85,6 +81,23 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
         .map((period) => [period.id, period]),
     ).values(),
   ];
+
+  const advancedCount = [filters.typeId, filters.periodId, filters.from, filters.to].filter(Boolean).length;
+  const appliedLabels = [
+    applied.keyword && "Nhân viên: " + applied.keyword,
+    applied.companyId && (companies.find((option) => option.id === applied.companyId)?.name || "Công ty đã chọn"),
+    applied.departmentId && (departments.find((option) => option.id === applied.departmentId)?.name || "Phòng ban đã chọn"),
+    applied.typeId && (types.find((option) => option.id === applied.typeId)?.name || "Loại đánh giá đã chọn"),
+    applied.periodId && (types.flatMap((type) => type.periods).find((period) => period.id === applied.periodId)?.name || "Kỳ đánh giá đã chọn"),
+    applied.from && "Từ " + applied.from,
+    applied.to && "Đến " + applied.to,
+  ].filter(Boolean);
+
+  function selectStatus(status: ReviewedEvaluationFilters["status"]) {
+    setFilters((value) => ({ ...value, status }));
+    setApplied((value) => ({ ...value, status }));
+    setPage(1);
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -137,6 +150,7 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (filters.from && filters.to && filters.from > filters.to) {
+      setAdvancedOpen(true);
       setFilterError("Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.");
       return;
     }
@@ -154,44 +168,61 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
   }
 
   return (
-    <section className={styles.page} aria-labelledby="reviewed-title">
-      <header className={styles.heading}>
-        <div>
-          <p className={styles.eyebrow}>
-            <i aria-hidden="true" />
-            {hr ? "Quản lý nhân sự · Đã nhận xét" : "Quản lý · NS đã đánh giá"}
-          </p>
-          <h1 id="reviewed-title">{title}</h1>
-          <p className={styles.description}>
-            Tra cứu kết quả, người duyệt và lý do từ chối của các bản đánh giá.
-          </p>
-        </div>
-        <div className={styles.totalCard}>
-          <span className={styles.totalIcon}>
-            <CheckCircledIcon aria-hidden="true" />
-          </span>
-          <div>
-            <strong>{data?.total ?? "—"}</strong>
-            <span>bản đã xử lý</span>
-          </div>
+    <section className={styles.page + " " + reviewed.page} aria-labelledby="reviewed-title">
+      <header className={reviewed.heading}>
+        <div><div className={reviewed.titleLine}><h1 id="reviewed-title">{title}</h1><span className={reviewed.total}><strong>{data?.total.toLocaleString("vi-VN") ?? "—"}</strong> bản đánh giá</span></div><p className={reviewed.description}>Tra cứu kết quả, người duyệt và lý do từ chối.</p></div>
+        <div className={reviewed.statusTabs} role="group" aria-label="Lọc theo trạng thái">
+          <button type="button" aria-pressed={applied.status === ""} onClick={() => selectStatus("")}>
+            <svg className={reviewed.statusRoad} viewBox="0 0 160 80" fill="none" aria-hidden="true" focusable="false">
+              <path d="M6 82C62 69 135 60 109 45S76 28 155 14M40 84C91 67 149 57 125 44S99 29 160 19" stroke="currentColor" strokeWidth="2" />
+              <path d="M23 83C79 68 141 58 117 44S87 29 158 16" stroke="currentColor" strokeDasharray="7 8" />
+            </svg>
+            <span className={reviewed.statusIcon} aria-hidden="true">
+              <svg viewBox="0 0 32 32" focusable="false">
+                <path d="m3 23 13-6 13 6-13 6Z" fill="#d42020" />
+                <path d="m3 17 13-6 13 6-13 6Z" fill="currentColor" />
+                <path d="m3 10 13-6 13 6-13 6Z" fill="currentColor" />
+              </svg>
+            </span>
+            <span>Tất cả</span>
+          </button>
+          <button type="button" data-status="Approved" aria-pressed={applied.status === "Approved"} onClick={() => selectStatus("Approved")}>
+            <span className={reviewed.statusIcon} aria-hidden="true"><CheckIcon /></span><span>Đã duyệt</span>
+          </button>
+          <button type="button" data-status="Rejected" aria-pressed={applied.status === "Rejected"} onClick={() => selectStatus("Rejected")}>
+            <span className={reviewed.statusIcon} aria-hidden="true"><Cross2Icon /></span><span>Từ chối</span>
+          </button>
         </div>
       </header>
 
       <form
-        className={styles.filters}
+        className={styles.filters + " " + reviewed.filters}
         onSubmit={applyFilters}
+        onInvalid={(event) => {
+          event.preventDefault();
+          setAdvancedOpen(true);
+          setFilterError("Ngày không hợp lệ. Vui lòng kiểm tra khoảng ngày.");
+        }}
         aria-label="Lọc danh sách đã duyệt / từ chối"
       >
-        <div className={styles.filterHeading}>
-          <span>
-            <MixerHorizontalIcon aria-hidden="true" />
-            Bộ lọc{activeFilters > 0 && <b>{activeFilters}</b>}
-          </span>
-          <span>Thu hẹp danh sách bạn cần xem</span>
-        </div>
-        <div className={styles.fields}>
+        <div className={reviewed.primaryFilters} data-hr={hr}>
           <label>
-            <span>Công ty</span>
+            <span className={styles.srOnly}>Nhân viên</span>
+            <div className={styles.control + " " + reviewed.searchControl}>
+              <MagnifyingGlassIcon aria-hidden="true" />
+              <input
+                type="search"
+                value={filters.keyword}
+                maxLength={200}
+                placeholder="Tìm theo tên / mã NV"
+                onChange={(event) =>
+                  setFilters((value) => ({ ...value, keyword: event.target.value }))
+                }
+              />
+            </div>
+          </label>
+          <label>
+            <span className={styles.srOnly}>Công ty</span>
             <div className={styles.control}>
               <select
                 value={filters.companyId}
@@ -214,19 +245,74 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
               <ChevronDownIcon aria-hidden="true" />
             </div>
           </label>
-          {hr && (
-            <label>
-              <span>Phòng ban</span>
+          {hr && (<label>
+            <span className={styles.srOnly}>Phòng ban</span>
+            <div className={styles.control}>
+              <select
+                value={filters.departmentId}
+                disabled={lookupsBusy || !departments.length}
+                onChange={(event) =>
+                  setFilters((value) => ({ ...value, departmentId: event.target.value }))
+                }
+              >
+                <option value="">{lookupsBusy ? "Đang tải…" : "Tất cả phòng ban"}</option>
+                {departments.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDownIcon aria-hidden="true" />
+            </div>
+          </label>)}
+          <div className={reviewed.filterButtons}>
+            <button type="button" className={styles.button + " " + reviewed.moreFilters} aria-expanded={advancedOpen} aria-controls="reviewed-extra-filters" onClick={() => setAdvancedOpen(!advancedOpen)}><MixerHorizontalIcon aria-hidden="true" />Lọc thêm{advancedCount > 0 && <b>{advancedCount}</b>}<ChevronDownIcon aria-hidden="true" /></button>
+            <button className={styles.button + " " + reviewed.clearButton} type="button" onClick={clearFilters} aria-label="Xóa tất cả bộ lọc" title="Xóa tất cả bộ lọc"><ReloadIcon aria-hidden="true" /></button>
+            <button className={styles.button + " " + styles.primary} type="submit" disabled={loading}><MagnifyingGlassIcon aria-hidden="true" />{loading ? "Đang tải…" : "Áp dụng"}</button>
+          </div>
+        </div>
+        <div className={reviewed.advancedFilters} id="reviewed-extra-filters" hidden={!advancedOpen}>
+          {hr && <><label>
+            <span>Loại đánh giá</span>
+            <div className={styles.control}>
+              <select
+                value={filters.typeId}
+                disabled={lookupsBusy || !types.length}
+                onChange={(event) =>
+                  setFilters((value) => ({
+                    ...value,
+                    typeId: event.target.value,
+                    periodId: "",
+                  }))
+                }
+              >
+                <option value="">{lookupsBusy ? "Đang tải…" : "Tất cả loại đánh giá"}</option>
+                {types.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDownIcon aria-hidden="true" />
+            </div>
+          </label><label>
+              <span>Kỳ đánh giá</span>
               <div className={styles.control}>
                 <select
-                  value={filters.departmentId}
-                  disabled={lookupsBusy || !departments.length}
+                  value={filters.periodId}
+                  disabled={lookupsBusy || !availablePeriods.length}
                   onChange={(event) =>
-                    setFilters((value) => ({ ...value, departmentId: event.target.value }))
+                    setFilters((value) => ({ ...value, periodId: event.target.value }))
                   }
                 >
-                  <option value="">{lookupsBusy ? "Đang tải…" : "Tất cả phòng ban"}</option>
-                  {departments.map((option) => (
+                  <option value="">
+                    {lookupsBusy
+                      ? "Đang tải…"
+                      : !availablePeriods.length
+                        ? "Chưa có kỳ đánh giá"
+                        : "Tất cả kỳ đánh giá"}
+                  </option>
+                  {availablePeriods.map((option) => (
                     <option key={option.id} value={option.id}>
                       {option.name}
                     </option>
@@ -234,93 +320,7 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
                 </select>
                 <ChevronDownIcon aria-hidden="true" />
               </div>
-            </label>
-          )}
-          <label>
-            <span>Nhân viên</span>
-            <div className={styles.control}>
-              <MagnifyingGlassIcon aria-hidden="true" />
-              <input
-                type="search"
-                value={filters.keyword}
-                maxLength={200}
-                placeholder="Tìm theo tên / mã NV"
-                onChange={(event) =>
-                  setFilters((value) => ({ ...value, keyword: event.target.value }))
-                }
-              />
-            </div>
-          </label>
-          <label>
-            <span>Trạng thái</span>
-            <div className={styles.control}>
-              <select
-                value={filters.status}
-                onChange={(event) =>
-                  setFilters((value) => ({ ...value, status: event.target.value }))
-                }
-              >
-                <option value="">Tất cả trạng thái</option>
-                <option value="Approved">Đã duyệt</option>
-                <option value="Rejected">Từ chối</option>
-              </select>
-              <ChevronDownIcon aria-hidden="true" />
-            </div>
-          </label>
-          {hr && (
-            <>
-              <label>
-                <span>Loại đánh giá</span>
-                <div className={styles.control}>
-                  <select
-                    value={filters.typeId}
-                    disabled={lookupsBusy || !types.length}
-                    onChange={(event) =>
-                      setFilters((value) => ({
-                        ...value,
-                        typeId: event.target.value,
-                        periodId: "",
-                      }))
-                    }
-                  >
-                    <option value="">{lookupsBusy ? "Đang tải…" : "Tất cả loại đánh giá"}</option>
-                    {types.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDownIcon aria-hidden="true" />
-                </div>
-              </label>
-              <label>
-                <span>Kỳ đánh giá</span>
-                <div className={styles.control}>
-                  <select
-                    value={filters.periodId}
-                    disabled={lookupsBusy || !availablePeriods.length}
-                    onChange={(event) =>
-                      setFilters((value) => ({ ...value, periodId: event.target.value }))
-                    }
-                  >
-                    <option value="">
-                      {lookupsBusy
-                        ? "Đang tải…"
-                        : !availablePeriods.length
-                          ? "Chưa có kỳ đánh giá"
-                          : "Tất cả kỳ đánh giá"}
-                    </option>
-                    {availablePeriods.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDownIcon aria-hidden="true" />
-                </div>
-              </label>
-            </>
-          )}
+            </label></>}
           <label>
             <span>Từ ngày</span>
             <div className={`${styles.control} ${reviewed.dateControl}`}>
@@ -354,24 +354,8 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
               />
             </div>
           </label>
-          <label>
-            <span>Sắp xếp</span>
-            <div className={styles.control}>
-              <select
-                value={filters.sortBy}
-                onChange={(event) =>
-                  setFilters((value) => ({ ...value, sortBy: event.target.value }))
-                }
-              >
-                <option value="date_desc">Mới nhất</option>
-                <option value="date_asc">Cũ nhất</option>
-                <option value="employee_asc">Tên A→Z</option>
-                <option value="employee_desc">Tên Z→A</option>
-              </select>
-              <ChevronDownIcon aria-hidden="true" />
-            </div>
-          </label>
         </div>
+        {appliedLabels.length > 0 && <div className={reviewed.appliedFilters}><span>Đang lọc</span>{appliedLabels.map((label, index) => <span key={index} className={reviewed.filterChip}>{label}</span>)}<button type="button" onClick={clearFilters}><Cross2Icon aria-hidden="true" />Xóa lọc</button></div>}
         {filterError && (
           <p className={styles.error} id="reviewed-filter-error" role="alert">
             <InfoCircledIcon aria-hidden="true" />
@@ -387,37 +371,38 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
             </button>
           </div>
         )}
-        <div className={styles.filterActions}>
-          <button className={styles.button} type="button" onClick={clearFilters}>
-            <Cross2Icon aria-hidden="true" />
-            Xóa lọc
-          </button>
-          <button className={`${styles.button} ${styles.primary}`} type="submit" disabled={loading}>
-            <MagnifyingGlassIcon aria-hidden="true" />
-            {loading ? "Đang tải…" : "Lọc danh sách"}
-          </button>
-        </div>
+
       </form>
 
       <div className={styles.inbox} aria-busy={loading}>
-        <div className={styles.listHeading}>
+        <div className={styles.listHeading + " " + reviewed.listHeading}>
           <div>
-            <span className={styles.listIcon}>
+            <span className={styles.listIcon + " " + reviewed.listIcon}>
               <FileTextIcon aria-hidden="true" />
             </span>
             <h2>Bản đánh giá đã xử lý</h2>
             <span className={styles.count}>{data?.total ?? "—"}</span>
           </div>
-          <button
-            className={styles.refresh}
-            type="button"
-            title="Tải lại danh sách"
-            aria-label="Tải lại danh sách"
-            disabled={loading}
-            onClick={() => setRevision((value) => value + 1)}
-          >
-            <ReloadIcon aria-hidden="true" />
-          </button>
+          <div className={reviewed.listTools}>
+            <label>
+              <span className={styles.srOnly}>Sắp xếp</span>
+              <div className={styles.control}>
+                <select value={applied.sortBy} onChange={(event) => {
+                  const sortBy = event.target.value;
+                  setFilters((value) => ({ ...value, sortBy }));
+                  setApplied((value) => ({ ...value, sortBy }));
+                  setPage(1);
+                }}>
+                  <option value="date_desc">Mới nhất</option>
+                  <option value="date_asc">Cũ nhất</option>
+                  <option value="employee_asc">Tên A→Z</option>
+                  <option value="employee_desc">Tên Z→A</option>
+                </select>
+                <ChevronDownIcon aria-hidden="true" />
+              </div>
+            </label>
+            <button className={styles.refresh} type="button" title="Tải lại danh sách" aria-label="Tải lại danh sách" disabled={loading} onClick={() => setRevision((value) => value + 1)}><ReloadIcon aria-hidden="true" /></button>
+          </div>
         </div>
         {error ? (
           <div className={styles.empty} role="alert">
@@ -477,108 +462,24 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
           <div className={styles.tableWrap}>
             <table className={`${styles.table} ${reviewed.table}`}>
               <caption className={styles.srOnly}>{title}</caption>
-              <thead>
-                <tr>
-                  <th scope="col" className={reviewed.employeeColumn}>
-                    Nhân viên
-                  </th>
-                  <th scope="col">Phòng ban</th>
-                  <th scope="col" className={reviewed.periodColumn}>
-                    Kỳ đánh giá
-                  </th>
-                  <th scope="col" className={reviewed.statusColumn}>
-                    Trạng thái
-                  </th>
-                  <th scope="col" className={reviewed.dateColumn}>
-                    Ngày duyệt / từ chối
-                  </th>
-                  <th scope="col">Người duyệt</th>
-                  <th scope="col">Lý do từ chối</th>
-                  <th scope="col">Điểm</th>
-                  <th scope="col">Điểm quản lý</th>
-                  <th scope="col">Kết quả</th>
-                  <th scope="col" className={reviewed.actionsColumn}>
-                    Thao tác
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.items.map((item) => (
-                  <tr key={`${item.id}:${item.evalid}`}>
-                    <td data-label="Nhân viên" className={reviewed.employeeCell}>
-                      <div className={styles.employee}>
-                        <span className={styles.avatar} aria-hidden="true">
-                          {(item.employeeName || "N").trim().charAt(0).toLocaleUpperCase("vi")}
-                        </span>
-                        <div>
-                          <strong>{item.employeeName || "Chưa có tên"}</strong>
-                          <span>{item.employeeCode || "—"}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td data-label="Phòng ban">{item.departmentName || "—"}</td>
-                    <td data-label="Kỳ đánh giá" className={reviewed.periodCell}>
-                      <span className={`${styles.period} ${reviewed.period}`}>
-                        {periodLabelLines(item.periodLabel).map((line, index) => (
-                          <span className={reviewed.periodLine} key={index}>
-                            {line}
-                          </span>
-                        ))}
-                      </span>
-                    </td>
-                    <td data-label="Trạng thái">
-                      <span
-                        className={`${styles.status} ${reviewed.status}`}
-                        data-status={item.status}
-                      >
-                        <i aria-hidden="true" />
-                        {item.status === "Rejected"
-                          ? "Từ chối"
-                          : item.status === "Approved"
-                            ? "Đã duyệt"
-                            : item.status}
-                      </span>
-                    </td>
-                    <td data-label="Ngày duyệt / từ chối" className={reviewed.dateCell}>
-                      <time
-                        dateTime={
-                          formatEvaluationDate(item.approvedDate) !== "—"
-                            ? item.approvedDate!
-                            : undefined
-                        }
-                      >
-                        {formatEvaluationDate(item.approvedDate)}
-                      </time>
-                    </td>
-                    <td data-label="Người duyệt">{item.approverName || "—"}</td>
-                    <td data-label="Lý do từ chối" className={reviewed.reasonCell}>
-                      <span className={reviewed.reason}>{item.rejectedReason || "—"}</span>
-                    </td>
-                    <td data-label="Điểm">
-                      <span className={reviewed.score}>
-                        {item.totalScore == null ? "—" : scoreFormatter.format(item.totalScore)}
-                      </span>
-                    </td>
-                    <td data-label="Điểm quản lý">
-                      <span className={reviewed.score}>
-                        {item.managerSocre == null ? "—" : scoreFormatter.format(item.managerSocre)}
-                      </span>
-                    </td>
-                    <td data-label="Kết quả">{item.band || "—"}</td>
-                    <td data-label="Thao tác" className={reviewed.actionsCell}>
-                      <button
-                        className={`${styles.button} ${styles.viewButton}`}
-                        type="button"
-                        aria-label={`Xem bản đánh giá của ${item.employeeName || item.employeeCode || "nhân viên"}`}
-                        disabled
-                      >
-                        <EyeOpenIcon aria-hidden="true" />
-                        Xem
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+              <thead><tr>
+                <th scope="col" className={reviewed.employeeColumn}>Nhân viên</th>
+                <th scope="col" className={reviewed.periodColumn}>Kỳ đánh giá</th>
+                <th scope="col" className={reviewed.statusColumn}>Trạng thái</th>
+                <th scope="col" className={reviewed.reviewerColumn}>Người duyệt</th>
+                <th scope="col" className={reviewed.scoresColumn}>Điểm đánh giá</th>
+                <th scope="col" className={reviewed.resultColumn}>Kết quả</th>
+                <th scope="col" className={reviewed.actionsColumn}><span className={styles.srOnly}>Thao tác</span></th>
+              </tr></thead>
+              <tbody>{data.items.map((item) => <tr key={item.id + ":" + item.evalid} data-status={item.status}>
+                <td data-label="Nhân viên" className={reviewed.employeeCell}><div className={styles.employee}><span className={styles.avatar} aria-hidden="true"><PersonIcon aria-hidden="true" /></span><div><strong>{item.employeeName || "Chưa có tên"}</strong><span>{item.employeeCode || "—"}</span><span className={reviewed.department}>{item.departmentName || "—"}</span></div></div></td>
+                <td data-label="Kỳ đánh giá" className={reviewed.periodCell}><div className={reviewed.periodIdentity}><span className={reviewed.periodIcon}><CalendarIcon aria-hidden="true" /></span><span className={reviewed.period}>{item.periodLabel || "—"}</span></div></td>
+                <td data-label="Trạng thái" className={reviewed.statusCell}><span className={reviewed.status} data-status={item.status}><i aria-hidden="true" />{item.status === "Rejected" ? "Từ chối" : item.status === "Approved" ? "Đã duyệt" : item.status}</span>{item.rejectedReason && <p className={reviewed.reason}>{item.rejectedReason}</p>}</td>
+                <td data-label="Người duyệt" className={reviewed.reviewerCell}><strong>{item.approverName || "—"}</strong><span className={reviewed.reviewDate}><ClockIcon aria-hidden="true" /><time dateTime={formatEvaluationDate(item.approvedDate) !== "—" ? item.approvedDate! : undefined}>{formatEvaluationDate(item.approvedDate)}</time></span></td>
+                <td data-label="Điểm đánh giá" className={reviewed.scoreCell}><dl className={reviewed.scores}><div><dt>Tổng điểm</dt><dd>{item.totalScore == null ? "—" : scoreFormatter.format(item.totalScore)}</dd></div><div><dt>Quản lý</dt><dd>{item.managerSocre == null ? "—" : scoreFormatter.format(item.managerSocre)}</dd></div></dl></td>
+                <td data-label="Kết quả" className={reviewed.resultCell}><span className={reviewed.result} data-empty={!item.band}>{item.band || "—"}</span></td>
+                <td data-label="Thao tác" className={reviewed.actionsCell}><button className={styles.button + " " + styles.viewButton} type="button" aria-label={"Xem bản đánh giá của " + (item.employeeName || item.employeeCode || "nhân viên")} disabled><EyeOpenIcon aria-hidden="true" />Xem</button></td>
+              </tr>)}</tbody>
             </table>
           </div>
         )}
