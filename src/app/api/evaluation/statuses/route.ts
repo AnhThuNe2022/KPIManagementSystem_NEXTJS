@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   if (!/^[1-9]\d*$/.test(templateId) || !Number.isSafeInteger(Number(templateId))) {
     return NextResponse.json({ message: "Invalid template ID" }, { status: 400 });
   }
-  const query = new URLSearchParams({ templateid: templateId, isactive: "true" });
+  const query = new URLSearchParams({ "Filters[templateid]": templateId, "Filters[isactive]": "true" });
   return proxyEvaluationRequest(`/TemplateLevel/get-all-status?${query}`, {
     signal: request.signal,
   });

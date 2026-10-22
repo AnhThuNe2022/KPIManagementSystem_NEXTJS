@@ -1,5 +1,7 @@
-.header {
-  --brand-width: clamp(340px, 30vw, 500px);
+  .header {
+  --brand-width: clamp(320px, 24vw, 400px);
+  --brand-slant: 44px;
+  --stripe-width: 30px;
   position: sticky;
   top: 0;
   z-index: 30;
@@ -24,8 +26,8 @@
   z-index: -1;
   inset: 0 auto 0 0;
   width: var(--brand-width);
-  background: #182970;
-  clip-path: polygon(0 0, 100% 0, calc(100% - 44px) 100%, 0 100%);
+  background: linear-gradient(115deg, #182970, #1b337c 72%, #17347e);
+  clip-path: polygon(0 0, 100% 0, calc(100% - var(--brand-slant)) 100%, 0 100%);
   pointer-events: none;
 }
 .header::after {
@@ -34,17 +36,19 @@
   z-index: -1;
   top: 0;
   bottom: 0;
-  left: calc(var(--brand-width) - 24px);
-  width: 3px;
-  background: #e64658;
-  transform: skewX(-25deg);
+  left: calc(var(--brand-width) - var(--stripe-width));
+  width: var(--stripe-width);
+  background: linear-gradient(90deg, #1b3e90 0%, #21489c 58%, #142c65 64%, #112655 calc(100% - 2px), #e64658 calc(100% - 2px), #ff6a78 100%);
+  transform-origin: top right;
+  transform: skewX(atan2(calc(-1 * var(--brand-slant)), var(--app-header-height)));
   pointer-events: none;
 }
 .brand {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   min-width: 0;
+  width: calc(var(--brand-width) - 24px);
   flex-shrink: 0;
   border-radius: 12px;
   color: #fff;
@@ -59,35 +63,45 @@
   display: grid;
   flex-shrink: 0;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
   background: #fff;
   box-shadow: 0 5px 14px rgb(4 12 43 / .25), inset 0 -2px 0 #dfe5ef;
 }
 .logo img {
   display: block;
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
 }
 .brandText {
   display: grid;
-  gap: 5px;
+  gap: 4px;
 }
 .company {
   color: #c3d1ff;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 650;
-  line-height: 18px;
+  line-height: 16px;
   letter-spacing: .12em;
 }
 .title {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 780;
-  line-height: 28px;
+  line-height: 26px;
   letter-spacing: -.03em;
 }
+.breadcrumbs { flex: 1; min-width: 0; color: var(--panel-muted); font-size: 12px; }
+.breadcrumbs ol { display: flex; align-items: center; gap: 11px; margin: 0; padding: 0; list-style: none; }
+.breadcrumbs li { display: inline-flex; align-items: center; gap: 11px; min-width: 0; }
+.breadcrumbs li:not(:last-child) { flex-shrink: 0; }
+.breadcrumbs svg { width: 13px; height: 13px; flex-shrink: 0; }
+.breadcrumbs a { display: inline-grid; place-items: center; min-width: 28px; min-height: 36px; border-radius: 6px; color: inherit; }
+.breadcrumbs a:focus-visible { outline: 2px solid rgb(var(--color-brand)); outline-offset: 2px; }
+.breadcrumbs li[aria-current="page"] { color: rgb(var(--color-text)); font-weight: 650; }
+.breadcrumbs span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 .actions,
 .tools {
   display: flex;
@@ -130,6 +144,9 @@
     background: rgb(var(--color-brand) / .07);
   }
 }
+@media (max-width: 1100px) {
+  .breadcrumbs li:not(:last-child), .breadcrumbs li[aria-current="page"] > svg { display: none; }
+}
 @media (max-width: 1023px) {
   .header {
     --brand-width: 328px;
@@ -138,19 +155,20 @@
     gap: 16px;
   }
   .brand {
+    width: calc(var(--brand-width) - 68px);
     gap: 14px;
   }
   .logo {
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
   }
   .logo img {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
   }
   .title {
-    font-size: 20px;
-    line-height: 26px;
+    font-size: 18px;
+    line-height: 24px;
   }
   .actions {
     gap: 16px;
@@ -163,22 +181,18 @@
   .header {
     --brand-width: 174px;
   }
-  .brandText {
+  .brand { width: auto; }
+  .brandText, .breadcrumbs {
     display: none;
   }
 }
 @media (max-width: 600px) {
   .header {
     --brand-width: 156px;
+    --brand-slant: 24px;
+    --stripe-width: 22px;
     gap: 8px;
     padding-right: 12px;
-  }
-  .header::before {
-    clip-path: polygon(0 0, 100% 0, calc(100% - 24px) 100%, 0 100%);
-  }
-  .header::after {
-    left: calc(var(--brand-width) - 12px);
-    transform: skewX(-16deg);
   }
   .logo {
     width: 44px;
