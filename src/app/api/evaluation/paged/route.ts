@@ -39,14 +39,12 @@ export async function POST(request: NextRequest) {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(body),
+        signal: request.signal,
       }
     );
 
     const rawText = await response.text();
 
-    console.log("=== Evaluation BE Response ===");
-    console.log("Status:", response.status);
-    console.log("Body:", rawText);
 
     if (!rawText) {
       return NextResponse.json(
