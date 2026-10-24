@@ -123,3 +123,73 @@ export interface ReviewedEvaluationFilters {
   sortBy: string;
 }
 
+export const generalHrStatusOptions = [
+  { value: EvaluationStatus.Unknown, label: "Không xác định" },
+  { value: EvaluationStatus.Drafted, label: "Lưu nháp" },
+  { value: EvaluationStatus.Rejected, label: "Bị từ chối" },
+  { value: EvaluationStatus.DirectManagerReviewing, label: "Quản lý trực tiếp đang duyệt" },
+  { value: EvaluationStatus.HRReviewing, label: "HR đang duyệt" },
+  { value: EvaluationStatus.CompileHRList, label: "Đã đánh giá xong" },
+  { value: EvaluationStatus.ManagerSeniorReviewing, label: "Quản lý cấp cao đang duyệt" },
+  { value: EvaluationStatus.SentHR, label: "QLCC đã duyệt" },
+  { value: EvaluationStatus.Imported, label: "Đã được import" },
+] as const;
+
+export interface GeneralHrEvaluationRequest {
+  Page: number;
+  PageSize: number;
+  Filters: {
+    keyword?: string;
+    departmentid?: string;
+    status: string;
+    companyid?: string;
+    evaluationtypeid?: string;
+    periodid?: string;
+    userapprove?: string;
+    sortOrder?: "asc" | "desc";
+    sortBy?: string;
+  };
+}
+
+export interface GeneralHrStatusChange {
+  EvalId: number;
+  Status: number;
+  Reason?: string | null;
+}
+
+export interface GeneralHrEvaluationDto {
+  id: number;
+  userId: string;
+  name: string;
+  status: string;
+  templateId?: number | null;
+  systemCode?: string | null;
+  companyCode?: string | null;
+  departmentName?: string | null;
+  period?: string | null;
+  templateName?: string | null;
+  submitDate?: string | null;
+  strDirectManager?: string | null;
+}
+
+export interface ApprovalHistoryEntry {
+  approvalId: number;
+  approverName?: string | null;
+  approverUserId?: string | null;
+  approvalLevel?: string | null;
+  status: string;
+  statusValue?: string | null;
+  comment?: string | null;
+  createdAt: string;
+}
+
+export interface EvaluationApprover {
+  id: number;
+  userName: string;
+  userId?: string | null;
+  systemCode?: string | null;
+  status: string;
+  isApprove: boolean;
+  approvalDate?: string | null;
+  message?: string | null;
+}
