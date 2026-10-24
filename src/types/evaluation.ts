@@ -95,3 +95,31 @@ export interface EvaluationTypeOption extends EvaluationFilterOption {
 
 export type ReviewRole = UserRoleSystem.ManagerMid | UserRoleSystem.HR;
 
+export interface ReviewedEvaluationDto {
+  id: number;
+  employeeCode: string | null;
+  employeeName: string | null;
+  departmentName: string | null;
+  periodLabel: string | null;
+  status: string;
+  approvedDate: string | null;
+  approverName: string | null;
+  rejectedReason: string | null;
+  totalScore: number | null;
+  managerSocre: number | null;
+  band: string | null;
+  evalid: number;
+}
+
+export interface ReviewedEvaluationFilters {
+  keyword: string;
+  companyId: string;
+  departmentId: string;
+  typeId: string;
+  periodId: string;
+  status: string;
+  from: string;
+  to: string;
+  sortBy: string;
+}
+
