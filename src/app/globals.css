@@ -2,13 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "DeocaUI";
+  src: url("/fonts/manrope.ttf") format("truetype");
+  font-weight: 200 800;
+  font-display: swap;
+}
+
 :root {
+  --app-header-height: 76px;
   /* Deoca palette from QLTS.Web; RGB channels support Tailwind opacity. */
-  --deoca-primary-rgb: 19 31 107;             /* #131F6B */
-  --deoca-primary-light-rgb: 26 42 138;       /* #1A2A8A */
-  --deoca-primary-highlight-rgb: 42 63 155;  /* #2A3F9B */
-  --deoca-accent-rgb: 212 32 32;              /* #D42020 */
-  --deoca-accent-hover-rgb: 184 26 26;        /* #B81A1A */
+  --deoca-primary-rgb: 19 31 107; /* #131F6B */
+  --deoca-primary-light-rgb: 26 42 138; /* #1A2A8A */
+  --deoca-primary-highlight-rgb: 42 63 155; /* #2A3F9B */
+  --deoca-accent-rgb: 212 32 32; /* #D42020 */
+  --deoca-accent-hover-rgb: 184 26 26; /* #B81A1A */
   --primary: rgb(var(--deoca-primary-rgb));
   --primary-light: rgb(var(--deoca-primary-light-rgb));
   --primary-highlight: rgb(var(--deoca-primary-highlight-rgb));
@@ -28,7 +36,19 @@
   --color-on-brand: 255 255 255;
   --color-on-brand-muted: 255 255 255 / 0.75;
   --color-on-brand-subtle: 255 255 255 / 0.55;
-  --shadow-card: 0 18px 48px rgb(var(--deoca-primary-rgb) / 0.10);
+  --shadow-card: 0 18px 48px rgb(var(--deoca-primary-rgb) / 0.1);
+  --panel-paper: #fff;
+  --panel-well: #e9edf4;
+  --panel-muted: #5c6b82;
+  --panel-shadow: 44 61 100;
+  --panel-light: 255 255 255;
+  --panel-solid: rgb(var(--deoca-primary-rgb));
+  --panel-on-solid: #fff;
+  --panel-depth:
+    0 16px 36px rgb(var(--panel-shadow) / 0.08), 0 3px 7px rgb(var(--panel-shadow) / 0.035);
+  --panel-recess:
+    inset 3px 3px 7px rgb(var(--panel-shadow) / 0.09),
+    inset -3px -3px 7px rgb(var(--panel-light) / 0.85);
 }
 
 html.dark {
@@ -45,10 +65,44 @@ html.dark {
   --color-border: 51 65 85;
   --color-on-brand: 255 255 255;
   --shadow-card: 0 18px 48px rgb(0 0 0 / 0.25);
+  --panel-paper: #131e2f;
+  --panel-well: #0b1422;
+  --panel-muted: #a9b8d0;
+  --panel-shadow: 0 0 0;
+  --panel-light: 61 81 115;
+  --panel-solid: #a3b7ff;
+  --panel-on-solid: #14234d;
+  --panel-depth: 0 18px 40px rgb(0 0 0 / 0.22), 0 2px 6px rgb(0 0 0 / 0.12);
+  --panel-recess: inset 3px 3px 8px rgb(0 0 0 / 0.3), inset -2px -2px 5px rgb(61 81 115 / 0.13);
 }
 
-* { box-sizing: border-box; }
-html { min-height: 100%; }
-body { margin: 0; min-height: 100vh; background: rgb(var(--color-page)); color: rgb(var(--color-text)); font-family: Arial, Helvetica, sans-serif; transition: background-color 180ms ease, color 180ms ease; }
-button, input { font: inherit; }
-button { cursor: pointer; }
+* {
+  box-sizing: border-box;
+}
+html {
+  min-height: 100%;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: rgb(var(--color-page));
+  color: rgb(var(--color-text));
+  font-family: Arial, Helvetica, sans-serif;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+button,
+input {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+
+@media (max-width: 1023px) {
+  :root { --app-header-height: 72px; }
+}
+@media (max-width: 600px) {
+  :root { --app-header-height: 68px; }
+}
