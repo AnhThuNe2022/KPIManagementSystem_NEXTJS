@@ -61,6 +61,29 @@ export enum UserRoleSystem {
   Unknown,
 }
 
+export interface PendingEvaluationDto {
+  id: number;
+  userCode: string | null;
+  userName: string | null;
+  departmentName: string | null;
+  periodLabel: string | null;
+  submittedDate: string | null;
+  selfScore: number | null;
+  status: string;
+  sysTemCode: string | null;
+  stepId: number;
+  isRejected: boolean;
+  reason: string | null;
+  companyCode: string | null;
+}
+
+export interface PendingEvaluationFilters {
+  keyword: string;
+  companyId: string;
+  departmentId: string;
+  periodId: string;
+}
+
 export interface EvaluationFilterOption {
   id: string;
   name: string;
