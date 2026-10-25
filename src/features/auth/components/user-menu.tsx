@@ -2,10 +2,12 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import styles from "./user-menu.module.css";
 
 export function UserMenu({ userName }: { userName: string }) {
   const router = useRouter();
+  const { logout: logoutSession } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const menuId = useId();
@@ -35,14 +37,7 @@ export function UserMenu({ userName }: { userName: string }) {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Logout failed");
-      }
+      await logoutSession();
 
       router.replace("/login");
       router.refresh();

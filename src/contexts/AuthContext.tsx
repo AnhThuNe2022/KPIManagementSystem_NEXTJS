@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -43,8 +44,10 @@ export function AuthProvider({
 
   const [isLoading, setIsLoading] =
     useState(true);
+  const refreshVersion = useRef(0);
 
   const refresh = async () => {
+    const version = ++refreshVersion.current;
 
     try {
 
@@ -58,6 +61,7 @@ export function AuthProvider({
           }
         );
 
+      if (version !== refreshVersion.current) return;
       if (!response.ok) {
         setUser(null);
         return;
@@ -66,15 +70,15 @@ export function AuthProvider({
       const data =
         await response.json();
 
-      setUser(data.user);
+      if (version === refreshVersion.current) setUser(data.user);
 
     } catch {
 
-      setUser(null);
+      if (version === refreshVersion.current) setUser(null);
 
     } finally {
 
-      setIsLoading(false);
+      if (version === refreshVersion.current) setIsLoading(false);
     }
   };
 
@@ -84,7 +88,7 @@ export function AuthProvider({
 
   const logout = async () => {
 
-    await fetch(
+    const response = await fetch(
       "/api/auth/logout",
       {
         method: "POST",
@@ -92,7 +96,11 @@ export function AuthProvider({
       }
     );
 
+    if (!response.ok) throw new Error("Logout failed");
+
+    refreshVersion.current++;
     setUser(null);
+    setIsLoading(false);
   };
 
   return (

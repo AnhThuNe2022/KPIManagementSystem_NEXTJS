@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   CompanyDto,
@@ -114,29 +114,22 @@ const initialManager: ManagerOption | null =
       }
     : null;
 
-  const loadDepartments = useCallback(
-    async (companyId?: number) => {
-      if (!companyId) {
-        setDepartmentOptions([]);
-        return;
-      }
+  useEffect(() => {
+    setDepartmentOptions([]);
+    if (!open || !form.companyId) return;
 
-      try {
-        const result =
-          await departmentApi.getAll(companyId);
-
-        setDepartmentOptions(result ?? []);
-      } catch (error) {
-        console.error(
-          "Load departments failed:",
-          error
-        );
-
-        setDepartmentOptions([]);
-      }
-    },
-    []
-  );
+    let active = true;
+    departmentApi.getAll(form.companyId)
+      .then(result => {
+        if (active) setDepartmentOptions(result ?? []);
+      })
+      .catch(error => {
+        if (!active) return;
+        console.error("Load departments failed:", error);
+        setErrors(prev => ({ ...prev, departmentId: "Không thể tải danh sách phòng ban." }));
+      });
+    return () => { active = false; };
+  }, [open, form.companyId]);
 
   /**
    * ==========================================
@@ -159,18 +152,11 @@ useEffect(() => {
   setForm(nextForm);
   setErrors({});
   setIsSubmitting(false);
-
-  if (nextForm.companyId) {
-    loadDepartments(nextForm.companyId);
-  } else {
-    setDepartmentOptions([]);
-  }
 }, [
   open,
   model,
   userId,
   hasPrimaryAssignment,
-  loadDepartments,
 ]);
   /**
    * ==========================================
@@ -311,7 +297,7 @@ useEffect(() => {
     }));
   };
 
-  const handleCompanyChanged = async (
+  const handleCompanyChanged = (
     company?: CompanyDto
   ) => {
     setForm(prev => ({
@@ -339,25 +325,6 @@ useEffect(() => {
       departmentId: undefined,
       managerId: undefined,
     }));
-
-    if (!company?.id) {
-      setDepartmentOptions([]);
-      return;
-    }
-
-    try {
-      await loadDepartments(company.id);
-    } catch (error) {
-      console.error("Load departments error:", error);
-
-      setDepartmentOptions([]);
-
-      setErrors(prev => ({
-        ...prev,
-        departmentId:
-          "Không thể tải danh sách phòng ban.",
-      }));
-    }
   };
 
   const handleDepartmentChange = (

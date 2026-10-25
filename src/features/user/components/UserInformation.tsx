@@ -211,7 +211,9 @@ export default function UserInforPage() {
 
   setAssignments(prev => {
     const index = prev.findIndex(
-      item => item.id === assignment.id
+      item => assignment.id != null
+        ? item.id === assignment.id
+        : item === editingAssignment
     );
 
     if (index === -1) {

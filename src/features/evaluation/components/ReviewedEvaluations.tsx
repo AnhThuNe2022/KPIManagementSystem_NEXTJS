@@ -67,6 +67,8 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
   const [types, setTypes] = useState<EvaluationTypeOption[]>([]);
   const [lookupsBusy, setLookupsBusy] = useState(true);
   const [lookupError, setLookupError] = useState("");
+  const [departmentBusy, setDepartmentBusy] = useState(false);
+  const [departmentError, setDepartmentError] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const requestKey = JSON.stringify({ level, page, pageSize, ...applied });
   const ready = snapshot?.key === requestKey;
@@ -130,14 +132,12 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
     setLookupError("");
     Promise.allSettled([
       evaluationLookupApi.getCompanies(level, controller.signal),
-      hr ? evaluationLookupApi.getDepartments("", level, controller.signal) : Promise.resolve([]),
       hr ? evaluationLookupApi.getTypes(controller.signal) : Promise.resolve([]),
-    ]).then(([companyResult, departmentResult, typeResult]) => {
+    ]).then(([companyResult, typeResult]) => {
       if (controller.signal.aborted) return;
       setCompanies(companyResult.status === "fulfilled" ? companyOptions(companyResult.value) : []);
-      setDepartments(departmentResult.status === "fulfilled" ? periodOptions(departmentResult.value) : []);
       setTypes(typeResult.status === "fulfilled" ? evaluationTypeOptions(typeResult.value) : []);
-      const failed = [companyResult, departmentResult, typeResult].find(
+      const failed = [companyResult, typeResult].find(
         (result) => result.status === "rejected",
       );
       if (failed?.status === "rejected")
@@ -146,6 +146,27 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
     });
     return () => controller.abort();
   }, [level, hr, lookupRevision]);
+
+  useEffect(() => {
+    setDepartments([]);
+    setDepartmentError("");
+    if (!hr) return;
+
+    const controller = new AbortController();
+    setDepartmentBusy(true);
+    evaluationLookupApi.getDepartments(filters.companyId, level, controller.signal)
+      .then(result => {
+        if (!controller.signal.aborted) setDepartments(periodOptions(result));
+      })
+      .catch((cause: unknown) => {
+        if (!controller.signal.aborted)
+          setDepartmentError(requestMessage(cause, "Chưa tải được danh sách phòng ban."));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setDepartmentBusy(false);
+      });
+    return () => controller.abort();
+  }, [filters.companyId, level, hr, lookupRevision]);
 
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -250,12 +271,12 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
             <div className={styles.control}>
               <select
                 value={filters.departmentId}
-                disabled={lookupsBusy || !departments.length}
+                disabled={lookupsBusy || departmentBusy || !departments.length}
                 onChange={(event) =>
                   setFilters((value) => ({ ...value, departmentId: event.target.value }))
                 }
               >
-                <option value="">{lookupsBusy ? "Đang tải…" : "Tất cả phòng ban"}</option>
+                <option value="">{lookupsBusy || departmentBusy ? "Đang tải…" : "Tất cả phòng ban"}</option>
                 {departments.map((option) => (
                   <option key={option.id} value={option.id}>
                     {option.name}
@@ -362,10 +383,10 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
             {filterError}
           </p>
         )}
-        {lookupError && (
+        {(lookupError || departmentError) && (
           <div className={styles.error} role="alert">
             <InfoCircledIcon aria-hidden="true" />
-            <span>{lookupError}</span>
+            <span>{lookupError || departmentError}</span>
             <button type="button" onClick={() => setLookupRevision((value) => value + 1)}>
               Thử lại
             </button>

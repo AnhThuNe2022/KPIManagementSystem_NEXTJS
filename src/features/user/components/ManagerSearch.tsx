@@ -146,6 +146,9 @@ useEffect(() => {
     /*
      * Debounce 1000ms
      */
+    let active = true;
+    setOptions([]);
+    setOpen(false);
     const timer =
       setTimeout(async () => {
         try {
@@ -156,6 +159,8 @@ useEffect(() => {
               userId,
               searchKeyword
             );
+
+          if (!active) return;
 
           /*
            * Backend trả về ARRAY trực tiếp.
@@ -252,6 +257,7 @@ useEffect(() => {
           setOptions(items);
           setOpen(true);
         } catch (error) {
+          if (!active) return;
           console.error(
             "Manager search error:",
             error
@@ -265,11 +271,12 @@ useEffect(() => {
            */
           setOpen(true);
         } finally {
-          setLoading(false);
+          if (active) setLoading(false);
         }
       }, 1000);
 
     return () => {
+      active = false;
       clearTimeout(timer);
     };
   }, [

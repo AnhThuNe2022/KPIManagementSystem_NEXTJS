@@ -4,10 +4,12 @@ import { useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Errors = { username?: string; password?: string };
 export function LoginForm() {
   const router = useRouter(); const params = useSearchParams();
+  const { refresh } = useAuth();
   const [username, setUsername] = useState(""); const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false); const [errors, setErrors] = useState<Errors>({});
   const [serverError, setServerError] = useState(""); const [loading, setLoading] = useState(false);
@@ -22,7 +24,12 @@ export function LoginForm() {
       const response = await fetch("/api/auth/login",
         { method: "POST", headers: { "Content-Type": "application/json" },
          credentials: "include", body: JSON.stringify({ username, password }) });
-      const data = await response.json() as { message?: string }; if (!response.ok) throw new Error(data.message); router.replace(params.get("next") || "/dashboard"); router.refresh(); }
+      const data = await response.json() as { message?: string };
+      if (!response.ok) throw new Error(data.message);
+      await refresh();
+      router.replace(params.get("next") || "/dashboard");
+      router.refresh();
+    }
     catch (error) { setServerError(error instanceof Error ? error.message : "Không thể đăng nhập. Vui lòng thử lại."); }
     finally { setLoading(false); }
   }
