@@ -83,8 +83,7 @@
 }
 .createButton,
 .viewButton,
-.editButton,
-.pageButton {
+.editButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -250,44 +249,6 @@
   width: 14px;
   height: 14px;
 }
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 18px 2px 0;
-}
-.pageInfo {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 9px 20px;
-  color: rgb(var(--color-muted));
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-}
-.pageNumber {
-  padding-left: 20px;
-  border-left: 1px solid rgb(var(--color-border));
-}
-.pageActions {
-  display: flex;
-  gap: 7px;
-}
-.pageButton {
-  min-height: 36px;
-  padding: 8px 10px;
-  color: rgb(var(--color-muted));
-  background: rgb(var(--color-surface) / 0.65);
-  font-size: 11px;
-}
-.pageButton svg {
-  width: 14px;
-  height: 14px;
-}
-.pageButton:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
 .empty {
   display: flex;
   flex-direction: column;
@@ -354,8 +315,7 @@
     background: rgb(var(--deoca-primary-light-rgb));
   }
   .viewButton:hover,
-  .editButton:hover,
-  .pageButton:hover:not(:disabled) {
+  .editButton:hover {
     color: rgb(var(--color-brand));
     border-color: rgb(var(--color-brand) / 0.3);
     background: rgb(var(--color-brand) / 0.075);
@@ -366,8 +326,7 @@
 }
 .createButton:active,
 .viewButton:active,
-.editButton:active,
-.pageButton:active:not(:disabled) {
+.editButton:active {
   transform: scale(0.98);
 }
 .page button:focus-visible:active {
@@ -473,14 +432,6 @@
     flex: 1;
     min-height: 44px;
   }
-  .pagination {
-    flex-wrap: wrap;
-    gap: 14px;
-    padding-top: 16px;
-  }
-  .pageActions {
-    margin-left: auto;
-  }
 }
 @container evaluations (max-width: 440px) {
   .table td:nth-child(3),
@@ -509,21 +460,6 @@
     font-size: 10px;
     letter-spacing: 0.09em;
   }
-  .pageInfo {
-    width: 100%;
-    justify-content: space-between;
-  }
-  .pageNumber {
-    border: 0;
-    padding-left: 0;
-  }
-  .pageActions {
-    width: 100%;
-  }
-  .pageButton {
-    flex: 1;
-    min-height: 40px;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .page button {
@@ -531,8 +467,7 @@
   }
   .createButton:active,
   .viewButton:active,
-  .editButton:active,
-  .pageButton:active:not(:disabled) {
+  .editButton:active {
     transform: none;
   }
 }

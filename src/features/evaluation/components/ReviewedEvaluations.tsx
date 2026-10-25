@@ -29,7 +29,7 @@ import {
   type ReviewRole,
 } from "@/types/evaluation";
 import styles from "../evaluation-common.module.css";
-import { EvaluationPagination } from "./EvaluationPagination";
+import { Pagination } from "@/components/ui/pagination";
 import { formatEvaluationDate, requestMessage, companyOptions, periodOptions, evaluationTypeOptions } from "../evaluationDisplay";
 import reviewed from "../reviewed-evaluations.module.css";
 
@@ -504,7 +504,8 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
             </table>
           </div>
         )}
-        <EvaluationPagination
+        <Pagination
+          itemLabel="bản đánh giá"
           page={page}
           pageSize={pageSize}
           total={data?.total ?? null}

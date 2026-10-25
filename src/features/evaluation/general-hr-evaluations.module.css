@@ -195,9 +195,6 @@
 .actionMenu button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 43px; padding: 9px 10px; border: 0; border-radius: 7px; color: var(--hr-text); background: transparent; font: inherit; font-size: 13px; text-align: left; }
 .actionMenu button svg { width: 16px; height: 16px; }
 .actionMenu .dangerMenuItem { color: var(--hr-danger); }
-.pagination footer { border-top: 1px solid var(--hr-line); padding: 17px 24px; }
-.pagination footer > p, .pagination footer label { font-size: 13px; }
-.pagination footer select { font-size: 13px; }
 .pageNote { display: flex; align-items: center; gap: 7px; margin: 16px 3px 0; color: var(--hr-muted); font-size: 13px; }
 .pageNote svg { width: 14px; height: 14px; }
 .skeletons { padding: 0 24px; }
@@ -574,8 +571,6 @@
   .mobileActions button:not(:disabled):active { background: var(--hr-soft); }
   .organizationCell { flex-wrap: wrap; text-align: left; }
   .recordsLayout .employee strong, .recordsLayout .employee > div > span { white-space: normal; overflow-wrap: anywhere; }
-  .pagination footer { padding: 16px 20px; gap: 12px; }
-  .page .pagination footer select { font-size: 16px; }
   .pageNote { align-items: flex-start; font-size: 13px; line-height: 1.8; }
   .pageNote svg { margin-top: 3px; }
   .status { font-size: 13px; }

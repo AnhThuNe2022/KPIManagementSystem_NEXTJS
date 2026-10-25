@@ -10,7 +10,7 @@ import { evaluationLookupApi } from "../services/evaluationLookupApi";
 import { loadGeneralHrExport, createGeneralHrWorkbook } from "../generalHrExport";
 import { generalHrStatusOptions, UserRoleSystem, type ApprovalHistoryEntry, type EvaluationApprover, type EvaluationFilterOption, type EvaluationTypeOption, type GeneralHrEvaluationDto, type GeneralHrEvaluationRequest, type PagedResult } from "@/types/evaluation";
 import { formatEvaluationDate, requestMessage, companyOptions, periodOptions, evaluationTypeOptions, statusKey, hrStatusLabel } from "../evaluationDisplay";
-import { EvaluationPagination } from "./EvaluationPagination";
+import { Pagination } from "@/components/ui/pagination";
 import s from "../general-hr-evaluations.module.css";
 
 function statusTone(value: string | number) {
@@ -286,7 +286,7 @@ export function GeneralHrEvaluations() {
           </tr>;
           })}</tbody></table></div>}
       </div>
-      <div className={s.pagination}><EvaluationPagination page={page} pageSize={pageSize} total={data?.total ?? null} loading={loading} error={!!error} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} /></div>
+      <Pagination itemLabel="bản đánh giá" page={page} pageSize={pageSize} total={data?.total ?? null} loading={loading} error={!!error} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} />
     </div>
     {trackedRow && <HrTrackingPanel key={trackedRow.id + ":" + revision} row={trackedRow} onClose={() => { setTrackingOpen(false); document.querySelector<HTMLButtonElement>('[data-track-id="' + trackedRow.id + '"]')?.focus({ preventScroll: true }); }} onHistory={() => openDialog("history", trackedRow)} onApprovers={() => openDialog("approvers", trackedRow)} />}
     </div>

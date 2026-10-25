@@ -28,7 +28,7 @@ import {
 } from "@/types/evaluation";
 import styles from "../evaluation-common.module.css";
 import pending from "../pending-evaluations.module.css";
-import { EvaluationPagination } from "./EvaluationPagination";
+import { Pagination } from "@/components/ui/pagination";
 import { evaluationLookupApi } from "../services/evaluationLookupApi";
 import { formatEvaluationDate, requestMessage, companyOptions, periodOptions, evaluationTypeOptions } from "../evaluationDisplay";
 
@@ -516,7 +516,8 @@ export function PendingEvaluations({
             </table>
           </div>
         )}
-        <EvaluationPagination
+        <Pagination
+          itemLabel="bản đánh giá"
           page={page}
           pageSize={pageSize}
           total={data?.total ?? null}

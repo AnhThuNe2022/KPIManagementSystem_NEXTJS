@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { ActivityLogIcon, ArrowLeftIcon, ArrowRightIcon, CalendarIcon, FileTextIcon, LayersIcon, MixIcon, PlusIcon } from "@radix-ui/react-icons";
+import { ActivityLogIcon, CalendarIcon, FileTextIcon, LayersIcon, MixIcon, PlusIcon } from "@radix-ui/react-icons";
+import { Pagination } from "@/components/ui/pagination";
 import styles from "../evaluation-list.module.css";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -17,12 +18,8 @@ export default function EvaluationList() {
   const [items, setItems] = useState<EvaluationDto[]>([]);
 
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
-
-  const totalPages = useMemo(() => {
-    return Math.max(1, Math.ceil(totalCount / pageSize));
-  }, [totalCount, pageSize]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -62,18 +59,6 @@ export default function EvaluationList() {
 
   const createNew = () => {
     router.push("/kpievaluation");
-  };
-
-  const nextPage = () => {
-    if (page < totalPages) {
-      setPage((current) => current + 1);
-    }
-  };
-
-  const prevPage = () => {
-    if (page > 1) {
-      setPage((current) => current - 1);
-    }
   };
 
   if (loading) {
@@ -347,39 +332,15 @@ export default function EvaluationList() {
         </div>
       </div>
 
-      {/* PAGINATION */}
-      <div
-        className={styles.pagination}
-      >
-        <div
-          className={styles.pageInfo}
-        >
-          <span>{totalCount} bản đánh giá</span>
-          <span className={styles.pageNumber}>Trang {page} / {totalPages}</span>
-        </div>
-
-        <div className={styles.pageActions}>
-          <button
-            type="button"
-            disabled={page <= 1}
-            onClick={prevPage}
-            className={styles.pageButton}
-          >
-            <ArrowLeftIcon aria-hidden="true" />
-            Trước
-          </button>
-
-          <button
-            type="button"
-            disabled={page >= totalPages}
-            onClick={nextPage}
-            className={styles.pageButton}
-          >
-            Sau
-            <ArrowRightIcon aria-hidden="true" />
-          </button>
-        </div>
-      </div>
+      <Pagination
+        itemLabel="bản đánh giá"
+        page={page}
+        pageSize={pageSize}
+        total={totalCount}
+        loading={loading}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+      />
     </div>
   );
 }

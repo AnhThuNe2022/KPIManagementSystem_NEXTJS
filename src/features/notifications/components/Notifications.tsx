@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeftIcon,
   ArrowRightIcon,
   BellIcon,
   CalendarIcon,
@@ -24,6 +23,7 @@ import { notificationApi, NOTIFICATIONS_CHANGED } from "@/features/user/service/
 import type { NotificationItem, NotificationPage } from "@/types/notification";
 import styles from "../notifications.module.css";
 import { searchText, internalNotificationLink } from "@/features/notifications/notificationUtils";
+import { Pagination } from "@/components/ui/pagination";
 
 type Status = "all" | "unread" | "read";
 const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
@@ -81,7 +81,6 @@ export function Notifications() {
     ? matches.slice((currentPage - 1) * pageSize, currentPage * pageSize)
     : matches;
   const disabled = busy || loading || !ready;
-  const firstPage = Math.max(1, Math.min(currentPage - 2, pageCount - 4));
   const readCount = Math.max(0, (data?.total ?? 0) - (data?.unreadCount ?? 0));
   const groups = new Map<string, NotificationItem[]>();
   for (const item of items) {
@@ -501,75 +500,18 @@ export function Notifications() {
             )}
           </div>
 
-          <footer className={styles.footer}>
-            <p role="status" aria-live="polite">
-              {!ready ? (
-                error ? (
-                  "Chưa cập nhật"
-                ) : (
-                  "Đang tải…"
-                )
-              ) : total ? (
-                <>
-                  <strong>
-                    {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, total)}
-                  </strong>{" "}
-                  / {total} thông báo
-                </>
-              ) : (
-                "0 thông báo"
-              )}
-            </p>
-            <label className={styles.pageSize}>
-              Mỗi trang
-              <select
-                value={pageSize}
-                disabled={busy}
-                onChange={(event) => {
-                  setPageSize(Number(event.target.value));
-                  setPage(1);
-                }}
-              >
-                {[10, 20].map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <nav className={styles.pagination} aria-label="Phân trang thông báo">
-              <button
-                type="button"
-                disabled={disabled || currentPage <= 1}
-                aria-label="Trang trước"
-                onClick={() => setPage(currentPage - 1)}
-              >
-                <ArrowLeftIcon aria-hidden="true" />
-              </button>
-              {Array.from({ length: Math.min(5, pageCount) }, (_, index) => firstPage + index).map(
-                (value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    aria-label={`Trang ${value}`}
-                    aria-current={currentPage === value ? "page" : undefined}
-                    disabled={disabled}
-                    onClick={() => setPage(value)}
-                  >
-                    {value}
-                  </button>
-                ),
-              )}
-              <button
-                type="button"
-                disabled={disabled || currentPage >= pageCount}
-                aria-label="Trang sau"
-                onClick={() => setPage(currentPage + 1)}
-              >
-                <ArrowRightIcon aria-hidden="true" />
-              </button>
-            </nav>
-          </footer>
+          <Pagination
+            itemLabel="thông báo"
+            page={currentPage}
+            pageSize={pageSize}
+            total={ready ? total : null}
+            loading={loading}
+            error={Boolean(error) && !ready}
+            disabled={busy || !ready}
+            pageSizeOptions={[10, 20]}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+          />
         </section>
       </div>
 

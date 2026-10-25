@@ -88,8 +88,7 @@
   white-space: nowrap;
 }
 .button svg,
-.iconButton svg,
-.pagination svg {
+.iconButton svg {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
@@ -681,69 +680,6 @@
 .rowActions .danger {
   color: var(--panel-muted);
 }
-.footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px;
-  padding: 16px 24px;
-  border-top: 1px solid rgb(var(--color-border) / 0.55);
-  background: rgb(var(--color-page) / 0.3);
-}
-.footer > p {
-  flex: 1;
-  margin: 0;
-  color: var(--panel-muted);
-  font-size: 11px;
-  white-space: nowrap;
-}
-.footer strong {
-  color: var(--inbox-ink);
-  font-weight: 750;
-}
-.pageSize {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--panel-muted);
-  font-size: 11px;
-  white-space: nowrap;
-}
-.pageSize select {
-  min-width: 60px;
-  min-height: 36px;
-  padding: 7px 9px;
-  border: 1px solid rgb(var(--color-border));
-  border-radius: 9px;
-  background: var(--panel-paper);
-  color: var(--inbox-ink);
-  font: inherit;
-  cursor: pointer;
-}
-.pagination {
-  display: flex;
-  gap: 4px;
-}
-.pagination button {
-  display: grid;
-  place-items: center;
-  min-width: 32px;
-  height: 36px;
-  padding: 0 8px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--panel-muted);
-  font-size: 11px;
-}
-.pagination button[aria-current="page"] {
-  background: var(--panel-solid);
-  color: var(--panel-on-solid);
-  box-shadow:
-    0 3px 7px rgb(var(--deoca-primary-rgb) / 0.14),
-    inset 0 1px 0 rgb(255 255 255 / 0.15);
-  font-weight: 700;
-}
 .page button:not(.message > button):disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -948,13 +884,11 @@
 @media (hover: hover) and (pointer: fine) {
   .button:hover,
   .iconButton:hover,
-  .pagination button:hover,
   .search button:hover {
     background: rgb(var(--color-brand) / 0.075);
     color: var(--inbox-brand);
   }
-  .primary:hover,
-  .pagination button[aria-current="page"]:hover {
+  .primary:hover {
     background: var(--panel-solid);
     color: var(--panel-on-solid);
     box-shadow: 0 6px 14px rgb(var(--deoca-primary-rgb) / 0.22);
@@ -996,10 +930,6 @@
   }
   .groups {
     padding-inline: 10px;
-  }
-  .footer {
-    padding-inline: 18px;
-    gap: 12px;
   }
 }
 @media (max-width: 1000px) {
@@ -1169,23 +1099,6 @@
     gap: 4px 9px;
     font-size: 10px;
   }
-  .footer {
-    gap: 12px;
-    padding: 15px 16px;
-  }
-  .pagination {
-    width: 100%;
-    justify-content: center;
-    gap: 5px;
-  }
-  .pagination button {
-    min-width: 38px;
-    height: 40px;
-  }
-  .pageSize select {
-    min-height: 40px;
-    font-size: 16px;
-  }
   .empty {
     min-height: 330px;
     padding-inline: 22px;
@@ -1228,12 +1141,10 @@
   }
 }
 @media (pointer: coarse) {
-  .search input,
-  .pageSize select {
+  .search input {
     font-size: 16px;
   }
-  .iconButton,
-  .pagination button {
+  .iconButton {
     min-width: 44px;
     height: 44px;
   }
@@ -1243,9 +1154,6 @@
   .search button {
     width: 44px;
     height: 44px;
-  }
-  .pageSize select {
-    min-height: 44px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
