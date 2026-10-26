@@ -152,7 +152,7 @@ const navigation: NavigationItem[] = [
     icon: <><rect x="3" y="3" width="18" height="18" rx="3" /><path d="M7 16v-4m5 4V8m5 8v-6" /></>,
     children: [{
       label: "Danh sách đánh giá",
-      href: "/hr/evaluations",
+      href: "/admin/evaluationList",
       icon: <><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 8h6m-6 4h6m-6 4h3" /></>,
     }],
   },
@@ -567,7 +567,6 @@ export function Sidebar() {
             {flyoutItem.children ? (
               <nav className={styles.flyoutLinks} aria-label={flyoutItem.label}>
                 {renderSubitems(flyoutItem, flyoutIndex ?? lastFlyoutIndex)}
-                {flyoutItem.children.length % 2 !== 0 && <span aria-hidden="true" />}
               </nav>
             ) : (
               <span className={styles.flyoutHint}>{flyoutItem.label}</span>

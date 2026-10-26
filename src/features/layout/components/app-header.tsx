@@ -18,7 +18,7 @@ const headerPages: Record<string, readonly [string, string]> = {
   "/manager/reviewed": ["Quản lý", "Danh sách NS đã đánh giá"],
   "/hr/pending": ["Quản lý Nhân sự", "Danh sách chờ nhận xét"],
   "/hr/reviewed": ["Quản lý Nhân sự", "Đã nhận xét"],
-  "/hr/evaluations": ["HR tổng hợp", "Danh sách đánh giá"],
+  "/admin/evaluationList": ["HR tổng hợp", "Danh sách đánh giá"],
 };
 
 export function AppHeader({ userName }: { userName: string }) {

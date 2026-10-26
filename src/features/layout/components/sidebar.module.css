@@ -577,15 +577,6 @@
   grid-auto-rows: minmax(52px, 1fr);
   gap: 8px;
 }
-.flyoutLinks::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  inset-inline: 12px;
-  height: 1px;
-  background: var(--line);
-  pointer-events: none;
-}
 .flyoutLinks .subitem {
   min-height: 52px;
   gap: 12px;

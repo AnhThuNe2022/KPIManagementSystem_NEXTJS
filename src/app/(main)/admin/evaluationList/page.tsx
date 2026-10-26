@@ -6,6 +6,6 @@ import { GeneralHrEvaluations } from "@/features/evaluation/components/GeneralHr
 export const metadata = { title: "Theo dõi đánh giá | Đèo Cả" };
 
 export default async function GeneralHrPage() {
-  if (!(await cookies()).has(appConfig.authCookieName)) redirect("/login?next=/hr/evaluations");
+  if (!(await cookies()).has(appConfig.authCookieName)) redirect("/login?next=/admin/evaluationList");
   return <GeneralHrEvaluations />;
 }
