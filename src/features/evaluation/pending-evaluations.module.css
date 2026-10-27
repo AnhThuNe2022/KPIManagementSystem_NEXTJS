@@ -54,12 +54,12 @@
 .companyLogo { display: block; width: 32px; height: 32px; flex-shrink: 0; object-fit: contain; object-position: center; }
 .company { display: inline-block; padding: 2px 6px; border: 1px solid rgb(var(--color-brand) / .15); border-radius: 4px; color: rgb(var(--color-brand)); background: rgb(var(--color-brand) / .05); font-size: 11px; font-weight: 750; }
 .department { display: block; margin-top: 6px; color: var(--panel-muted); font-size: 12px; overflow-wrap: anywhere; }
-.periodIdentity { display: flex; align-items: flex-start; gap: 10px; }
+.periodIdentity { display: flex; align-items: center; gap: 10px; }
 .periodIcon { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 34px; border-radius: 9px; color: var(--pending-purple); background: var(--pending-purple-soft); }
 .periodIcon svg { width: 17px; height: 17px; }
 .period { min-width: 0; font-size: 13px; font-weight: 650; line-height: 1.7; overflow-wrap: anywhere; }
-.date { display: flex; align-items: flex-start; gap: 6px; }
-.date > svg { flex-shrink: 0; width: 13px; height: 13px; margin-top: 3px; color: var(--pending-wait); }
+.date { display: flex; align-items: center; gap: 6px; }
+.date > svg { flex-shrink: 0; width: 13px; height: 13px; color: var(--pending-wait); }
 .page .table time { color: var(--panel-muted); font-size: 12px; line-height: 1.6; }
 .page .status { max-width: 100%; padding: 5px 10px 5px 14px; border-radius: 3px; clip-path: polygon(9px 0, 100% 0, 100% 100%, 9px 100%, 0 50%); color: var(--pending-wait); background: var(--pending-wait-soft); font-size: 12px; font-weight: 700; line-height: 1.5; }
 .page .status[data-rejected="true"] { color: var(--pending-rejected); background: var(--pending-rejected-soft); }

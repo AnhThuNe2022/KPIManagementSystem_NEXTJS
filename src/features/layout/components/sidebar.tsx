@@ -156,6 +156,16 @@ const navigation: NavigationItem[] = [
       icon: <><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 8h6m-6 4h6m-6 4h3" /></>,
     }],
   },
+  {
+    label: "Cấu hình",
+    href: "#",
+    icon: <><path d="m10 3-1 3-3 1-3-1-1 4 2 2-1 3 3 2 3-1 2 2 4-1 1-3 3-1 1-4-3-1-1-3Z" /><circle cx="11" cy="11" r="3" /></>,
+    children: [{
+      label: "Quản lý Permission",
+      href: "/admin/permission",
+      icon: <><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z" /><path d="m8 12 3 3 5-5" /></>,
+    }],
+  },
 ];
 
 export function Sidebar() {
