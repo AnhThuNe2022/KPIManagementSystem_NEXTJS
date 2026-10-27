@@ -30,6 +30,7 @@ import {
 } from "@/types/evaluation";
 import styles from "../evaluation-common.module.css";
 import { Pagination } from "@/components/ui/pagination";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { formatEvaluationDate, requestMessage, companyOptions, periodOptions, evaluationTypeOptions } from "../evaluationDisplay";
 import reviewed from "../reviewed-evaluations.module.css";
 
@@ -242,50 +243,12 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
               />
             </div>
           </label>
-          <label>
-            <span className={styles.srOnly}>Công ty</span>
-            <div className={styles.control}>
-              <select
-                value={filters.companyId}
-                disabled={lookupsBusy || !companies.length}
-                onChange={(event) =>
-                  setFilters((value) => ({
-                    ...value,
-                    companyId: event.target.value,
-                    departmentId: "",
-                  }))
-                }
-              >
-                <option value="">{lookupsBusy ? "Đang tải…" : "Tất cả công ty"}</option>
-                {companies.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDownIcon aria-hidden="true" />
-            </div>
-          </label>
-          {hr && (<label>
-            <span className={styles.srOnly}>Phòng ban</span>
-            <div className={styles.control}>
-              <select
-                value={filters.departmentId}
-                disabled={lookupsBusy || departmentBusy || !departments.length}
-                onChange={(event) =>
-                  setFilters((value) => ({ ...value, departmentId: event.target.value }))
-                }
-              >
-                <option value="">{lookupsBusy || departmentBusy ? "Đang tải…" : "Tất cả phòng ban"}</option>
-                {departments.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDownIcon aria-hidden="true" />
-            </div>
-          </label>)}
+          <div className={reviewed.selectField}>
+            <SearchableSelect id="reviewed-company-filter" label="Công ty" value={filters.companyId} options={companies} placeholder={lookupsBusy ? "Đang tải…" : "Tất cả công ty"} disabled={lookupsBusy || !companies.length} onChange={(companyId) => setFilters((value) => ({ ...value, companyId, departmentId: "" }))} />
+          </div>
+          {hr && <div className={reviewed.selectField}>
+            <SearchableSelect id="reviewed-department-filter" label="Phòng ban" value={filters.departmentId} options={departments} placeholder={lookupsBusy || departmentBusy ? "Đang tải…" : "Tất cả phòng ban"} disabled={lookupsBusy || departmentBusy || !departments.length} onChange={(departmentId) => setFilters((value) => ({ ...value, departmentId }))} />
+          </div>}
           <div className={reviewed.filterButtons}>
             <button type="button" className={styles.button + " " + reviewed.moreFilters} aria-expanded={advancedOpen} aria-controls="reviewed-extra-filters" onClick={() => setAdvancedOpen(!advancedOpen)}><MixerHorizontalIcon aria-hidden="true" />Lọc thêm{advancedCount > 0 && <b>{advancedCount}</b>}<ChevronDownIcon aria-hidden="true" /></button>
             <button className={styles.button + " " + reviewed.clearButton} type="button" onClick={clearFilters} aria-label="Xóa tất cả bộ lọc" title="Xóa tất cả bộ lọc"><ReloadIcon aria-hidden="true" /></button>
@@ -293,55 +256,16 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
           </div>
         </div>
         <div className={reviewed.advancedFilters} id="reviewed-extra-filters" hidden={!advancedOpen}>
-          {hr && <><label>
-            <span>Loại đánh giá</span>
-            <div className={styles.control}>
-              <select
-                value={filters.typeId}
-                disabled={lookupsBusy || !types.length}
-                onChange={(event) =>
-                  setFilters((value) => ({
-                    ...value,
-                    typeId: event.target.value,
-                    periodId: "",
-                  }))
-                }
-              >
-                <option value="">{lookupsBusy ? "Đang tải…" : "Tất cả loại đánh giá"}</option>
-                {types.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDownIcon aria-hidden="true" />
+          {hr && <>
+            <div className={reviewed.selectField}>
+              <span>Loại đánh giá</span>
+              <SearchableSelect id="reviewed-type-filter" label="Loại đánh giá" value={filters.typeId} options={types} placeholder={lookupsBusy ? "Đang tải…" : "Tất cả loại đánh giá"} disabled={lookupsBusy || !types.length} onChange={(typeId) => setFilters((value) => ({ ...value, typeId, periodId: "" }))} />
             </div>
-          </label><label>
+            <div className={reviewed.selectField}>
               <span>Kỳ đánh giá</span>
-              <div className={styles.control}>
-                <select
-                  value={filters.periodId}
-                  disabled={lookupsBusy || !availablePeriods.length}
-                  onChange={(event) =>
-                    setFilters((value) => ({ ...value, periodId: event.target.value }))
-                  }
-                >
-                  <option value="">
-                    {lookupsBusy
-                      ? "Đang tải…"
-                      : !availablePeriods.length
-                        ? "Chưa có kỳ đánh giá"
-                        : "Tất cả kỳ đánh giá"}
-                  </option>
-                  {availablePeriods.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDownIcon aria-hidden="true" />
-              </div>
-            </label></>}
+              <SearchableSelect id="reviewed-period-filter" label="Kỳ đánh giá" value={filters.periodId} options={availablePeriods} placeholder={lookupsBusy ? "Đang tải…" : !availablePeriods.length ? "Chưa có kỳ đánh giá" : "Tất cả kỳ đánh giá"} disabled={lookupsBusy || !availablePeriods.length} onChange={(periodId) => setFilters((value) => ({ ...value, periodId }))} />
+            </div>
+          </>}
           <label>
             <span>Từ ngày</span>
             <div className={`${styles.control} ${reviewed.dateControl}`}>

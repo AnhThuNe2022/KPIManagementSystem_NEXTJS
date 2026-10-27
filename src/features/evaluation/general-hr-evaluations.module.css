@@ -125,8 +125,8 @@
 .optionSearch { display: flex; align-items: center; gap: 8px; flex-shrink: 0; min-height: 42px; padding: 0 10px; margin-bottom: 5px; border-bottom: 1px solid var(--hr-line); background: var(--hr-paper); }
 .optionSearch > svg { flex-shrink: 0; width: 16px; height: 16px; color: var(--hr-muted); }
 .optionSearch input { width: 100%; min-width: 0; min-height: 40px; padding: 8px 0; border: 0; color: var(--hr-text); background: transparent; font: inherit; font-size: 13px; caret-color: rgb(var(--color-brand)); }
-.page .optionSearch input:focus-visible { outline: none; }
-.optionSearch:has(input:focus-visible) { border-bottom-color: var(--hr-action); }
+.page .optionSearch input:focus { outline: none; box-shadow: none; }
+.optionSearch:focus-within { border-bottom-color: var(--hr-action); }
 .optionSearch input::placeholder { color: var(--hr-muted); opacity: 1; }
 .searchSelectList { min-height: 0; max-height: 260px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--hr-line) transparent; }
 .searchSelectOption { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 44px; padding: 9px 10px; border: 0; border-radius: 7px; color: var(--hr-text); background: transparent; text-align: left; font: inherit; font-size: 13px; line-height: 1.5; }
@@ -352,10 +352,17 @@
 .timeline > li[data-tone="success"] .timelineNode { color: var(--hr-success); background: var(--hr-success-soft); }
 .eventContent { min-width: 0; padding: 10px 18px 16px; border-bottom: 1px solid var(--hr-line); }
 .timeline > li[data-last="true"] .eventContent { border-bottom-color: transparent; border-radius: 14px; background: var(--hr-progress-soft); }
-.eventHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.eventHeader > strong { min-width: 0; font-size: 16px; font-weight: 750; overflow-wrap: anywhere; }
+.eventHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.eventHeader .eventPerson { margin-top: 0; }
 .latestEvent { flex-shrink: 0; padding: 3px 8px; border-radius: 6px; color: var(--hr-progress); background: var(--hr-paper); font-size: 12px; font-weight: 700; }
-.eventPerson { display: flex; align-items: center; gap: 10px; margin-top: 9px; }
+.eventBadges { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.eventBadge { display: inline-flex; align-items: center; min-width: 0; max-width: 100%; min-height: 24px; padding: 3px 8px; border-radius: 6px; color: var(--hr-neutral); background: var(--hr-neutral-soft); font-size: 11px; font-weight: 650; line-height: 1.45; overflow-wrap: anywhere; }
+.eventBadge[data-kind="action"] { color: var(--hr-progress); background: var(--hr-progress-soft); }
+.eventBadge[data-kind="status"] { flex: 0 1 auto; white-space: normal; box-shadow: 0 0 10px rgb(var(--color-brand) / .12); }
+.eventBadge[data-kind="status"][data-tone="success"] { color: var(--hr-success); background: var(--hr-success-soft); }
+.eventBadge[data-kind="status"][data-tone="danger"] { color: var(--hr-danger); background: var(--hr-danger-soft); }
+.eventBadge[data-kind="status"][data-tone="progress"] { color: var(--hr-progress); background: var(--hr-progress-soft); }
+.eventPerson { display: flex; align-items: center; gap: 10px; min-width: 0; margin-top: 9px; }
 .smallAvatar { display: grid; place-items: center; width: 31px; height: 31px; flex-shrink: 0; border-radius: 50%; background: var(--hr-neutral-soft); color: var(--hr-action); }
 .eventPerson > div { min-width: 0; }
 .eventPerson strong { display: block; font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }

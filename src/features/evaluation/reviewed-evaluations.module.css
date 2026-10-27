@@ -46,7 +46,7 @@
 .page .filters { padding: 16px; margin-bottom: 18px; border-radius: 14px; }
 .primaryFilters { display: grid; grid-template-columns: minmax(180px, 1.4fr) minmax(140px, 1fr) minmax(140px, 1fr) auto; align-items: start; gap: 12px; }
 .primaryFilters[data-hr="false"] { grid-template-columns: minmax(180px, 1.5fr) minmax(140px, 1fr) auto; }
-.primaryFilters label, .advancedFilters label { min-width: 0; }
+.primaryFilters label, .advancedFilters label, .selectField { min-width: 0; }
 .page .filters :is(input, select) { font-size: 13px; }
 .page .filters input::placeholder { opacity: 1; }
 .searchControl > svg:last-child { left: 13px; right: auto; }
@@ -62,7 +62,7 @@
 .page .clearButton { width: 44px; padding: 0; }
 .advancedFilters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgb(var(--color-border) / .65); }
 .advancedFilters[hidden] { display: none; }
-.advancedFilters label > span { display: block; margin-bottom: 7px; color: var(--panel-muted); font-size: 13px; }
+.advancedFilters label > span, .advancedFilters .selectField > span { display: block; margin-bottom: 7px; color: var(--panel-muted); font-size: 13px; }
 .dateControl input { padding-inline: 13px; color-scheme: light; }
 :global(html.dark) .dateControl input { color-scheme: dark; }
 .appliedFilters { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding-top: 13px; border-top: 1px solid rgb(var(--color-border) / .55); font-size: 12px; }

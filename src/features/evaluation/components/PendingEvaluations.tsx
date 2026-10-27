@@ -29,6 +29,7 @@ import {
 import styles from "../evaluation-common.module.css";
 import pending from "../pending-evaluations.module.css";
 import { Pagination } from "@/components/ui/pagination";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { evaluationLookupApi } from "../services/evaluationLookupApi";
 import { formatEvaluationDate, requestMessage, companyOptions, periodOptions, evaluationTypeOptions } from "../evaluationDisplay";
 
@@ -188,6 +189,11 @@ export function PendingEvaluations({
 
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (hr && typeId && !filters.periodId) {
+      setAdvancedOpen(true);
+      window.requestAnimationFrame(() => document.getElementById("pending-period-filter")?.focus());
+      return;
+    }
     setApplied({ ...filters, keyword: filters.keyword.trim() });
     setAppliedSortBy(sortBy);
     setPage(1);
@@ -257,24 +263,18 @@ export function PendingEvaluations({
         <p className={pending.description}>{hr ? "Theo dõi các bản đánh giá đang chờ ý kiến nhân sự." : "Theo dõi các bản đánh giá của nhân sự đang chờ bạn xử lý."}</p>
       </header>
 
-      <form className={styles.filters + " " + pending.filters} onSubmit={applyFilters} aria-label="Lọc danh sách chờ duyệt" onInvalid={(event) => { event.preventDefault(); setAdvancedOpen(true); }}>
+      <form className={styles.filters + " " + pending.filters} onSubmit={applyFilters} aria-label="Lọc danh sách chờ duyệt">
         <div className={pending.primaryFilters}>
           <label><span className={styles.srOnly}>Nhân viên</span><div className={styles.control + " " + pending.searchControl}>
             <MagnifyingGlassIcon aria-hidden="true" />
             <input type="search" value={filters.keyword} maxLength={200} placeholder="Tìm theo tên / mã NV" onChange={(event) => setFilters((value) => ({ ...value, keyword: event.target.value }))} />
           </div></label>
-          <label><span className={styles.srOnly}>Công ty</span><div className={styles.control}>
-            <select value={filters.companyId} disabled={lookupsBusy || !companies.length} onChange={(event) => setFilters((value) => ({ ...value, companyId: event.target.value, departmentId: "" }))}>
-              <option value="">{lookupsBusy ? "Đang tải…" : "Tất cả công ty"}</option>
-              {companies.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
-            </select><ChevronDownIcon aria-hidden="true" />
-          </div></label>
-          <label><span className={styles.srOnly}>Phòng ban</span><div className={styles.control}>
-            <select value={filters.departmentId} disabled={!filters.companyId || departmentBusy || !departments.length} onChange={(event) => setFilters((value) => ({ ...value, departmentId: event.target.value }))}>
-              <option value="">{departmentBusy ? "Đang tải…" : !filters.companyId ? "Chọn công ty trước" : "Tất cả phòng ban"}</option>
-              {departments.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
-            </select><ChevronDownIcon aria-hidden="true" />
-          </div></label>
+          <div className={pending.selectField}>
+            <SearchableSelect id="pending-company-filter" label="Công ty" value={filters.companyId} options={companies} placeholder={lookupsBusy ? "Đang tải…" : "Tất cả công ty"} disabled={lookupsBusy || !companies.length} onChange={(companyId) => setFilters((value) => ({ ...value, companyId, departmentId: "" }))} />
+          </div>
+          <div className={pending.selectField}>
+            <SearchableSelect id="pending-department-filter" label="Phòng ban" value={filters.departmentId} options={departments} placeholder={departmentBusy ? "Đang tải…" : !filters.companyId ? "Chọn công ty trước" : "Tất cả phòng ban"} disabled={!filters.companyId || departmentBusy || !departments.length} onChange={(departmentId) => setFilters((value) => ({ ...value, departmentId }))} />
+          </div>
           <div className={pending.filterButtons}>
             <button className={styles.button + " " + pending.moreFilters} type="button" aria-expanded={advancedOpen} aria-controls="pending-extra-filters" onClick={() => setAdvancedOpen((value) => !value)}>
               <MixerHorizontalIcon aria-hidden="true" />Lọc thêm{advancedCount > 0 && <b>{advancedCount}</b>}<ChevronDownIcon aria-hidden="true" />
@@ -284,18 +284,14 @@ export function PendingEvaluations({
           </div>
         </div>
         <div id="pending-extra-filters" className={pending.advancedFilters} hidden={!advancedOpen}>
-          {hr && <label><span>Loại đánh giá</span><div className={styles.control}>
-            <select value={typeId} disabled={lookupsBusy || !evaluationTypes.length} onChange={(event) => { setTypeId(event.target.value); setFilters((value) => ({ ...value, periodId: "" })); }}>
-              <option value="">{lookupsBusy ? "Đang tải…" : "Tất cả loại đánh giá"}</option>
-              {evaluationTypes.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
-            </select><ChevronDownIcon aria-hidden="true" />
-          </div></label>}
-          <label><span>Kỳ đánh giá{hr && typeId && " (bắt buộc)"}</span><div className={styles.control}>
-            <select value={filters.periodId} required={hr && Boolean(typeId)} disabled={lookupsBusy || !availablePeriods.length} onChange={(event) => setFilters((value) => ({ ...value, periodId: event.target.value }))}>
-              <option value="">{lookupsBusy ? "Đang tải…" : hr && typeId ? availablePeriods.length ? "Chọn kỳ đánh giá" : "Loại này chưa có kỳ phù hợp" : "Tất cả kỳ đánh giá"}</option>
-              {availablePeriods.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
-            </select><ChevronDownIcon aria-hidden="true" />
-          </div></label>
+          {hr && <div className={pending.selectField}>
+            <span>Loại đánh giá</span>
+            <SearchableSelect id="pending-type-filter" label="Loại đánh giá" value={typeId} options={evaluationTypes} placeholder={lookupsBusy ? "Đang tải…" : "Tất cả loại đánh giá"} disabled={lookupsBusy || !evaluationTypes.length} onChange={(value) => { setTypeId(value); setFilters((current) => ({ ...current, periodId: "" })); }} />
+          </div>}
+          <div className={pending.selectField}>
+            <span>Kỳ đánh giá{hr && typeId && " (bắt buộc)"}</span>
+            <SearchableSelect id="pending-period-filter" label="Kỳ đánh giá" value={filters.periodId} options={availablePeriods} placeholder={lookupsBusy ? "Đang tải…" : hr && typeId ? availablePeriods.length ? "Chọn kỳ đánh giá" : "Loại này chưa có kỳ phù hợp" : "Tất cả kỳ đánh giá"} disabled={lookupsBusy || !availablePeriods.length} required={hr && Boolean(typeId)} onChange={(periodId) => setFilters((value) => ({ ...value, periodId }))} />
+          </div>
           {hr && typeId && !filters.periodId && <p className={pending.filterHint} role="status">Chọn kỳ đánh giá để áp dụng loại đánh giá này.</p>}
         </div>
         {(lookupError || departmentError) && <div className={styles.error} role="alert"><InfoCircledIcon aria-hidden="true" /><span>{lookupError || departmentError}</span><button type="button" onClick={() => setLookupRevision((value) => value + 1)}>Thử lại</button></div>}

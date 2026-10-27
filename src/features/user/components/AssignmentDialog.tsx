@@ -27,6 +27,7 @@ import {
 import styles from "../user-information.module.css";
 import { departmentApi } from "../service/departmentApi";
 import ManagerSearch, { ManagerOption } from "./ManagerSearch";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 interface AssignmentDialogProps {
   open: boolean;
@@ -658,89 +659,17 @@ return (
                 />
               ) : (
                 /* ADD: EDITABLE */
-                <div className="relative">
-                  <select
-                    id="companyId"
-                    value={
-                      form.companyId !== undefined &&
-                      form.companyId !== null
-                        ? String(form.companyId)
-                        : ""
-                    }
-                    onChange={event => {
-                      const value = event.target.value;
-
-                      const companyId = value
-                        ? Number(value)
-                        : undefined;
-
-                      const company = companies.find(
-                        item => item.id === companyId
-                      );
-
-                      handleCompanyChanged(company);
-                    }}
-                    className={`
-                      h-9
-                      w-full
-                      appearance-none
-                      rounded-none
-                      border-0
-                      border-b
-                      bg-transparent
-                      px-0
-                      pr-7
-                      text-sm
-                      text-[rgb(var(--color-text))]
-                      outline-none
-                      transition
-                      focus:border-[rgb(var(--color-brand))]
-                      focus:ring-0
-                      ${
-                        errors.companyId
-                          ? "border-red-500"
-                          : "border-[rgb(var(--color-border))]"
-                      }
-                    `}
-                  >
-                    <option value="">
-                      -- Chọn công ty --
-                    </option>
-
-                    {companies.map(company => (
-                      <option
-                        key={company.id}
-                        value={company.id}
-                      >
-                        {company.companyName}
-                      </option>
-                    ))}
-                  </select>
-
-                  <span
-                    className="
-                      pointer-events-none
-                      absolute
-                      right-1
-                      top-1/2
-                      -translate-y-1/2
-                      text-[rgb(var(--color-muted))]
-                    "
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </span>
-                </div>
+                <SearchableSelect
+                  id="companyId"
+                  label="Công ty"
+                  value={form.companyId == null ? "" : String(form.companyId)}
+                  options={companies.map(company => ({ id: String(company.id), name: company.companyName }))}
+                  placeholder="-- Chọn công ty --"
+                  required
+                  invalid={Boolean(errors.companyId)}
+                  variant="underline"
+                  onChange={value => handleCompanyChanged(companies.find(company => String(company.id) === value))}
+                />
               )}
 
               {errors.companyId && (
@@ -791,95 +720,18 @@ return (
                 />
               ) : (
                 /* ADD: EDITABLE */
-                <div className="relative">
-                  <select
-                    id="departmentId"
-                    value={
-                      form.departmentId !== undefined &&
-                      form.departmentId !== null
-                        ? String(form.departmentId)
-                        : ""
-                    }
-                    disabled={!form.companyId}
-                    onChange={event => {
-                      const value = event.target.value;
-
-                      const departmentId = value
-                        ? Number(value)
-                        : undefined;
-
-                      const department =
-                        departmentOptions.find(
-                          item => item.id === departmentId
-                        );
-
-                      handleDepartmentChange(department);
-                    }}
-                    className={`
-                      h-9
-                      w-full
-                      appearance-none
-                      rounded-none
-                      border-0
-                      border-b
-                      bg-transparent
-                      px-0
-                      pr-7
-                      text-sm
-                      text-[rgb(var(--color-text))]
-                      outline-none
-                      transition
-                      focus:border-[rgb(var(--color-brand))]
-                      focus:ring-0
-                      disabled:cursor-not-allowed
-                      disabled:opacity-50
-                      ${
-                        errors.departmentId
-                          ? "border-red-500"
-                          : "border-[rgb(var(--color-border))]"
-                      }
-                    `}
-                  >
-                    <option value="">
-                      {!form.companyId
-                        ? "-- Chọn công ty trước --"
-                        : "-- Chọn phòng ban --"}
-                    </option>
-
-                    {departmentOptions.map(department => (
-                      <option
-                        key={department.id}
-                        value={department.id}
-                      >
-                        {department.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  <span
-                    className="
-                      pointer-events-none
-                      absolute
-                      right-1
-                      top-1/2
-                      -translate-y-1/2
-                      text-[rgb(var(--color-muted))]
-                    "
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </span>
-                </div>
+                <SearchableSelect
+                  id="departmentId"
+                  label="Phòng ban"
+                  value={form.departmentId == null ? "" : String(form.departmentId)}
+                  options={departmentOptions.map(department => ({ id: String(department.id), name: department.name }))}
+                  placeholder={!form.companyId ? "-- Chọn công ty trước --" : "-- Chọn phòng ban --"}
+                  disabled={!form.companyId}
+                  required
+                  invalid={Boolean(errors.departmentId)}
+                  variant="underline"
+                  onChange={value => handleDepartmentChange(departmentOptions.find(department => String(department.id) === value))}
+                />
               )}
 
               {errors.departmentId && (

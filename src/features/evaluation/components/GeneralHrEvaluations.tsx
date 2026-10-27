@@ -20,10 +20,6 @@ function statusTone(value: string | number) {
   if (["Drafted", "Unknown", "Imported"].includes(key)) return "neutral";
   return "progress";
 }
-function reviewerRole(value?: string | null) {
-  return ({ManagerMid: "Quản lý trực tiếp", ManagerSenior: "Quản lý cấp cao", HR: "Nhân sự", Employee: "Nhân viên", ChairMan: "Chủ tịch", HRSummary: "HR tổng hợp"} as Record<string, string>)[value ?? ""] ?? value ?? "Người xử lý";
-}
-
 type Filters = { keyword: string; companyId: string; departmentId: string; reviewerId: string; typeId: string; periodId: string; statuses: string[]; order: "asc" | "desc" };
 const emptyFilters: Filters = { keyword: "", companyId: "", departmentId: "", reviewerId: "", typeId: "", periodId: "", statuses: [], order: "desc" };
 
@@ -417,8 +413,12 @@ function GeneralHrEvaluationDialog({ mode, row, onClose, onModeChange, onMutated
           {[...history].reverse().map((entry, index) => <li key={entry.approvalId} data-tone={statusTone(entry.status)} data-last={index === 0}>
             <time className={s.eventTime} dateTime={entry.createdAt}>{formatEvaluationDate(entry.createdAt)}</time>
             <span className={s.timelineNode} aria-hidden="true">{statusTone(entry.status) === "danger" ? <Cross2Icon /> : <CheckIcon />}</span>
-            <div className={s.eventContent}><div className={s.eventHeader}><strong>{entry.statusValue || hrStatusLabel(entry.status)}</strong>{index === 0 && <span className={s.latestEvent}>Mới nhất</span>}</div>
-              <div className={s.eventPerson}><span className={s.smallAvatar}><PersonIcon aria-hidden="true" /></span><div><strong>{entry.approverName || "Chưa xác định người xử lý"}</strong><span>{reviewerRole(entry.approvalLevel)}{entry.approverUserId ? " · " + entry.approverUserId : ""}</span></div></div>
+            <div className={s.eventContent}><div className={s.eventHeader}><div className={s.eventPerson}><span className={s.smallAvatar}><PersonIcon aria-hidden="true" /></span><div><strong>{entry.approverName || "Chưa xác định người xử lý"}</strong><span>{entry.approverUserId || "Chưa có mã người xử lý"}</span></div></div>{index === 0 && <span className={s.latestEvent}>Mới nhất</span>}</div>
+              <div className={s.eventBadges} role="group" aria-label="Thông tin dấu mốc">
+                <span className={s.eventBadge} data-kind="level">Level {entry.approvalLevel || "Unknown"}</span>
+                <span className={s.eventBadge} data-kind="action">{entry.status || "Unknown"}</span>
+                <span className={s.eventBadge} data-kind="status" data-tone={statusTone(entry.status)}>{entry.statusValue || hrStatusLabel(entry.status)}</span>
+              </div>
               {entry.comment && <blockquote>{entry.comment}</blockquote>}
             </div>
           </li>)}
