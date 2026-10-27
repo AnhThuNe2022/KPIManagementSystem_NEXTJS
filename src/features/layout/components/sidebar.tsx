@@ -3,6 +3,8 @@
 import {
   useEffect,
   useLayoutEffect,
+  useOptimistic,
+  startTransition,
   useRef,
   useState,
   type CSSProperties,
@@ -10,7 +12,7 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import styles from "./sidebar.module.css";
 
 type NavigationItem = {
@@ -170,8 +172,10 @@ const navigation: NavigationItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [selectedPathname, setSelectedPathname] = useOptimistic(pathname);
   const activeIndex = navigation.findIndex(
-    (item) => item.href === pathname || item.children?.some((child) => child.href === pathname),
+    (item) => item.href === selectedPathname || item.children?.some((child) => child.href === selectedPathname),
   );
   const [collapsed, setCollapsed] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -281,11 +285,17 @@ export function Sidebar() {
     }, 180);
   }
 
-  function navigate() {
+  function navigate(event: { preventDefault: () => void }, href: string) {
+    if (href === "#") return;
+    event.preventDefault();
     cancelReturn();
     setMobileOpen(false);
     setHoveredIndex(null);
     setFocusedIndex(null);
+    startTransition(() => {
+      setSelectedPathname(href);
+      router.push(href);
+    });
   }
 
   function renderSubitems(item: NavigationItem, index: number) {
@@ -294,8 +304,8 @@ export function Sidebar() {
         key={child.href}
         href={child.href}
         className={styles.subitem}
-        aria-current={child.href === pathname ? "page" : undefined}
-        onClick={navigate}
+        aria-current={child.href === selectedPathname ? "page" : undefined}
+        onNavigate={(event) => navigate(event, child.href)}
         onPointerEnter={() => {
           cancelReturn();
           setHoveredIndex(index);
@@ -432,7 +442,7 @@ export function Sidebar() {
             {navigation.map((item, index) => {
               const groupOpen =
                 openGroups[item.label] ??
-                item.children?.some((child) => child.href === pathname) ??
+                item.children?.some((child) => child.href === selectedPathname) ??
                 false;
               const submenuId = `sidebar-submenu-${index}`;
               const interaction = {
@@ -515,7 +525,7 @@ export function Sidebar() {
                     <Link
                       {...interaction}
                       href={item.href}
-                      onClick={navigate}
+                      onNavigate={(event) => navigate(event, item.href)}
                       aria-current={activeIndex === index ? "page" : undefined}
                     >
                       {content}
