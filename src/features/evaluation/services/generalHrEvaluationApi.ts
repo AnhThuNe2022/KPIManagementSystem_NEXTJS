@@ -14,7 +14,8 @@ export const generalHrEvaluationApi = {
     return response.data;
   },
   getReviewers(signal?: AbortSignal) {
-    return request<{ id: string; fullName: string; systemCode?: string }[]>("/employeeinfor/get-user-by-filter", { signal });
+    const query = new URLSearchParams({ "Filters[userapprove]": "1" });
+    return request<{ id: string; fullName: string; systemCode?: string }[]>("/employeeinfor/get-user-by-filter?" + query, { signal });
   },
   getApprovalHistory(id: number, signal?: AbortSignal) {
     return request<ApprovalHistoryEntry[]>("/evaluation/" + id + "/approval-history", { signal });
