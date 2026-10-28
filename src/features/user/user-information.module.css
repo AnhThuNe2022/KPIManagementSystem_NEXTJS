@@ -919,36 +919,6 @@
   border-top: 1px solid var(--profile-line);
   background: rgb(var(--color-surface) / 0.97);
 }
-.managerSearch {
-  position: relative;
-  width: 100%;
-}
-.managerSearch > div:first-child > div:first-child {
-  left: 12px;
-}
-.managerSearch > div:first-child > button {
-  right: 10px;
-}
-.dialog .managerSearch input {
-  padding-left: 38px;
-  padding-right: 35px;
-}
-.managerSearch > div:not(:first-child) {
-  position: relative;
-  inset: auto;
-  margin-top: 8px;
-  border-radius: 11px;
-  box-shadow: none;
-}
-.managerSearch > div:not(:first-child) button {
-  min-height: 50px;
-  border: 0;
-  border-radius: 9px;
-}
-.managerSearch > div:not(:first-child) button > div {
-  white-space: normal;
-  font-size: 12px;
-}
 :global(html.dark) .page,
 :global(html.dark) .dialog {
   --profile-highlight: rgb(173 197 255 / 0.09);

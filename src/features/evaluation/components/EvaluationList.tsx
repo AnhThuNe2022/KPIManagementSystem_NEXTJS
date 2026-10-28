@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { evaluationApi } from "@/features/evaluation/services/evaluationApi";
+import { requestMessage } from "../evaluationDisplay";
 import type { EvaluationDto } from "@/types/evaluation";
 
 export default function EvaluationList() {
@@ -21,7 +22,7 @@ export default function EvaluationList() {
   const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (signal: AbortSignal) => {
     setLoading(true);
 
     try {
@@ -32,29 +33,28 @@ export default function EvaluationList() {
           getMy: "123",
           // sortOrder: "desc",
         },
-      });
-
-      if (!result.success) {
-        toast.error(result.message || "Không thể tải danh sách.");
-        return;
-      }
+      }, signal);
+      if (signal.aborted) return;
 
       setItems(result.data?.items ?? []);
       setTotalCount(result.data?.total ?? 0);
     } catch (error) {
+      if (signal.aborted) return;
       const message =
         error instanceof Error
           ? error.message
           : "Lỗi không xác định.";
 
-      toast.error(`Lỗi tải danh sách: ${message}`);
+      toast.error(`Lỗi tải danh sách: ${requestMessage(error, message)}`);
     } finally {
-      setLoading(false);
+      if (!signal.aborted) setLoading(false);
     }
   }, [page, pageSize]);
 
   useEffect(() => {
-    loadData();
+    const controller = new AbortController();
+    void loadData(controller.signal);
+    return () => controller.abort();
   }, [loadData]);
 
   const createNew = () => {

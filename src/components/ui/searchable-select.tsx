@@ -9,31 +9,39 @@ export type SearchableSelectOption = { id: string; name: string };
 type Props = {
   id: string;
   label: string;
-  value: string;
   options: readonly SearchableSelectOption[];
   placeholder: string;
-  onChange: (value: string) => void;
   disabled?: boolean;
   required?: boolean;
   invalid?: boolean;
   variant?: "filter" | "underline";
-};
+  valueLabel?: string;
+  onSearchChange?: (query: string) => void;
+  loading?: boolean;
+  emptyMessage?: string;
+} & (
+  | { multiple?: false; value: string; onChange: (value: string) => void }
+  | { multiple: true; value: readonly string[]; onChange: (value: string[]) => void }
+);
 
 const searchableText = (value: string) =>
   value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLocaleLowerCase("vi").trim();
 
-export function SearchableSelect({
-  id,
-  label,
-  value,
-  options,
-  placeholder,
-  onChange,
-  disabled = false,
-  required = false,
-  invalid = false,
-  variant = "filter",
-}: Props) {
+export function SearchableSelect(props: Props) {
+  const {
+    id,
+    label,
+    options,
+    placeholder,
+    disabled = false,
+    required = false,
+    invalid = false,
+    variant = "filter",
+    valueLabel,
+    onSearchChange,
+    loading = false,
+    emptyMessage = "Không tìm thấy kết quả",
+  } = props;
   const reactId = useId().replace(/:/g, "");
   const popupId = id + "-options";
   const listId = id + "-list";
@@ -45,12 +53,23 @@ export function SearchableSelect({
   const trigger = useRef<HTMLButtonElement>(null);
   const popup = useRef<HTMLDivElement>(null);
   const search = useRef<HTMLInputElement>(null);
-  const visible = choices.filter((option) => searchableText(option.name).includes(searchableText(query)));
+  const selected = props.multiple ? props.value : [props.value];
+  const visible = onSearchChange ? choices : choices.filter((option) => searchableText(option.name).includes(searchableText(query)));
   const activeIndex = Math.min(active, visible.length - 1);
-  const current = options.find((option) => option.id === value)?.name || placeholder;
+  const current = props.multiple
+    ? selected.length ? `${selected.length} ${label.toLocaleLowerCase("vi")} đã chọn` : placeholder
+    : valueLabel || options.find((option) => option.id === props.value)?.name || placeholder;
 
   function choose(next: string) {
-    onChange(next);
+    if (props.multiple) {
+      props.onChange(next ? selected.includes(next) ? selected.filter(value => value !== next) : [...selected, next] : []);
+      return;
+    }
+    props.onChange(next);
+    close();
+  }
+
+  function close() {
     popup.current?.hidePopover();
     trigger.current?.focus();
   }
@@ -100,8 +119,9 @@ export function SearchableSelect({
           setOpen(shown);
           if (shown) {
             setQuery("");
-            setActive(Math.max(0, choices.findIndex((option) => option.id === value)));
+            setActive(Math.max(0, choices.findIndex((option) => selected.includes(option.id))));
           }
+          onSearchChange?.("");
         }}
       >
         <div className={styles.search}>
@@ -116,8 +136,8 @@ export function SearchableSelect({
             aria-expanded={open}
             aria-controls={listId}
             aria-autocomplete="list"
-            aria-activedescendant={activeIndex >= 0 ? `${id}-option-${activeIndex}` : undefined}
-            onChange={(event) => { setQuery(event.target.value); setActive(0); }}
+            aria-activedescendant={!loading && activeIndex >= 0 ? `${id}-option-${activeIndex}` : undefined}
+            onChange={(event) => { setQuery(event.target.value); onSearchChange?.(event.target.value); setActive(0); }}
             onKeyDown={(event) => {
               if (event.key === "ArrowDown" || event.key === "ArrowUp") {
                 event.preventDefault();
@@ -127,7 +147,7 @@ export function SearchableSelect({
                 setActive(event.key === "Home" ? 0 : visible.length - 1);
               } else if (event.key === "Enter") {
                 event.preventDefault();
-                if (visible[activeIndex]) choose(visible[activeIndex].id);
+                if (!loading && visible[activeIndex]) choose(visible[activeIndex].id);
               } else if (event.key === "Escape") {
                 event.preventDefault();
                 popup.current?.hidePopover();
@@ -138,26 +158,27 @@ export function SearchableSelect({
             }}
           />
         </div>
-        <div id={listId} role="listbox" aria-label={label} className={styles.list}>
-          {visible.map((option, index) => (
+        <div id={listId} role="listbox" aria-label={label} aria-multiselectable={props.multiple || undefined} aria-busy={loading} className={styles.list}>
+          {!loading && visible.map((option, index) => (
             <button
               key={option.id || "__all__"}
               id={`${id}-option-${index}`}
               type="button"
               role="option"
               tabIndex={-1}
-              aria-selected={option.id === value}
+              aria-selected={option.id ? selected.includes(option.id) : props.multiple ? !selected.length : props.value === ""}
               data-active={index === activeIndex}
               className={styles.option}
               onPointerMove={() => setActive(index)}
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => choose(option.id)}
             >
-              <span>{option.name}</span>{option.id === value && <CheckIcon aria-hidden="true" />}
+              <span>{option.name}</span>{(option.id ? selected.includes(option.id) : props.multiple ? !selected.length : props.value === "") && <CheckIcon aria-hidden="true" />}
             </button>
           ))}
         </div>
-        {!visible.length && <p className={styles.empty} role="status">Không tìm thấy kết quả</p>}
+        {(loading || (onSearchChange ? !options.length : !visible.length)) && <p className={styles.empty} role="status">{loading ? "Đang tìm…" : emptyMessage}</p>}
+        {props.multiple && <button type="button" className={styles.done} onClick={close}>Xong<CheckIcon aria-hidden="true" /></button>}
       </div>
     </div>
   );

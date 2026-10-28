@@ -2,6 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { appConfig } from "@/config/app";
+import { ApiError } from "./errors";
 
 const API_URL = process.env.AUTH_API_URL?.replace(/\/$/, "");
 
@@ -44,8 +45,10 @@ if (!response.ok) {
     throw new Error("UNAUTHORIZED");
   }
 
-  throw new Error(`API_ERROR_${response.status}: ${errorText}`);
+  throw new ApiError(response.status, errorText, response.headers.get("content-type"));
 }
+
+if (response.status === 204) return undefined as T;
 
 const contentType =
   response.headers.get("content-type") ?? "";

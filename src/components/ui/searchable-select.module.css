@@ -101,9 +101,9 @@
 
 .root .search:focus-within { border-bottom-color: rgb(var(--color-brand)); }
 .root .search > svg { width: 16px; height: 16px; flex: 0 0 auto; color: var(--panel-muted); }
-.root .search input { width: 100%; min-width: 0; min-height: 40px; padding: 8px 0; border: 0; outline: 0; color: rgb(var(--color-text)); background: transparent; font: inherit; font-size: 13px; }
-.root .search input:focus { outline: none; box-shadow: none; }
-.root .search input::placeholder { color: var(--panel-muted); opacity: 1; }
+.root[data-variant] .search input { width: 100%; min-width: 0; min-height: 40px; padding: 8px 0; border: 0; outline: 0; box-shadow: none; color: rgb(var(--color-text)); background: transparent; font: inherit; font-size: 13px; }
+.root[data-variant] .search input:focus { outline: none; box-shadow: none; }
+.root[data-variant] .search input::placeholder { color: var(--panel-muted); opacity: 1; }
 
 .list { min-height: 0; max-height: 260px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgb(var(--color-border)) transparent; }
 .root .option { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 44px; padding: 9px 10px; border: 0; border-radius: 7px; color: rgb(var(--color-text)); background: transparent; font: inherit; font-size: 13px; line-height: 1.5; text-align: left; cursor: pointer; }
@@ -111,6 +111,9 @@
 .root .option > svg { width: 16px; height: 16px; flex: 0 0 auto; }
 .root .option[data-active="true"], .root .option[aria-selected="true"] { color: var(--select-active); background: var(--select-active-bg); }
 .root .empty { margin: 0; padding: 16px 10px; color: var(--panel-muted); font-size: 13px; }
+.root .done { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; width: 100%; min-height: 40px; margin-top: 5px; padding: 8px 10px; border: 0; border-top: 1px solid rgb(var(--color-border) / 0.65); border-radius: 0 0 7px 7px; color: var(--select-active); background: transparent; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
+.root .done > svg { width: 16px; height: 16px; }
+.root .done:focus-visible { outline: 2px solid rgb(var(--color-brand)); outline-offset: -2px; }
 
 @media (max-width: 700px), (pointer: coarse) {
   .root[data-variant] .search input { font-size: 16px; }

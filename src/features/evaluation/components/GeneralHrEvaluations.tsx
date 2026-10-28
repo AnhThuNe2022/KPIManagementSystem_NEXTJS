@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import { ActivityLogIcon, ArrowRightIcon, CheckIcon, ClockIcon, ChevronDownIcon, Cross2Icon, DotsHorizontalIcon, DownloadIcon, ExclamationTriangleIcon, EyeOpenIcon, FileTextIcon, MagnifyingGlassIcon, MixerHorizontalIcon, PersonIcon, ReloadIcon, ResetIcon, TrashIcon, UpdateIcon } from "@radix-ui/react-icons";
 import { toast } from "sonner";
 import { generalHrEvaluationApi as api } from "../services/generalHrEvaluationApi";
@@ -11,6 +11,7 @@ import { loadGeneralHrExport, createGeneralHrWorkbook } from "../generalHrExport
 import { generalHrStatusOptions, UserRoleSystem, type ApprovalHistoryEntry, type EvaluationApprover, type EvaluationFilterOption, type EvaluationTypeOption, type GeneralHrEvaluationDto, type GeneralHrEvaluationRequest, type PagedResult } from "@/types/evaluation";
 import { formatEvaluationDate, requestMessage, companyOptions, periodOptions, evaluationTypeOptions, statusKey, hrStatusLabel } from "../evaluationDisplay";
 import { Pagination } from "@/components/ui/pagination";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import s from "../general-hr-evaluations.module.css";
 
 function statusTone(value: string | number) {
@@ -22,97 +23,6 @@ function statusTone(value: string | number) {
 }
 type Filters = { keyword: string; companyId: string; departmentId: string; reviewerId: string; typeId: string; periodId: string; statuses: string[]; order: "asc" | "desc" };
 const emptyFilters: Filters = { keyword: "", companyId: "", departmentId: "", reviewerId: "", typeId: "", periodId: "", statuses: [], order: "desc" };
-
-function StatusFilter({ selected, onChange }: { selected: string[]; onChange: (values: string[]) => void }) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const search = useRef<HTMLInputElement>(null);
-  const visible = generalHrStatusOptions.filter((option) => searchableText(option.label).includes(searchableText(query)));
-  const ref = useRef<HTMLDivElement>(null);
-  const trigger = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    search.current?.focus();
-    const outside = (event: PointerEvent) => { if (!ref.current?.contains(event.target as Node)) setOpen(false); };
-    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") { setOpen(false); trigger.current?.focus(); } };
-    document.addEventListener("pointerdown", outside);
-    document.addEventListener("keydown", escape);
-    return () => { document.removeEventListener("pointerdown", outside); document.removeEventListener("keydown", escape); };
-  }, [open]);
-  return <div className={s.statusField} ref={ref} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}>
-    <span id="hr-status-label" className={s.fieldLabel}>Trạng thái</span>
-    <button ref={trigger} type="button" className={s.selectButton} aria-labelledby="hr-status-label hr-status-value" aria-expanded={open} aria-controls="hr-status-options" onClick={() => { if (!open) setQuery(""); setOpen(!open); }}>
-      <span id="hr-status-value">{selected.length ? `${selected.length} trạng thái đã chọn` : "Tất cả trạng thái"}</span><ChevronDownIcon aria-hidden="true" />
-    </button>
-    {open && <div id="hr-status-options" className={s.statusOptions}>
-      <div className={s.optionSearch}><MagnifyingGlassIcon aria-hidden="true" /><input ref={search} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm trạng thái…" aria-label="Tìm trạng thái" /></div>
-      <label className={s.allStatuses}><input type="checkbox" checked={!selected.length} onChange={() => onChange([])} /><span>Tất cả trạng thái</span></label>
-      {visible.map((option) => <label key={option.value}><input type="checkbox" checked={selected.includes(option.value)} onChange={() => onChange(selected.includes(option.value) ? selected.filter((value) => value !== option.value) : [...selected, option.value])} /><span>{option.label}</span></label>)}
-      {!visible.length && <p className={s.searchSelectEmpty} role="status">Không tìm thấy kết quả</p>}
-      <button type="button" onClick={() => { setOpen(false); trigger.current?.focus(); }}>Xong<ChevronDownIcon aria-hidden="true" /></button>
-    </div>}
-  </div>;
-}
-
-function searchableText(value: string) {
-  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLocaleLowerCase("vi").trim();
-}
-
-function SelectField({ label, value, options, placeholder, disabled, onChange, clearable = true }: { label: string; value: string; options: EvaluationFilterOption[]; placeholder: string; disabled?: boolean; onChange: (value: string) => void; clearable?: boolean }) {
-  const id = useId();
-  const anchor = "--hr-select-" + id.replace(/[^a-zA-Z0-9_-]/g, "");
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [active, setActive] = useState(0);
-  const popup = useRef<HTMLDivElement>(null);
-  const trigger = useRef<HTMLButtonElement>(null);
-  const search = useRef<HTMLInputElement>(null);
-  const choices = clearable ? [{ id: "", name: placeholder }, ...options] : options;
-  const visible = choices.filter((option) => searchableText(option.name).includes(searchableText(query)));
-  const activeIndex = Math.min(active, visible.length - 1);
-  const current = options.find((option) => option.id === value)?.name || placeholder;
-  function choose(next: string) {
-    onChange(next);
-    popup.current?.hidePopover();
-    trigger.current?.focus();
-  }
-  useEffect(() => {
-    if (disabled) popup.current?.hidePopover();
-  }, [disabled]);
-  useEffect(() => {
-    if (open) search.current?.focus();
-  }, [open]);
-  useEffect(() => {
-    if (open) popup.current?.querySelector<HTMLElement>('[data-active="true"]')?.scrollIntoView({ block: "nearest" });
-  }, [activeIndex, open, query]);
-  return <div className={s.field}>
-    <span id={id + "-label"}>{label}</span>
-    <button ref={trigger} className={s.selectButton} type="button" disabled={disabled} popoverTarget={id} aria-labelledby={id + "-label " + id + "-value"} aria-haspopup="dialog" aria-expanded={open} aria-controls={id} style={{ anchorName: anchor } as CSSProperties}>
-      <span id={id + "-value"}>{current}</span><ChevronDownIcon aria-hidden="true" />
-    </button>
-    <div ref={popup} id={id} popover="auto" role="dialog" aria-labelledby={id + "-label"} className={s.searchSelectPopup} style={{ positionAnchor: anchor } as CSSProperties} onToggle={(event) => {
-      const shown = event.newState === "open";
-      setOpen(shown);
-      if (shown) { setQuery(""); setActive(Math.max(0, choices.findIndex((option) => option.id === value))); }
-    }}>
-      <div className={s.optionSearch}><MagnifyingGlassIcon aria-hidden="true" /><input ref={search} type="search" role="combobox" value={query} placeholder={"Tìm " + label.toLocaleLowerCase("vi") + "…"} aria-label={"Tìm " + label.toLocaleLowerCase("vi")} aria-expanded={open} aria-controls={id + "-list"} aria-autocomplete="list" aria-activedescendant={activeIndex >= 0 ? id + "-option-" + activeIndex : undefined} onChange={(event) => { setQuery(event.target.value); setActive(0); }} onKeyDown={(event) => {
-        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-          event.preventDefault();
-          if (visible.length) setActive((index) => (Math.min(index, visible.length - 1) + (event.key === "ArrowDown" ? 1 : visible.length - 1)) % visible.length);
-        } else if (event.key === "Enter") {
-          event.preventDefault();
-          if (visible[activeIndex]) choose(visible[activeIndex].id);
-        } else if (event.key === "Escape") {
-          event.preventDefault(); popup.current?.hidePopover(); trigger.current?.focus();
-        } else if (event.key === "Tab") popup.current?.hidePopover();
-      }} /></div>
-      <div id={id + "-list"} role="listbox" aria-label={label} className={s.searchSelectList}>
-        {visible.map((option, index) => <button key={option.id} id={id + "-option-" + index} role="option" type="button" tabIndex={-1} aria-selected={option.id === value} data-active={index === activeIndex} className={s.searchSelectOption} onPointerMove={() => setActive(index)} onMouseDown={(event) => event.preventDefault()} onClick={() => choose(option.id)}><span>{option.name}</span>{option.id === value && <CheckIcon aria-hidden="true" />}</button>)}
-      </div>
-        {!visible.length && <p className={s.searchSelectEmpty} role="status">Không tìm thấy kết quả</p>}
-    </div>
-  </div>;
-}
 
 export function GeneralHrEvaluations() {
   const [filters, setFilters] = useState<Filters>(emptyFilters);
@@ -242,9 +152,9 @@ export function GeneralHrEvaluations() {
       <form className={s.filters} aria-label="Lọc hồ sơ đánh giá" data-expanded={advancedOpen} onSubmit={applyFilters}>
         <div className={s.searchRow}>
           <label className={s.field + " " + s.search}><span>Nhân viên</span><div className={s.inputWrap}><MagnifyingGlassIcon aria-hidden="true" /><input type="search" placeholder="Tìm tên hoặc mã nhân viên…" value={filters.keyword} onChange={(event) => updateFilter("keyword", event.target.value)} /></div></label>
-          <SelectField label="Công ty" value={filters.companyId} options={companies} placeholder="Tất cả công ty" disabled={lookupBusy || !companies.length} onChange={(value) => setFilters((current) => ({ ...current, companyId: value, departmentId: "" }))} />
-          <SelectField label="Phòng ban" value={filters.departmentId} options={departments} placeholder={filters.companyId ? "Tất cả phòng ban" : "Chọn công ty trước"} disabled={!filters.companyId || departmentBusy || !departments.length} onChange={(value) => updateFilter("departmentId", value)} />
-          <SelectField label="Người đang duyệt" value={filters.reviewerId} options={reviewers} placeholder="Tất cả người duyệt" disabled={lookupBusy || !reviewers.length} onChange={(value) => updateFilter("reviewerId", value)} />
+          <div className={s.field}><span>Công ty</span><SearchableSelect id="hr-company-filter" label="Công ty" value={filters.companyId} options={companies} placeholder="Tất cả công ty" disabled={lookupBusy || !companies.length} onChange={(value) => setFilters((current) => ({ ...current, companyId: value, departmentId: "" }))} /></div>
+          <div className={s.field}><span>Phòng ban</span><SearchableSelect id="hr-department-filter" label="Phòng ban" value={filters.departmentId} options={departments} placeholder={filters.companyId ? "Tất cả phòng ban" : "Chọn công ty trước"} disabled={!filters.companyId || departmentBusy || !departments.length} onChange={(value) => updateFilter("departmentId", value)} /></div>
+          <div className={s.field}><span>Người đang duyệt</span><SearchableSelect id="hr-reviewer-filter" label="Người đang duyệt" value={filters.reviewerId} options={reviewers} placeholder="Tất cả người duyệt" disabled={lookupBusy || !reviewers.length} onChange={(value) => updateFilter("reviewerId", value)} /></div>
           <div className={s.filterActions}>
             <button className={s.moreFilters} type="button" data-active={advancedCount > 0} aria-expanded={advancedOpen} aria-controls="hr-extra-filters" onClick={() => setAdvancedOpen(!advancedOpen)}><MixerHorizontalIcon aria-hidden="true" /><span>Lọc thêm</span>{advancedCount > 0 && <b>{advancedCount}</b>}<ChevronDownIcon aria-hidden="true" /></button>
             <button type="button" className={s.iconButton} aria-label="Xóa tất cả bộ lọc" title="Xóa tất cả bộ lọc" onClick={clearFilters}><ResetIcon aria-hidden="true" /></button>
@@ -252,10 +162,10 @@ export function GeneralHrEvaluations() {
           </div>
         </div>
         <div className={s.filterRow} id="hr-extra-filters" hidden={!advancedOpen}>
-          <SelectField label="Loại đánh giá" value={filters.typeId} options={types} placeholder="Tất cả loại đánh giá" disabled={lookupBusy || !types.length} onChange={(value) => setFilters((current) => ({ ...current, typeId: value, periodId: "" }))} />
-          <SelectField label="Kỳ đánh giá" value={filters.periodId} options={periods} placeholder={filters.typeId ? "Tất cả kỳ đánh giá" : "Chọn loại đánh giá trước"} disabled={!filters.typeId || lookupBusy || !periods.length} onChange={(value) => updateFilter("periodId", value)} />
-          <StatusFilter selected={filters.statuses} onChange={(statuses) => setFilters((current) => ({ ...current, statuses }))} />
-          <SelectField label="Sắp xếp" value={filters.order} options={[{ id: "desc", name: "Hồ sơ mới trước" }, { id: "asc", name: "Hồ sơ cũ trước" }]} placeholder="Sắp xếp hồ sơ" clearable={false} onChange={(value) => updateFilter("order", value)} />
+          <div className={s.field}><span>Loại đánh giá</span><SearchableSelect id="hr-type-filter" label="Loại đánh giá" value={filters.typeId} options={types} placeholder="Tất cả loại đánh giá" disabled={lookupBusy || !types.length} onChange={(value) => setFilters((current) => ({ ...current, typeId: value, periodId: "" }))} /></div>
+          <div className={s.field}><span>Kỳ đánh giá</span><SearchableSelect id="hr-period-filter" label="Kỳ đánh giá" value={filters.periodId} options={periods} placeholder={filters.typeId ? "Tất cả kỳ đánh giá" : "Chọn loại đánh giá trước"} disabled={!filters.typeId || lookupBusy || !periods.length} onChange={(value) => updateFilter("periodId", value)} /></div>
+          <div className={s.field}><span>Trạng thái</span><SearchableSelect id="hr-status-filter" label="Trạng thái" multiple value={filters.statuses} options={generalHrStatusOptions.map(option => ({ id: option.value, name: option.label }))} placeholder="Tất cả trạng thái" onChange={(statuses) => setFilters((current) => ({ ...current, statuses }))} /></div>
+          <label className={s.field}><span>Sắp xếp</span><div className={s.selectWrap}><select value={filters.order} onChange={(event) => updateFilter("order", event.target.value)}><option value="desc">Hồ sơ mới trước</option><option value="asc">Hồ sơ cũ trước</option></select><ChevronDownIcon aria-hidden="true" /></div></label>
         </div>
         {(lookupError || departmentError) && <div className={s.notice} role="alert"><span>{lookupError || departmentError}</span><button type="button" onClick={() => setLookupRevision((value) => value + 1)}>Thử lại</button></div>}
         <p className={s.filterHint} role="status">{dirty ? "Có thay đổi chưa áp dụng. Nhấn Áp dụng để cập nhật danh sách." : ""}</p>
