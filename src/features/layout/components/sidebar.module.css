@@ -178,6 +178,14 @@
 .group {
   min-width: 0;
 }
+.menuStatus { padding: 14px 22px; color: var(--ink); font-size: 13px; line-height: 1.6; }
+.menuStatus p { margin: 0; }
+.menuStatus button { margin-top: 10px; min-height: 40px; padding: 7px 12px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--selection-ink); font: inherit; }
+.menuStatus button:focus-visible { outline: 2px solid var(--selection-ink); outline-offset: 2px; }
+.item:disabled,.subitem:disabled { opacity: .5; cursor: default; }
+.nestedMenu { margin-left: 13px; padding-left: 8px; border-left: 1px solid var(--line); }
+.subitem .nestedChevron { width: 14px; height: 14px; flex: 0 0 14px; margin-left: auto; transition: transform 180ms; }
+.subitem .nestedChevron[data-open="true"] { transform: rotate(180deg); }
 
 /* The cutout stays mounted so fast hovering only retargets its motion. */
 .indicator {
@@ -360,6 +368,10 @@
   display: flex;
   align-items: center;
   gap: 9px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
   min-height: 60px;
   padding: 9px;
   border-radius: 10px;

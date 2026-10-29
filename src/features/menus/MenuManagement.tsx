@@ -9,7 +9,7 @@ import {
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { notify } from "@/components/ui/toast";
 import type { MenuDto } from "@/types/menu";
-import { menuApi, type MenuDraft } from "./menuApi";
+import { menuApi, MENUS_CHANGED, type MenuDraft } from "./menuApi";
 import { flattenMenus, matchesMenu } from "./menuTree";
 import { MenuIcon, menuIconOptions } from "./MenuIcon";
 import s from "./menus.module.css";
@@ -114,6 +114,7 @@ export function MenuManagement() {
     try {
       const deleting = action === "delete";
       await (deleting ? menuApi.remove(draft.id) : menuApi.save(draft));
+      window.dispatchEvent(new Event(MENUS_CHANGED));
       notify("success", `Đã ${deleting ? "xóa" : draft.id ? "lưu" : "tạo"} menu “${draft.title.trim()}”.`);
       setConfirmation(null); setDraft(null); setOriginal(null);
       await reload(deleting ? undefined : { id: draft.id, code: draft.code.trim() });

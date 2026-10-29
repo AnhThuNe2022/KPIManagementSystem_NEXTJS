@@ -2,8 +2,13 @@ import { request } from "@/lib/api/request";
 import type { MenuDto } from "@/types/menu";
 
 export type MenuDraft = Omit<MenuDto, "children">;
+export const MENUS_CHANGED = "menus-changed";
 
 export const menuApi = {
+  async my(signal?: AbortSignal) {
+    const response = await request<{ data: MenuDto[] | null }>("/menus/my", { signal });
+    return response.data ?? [];
+  },
   tree(signal?: AbortSignal) {
     return request<MenuDto[]>("/menus/tree", { signal });
   },

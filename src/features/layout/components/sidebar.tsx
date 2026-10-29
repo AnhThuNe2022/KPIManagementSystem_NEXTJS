@@ -9,184 +9,59 @@ import {
   useState,
   type CSSProperties,
   type FocusEvent,
-  type ReactNode,
 } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+import { HamburgerMenuIcon, ChevronDownIcon } from "@radix-ui/react-icons";
 import { usePathname, useRouter } from "next/navigation";
+import type { MenuDto } from "@/types/menu";
+import { menuApi, MENUS_CHANGED } from "@/features/menus/menuApi";
+import { notify } from "@/components/ui/toast";
 import styles from "./sidebar.module.css";
 
-type NavigationItem = {
-  label: string;
-  href: string;
-  icon: ReactNode;
-  children?: { label: string; href: string; icon: ReactNode }[];
+const NavigationIcon = dynamic(() => import("@/features/menus/MenuIcon").then(module => module.MenuIcon), {
+  loading: () => <HamburgerMenuIcon className={styles.icon} aria-hidden="true" />,
+});
+
+// These backend URLs predate the Next.js routes.
+const legacyRoutes: Record<string, string> = {
+  "/user/infor": "/user-infor", "/my/evaluation": "/my-evaluation",
+  "/permissions": "/admin/permission", "/menus": "/admin/menu",
 };
 
-const navigation: NavigationItem[] = [
-  {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: (
-      <>
-        <rect x="3" y="3" width="7" height="7" rx="2" />
-        <rect x="14" y="3" width="7" height="7" rx="2" />
-        <rect x="3" y="14" width="7" height="7" rx="2" />
-        <rect x="14" y="14" width="7" height="7" rx="2" />
-      </>
-    ),
-  },
-  {
-    label: "Thông tin chung",
-    href: "#",
-    icon: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <circle cx="12" cy="9" r="3" />
-        <path d="M5 18a7.5 7.5 0 0 1 14 0" />
-      </>
-    ),
-    children: [
-      {
-        label: "Thông tin tài khoản cá nhân",
-        href: "/user-infor",
-        icon: (
-          <>
-            <rect x="3" y="5" width="18" height="15" rx="3" />
-            <path d="M9 5V3h6v2m1 6h2m-2 4h2" />
-            <circle cx="8" cy="11" r="2" />
-            <path d="M5 17a3 3 0 0 1 6 0" />
-          </>
-        ),
-      },
-    ],
-  },
-  {
-    label: "Nhập đánh giá",
-    href: "#",
-    icon: (
-      <>
-        <path d="M4 5h10M4 10h7M4 15h4m3 4 2.5-.5L21 11l-2-2-7.5 7.5L11 19Z" />
-        <path d="m17 11 2 2" />
-      </>
-    ),
-  },
-  {
-    label: "Bản đánh giá của tôi",
-    href: "/my-evaluation",
-    icon: (
-      <>
-        <rect x="5" y="4" width="14" height="17" rx="3" />
-        <path d="M9 4V3h6v1M9 10h6m-6 5 2 2 4-4" />
-      </>
-    ),
-  },
-  {
-    label: "Quản lý",
-    href: "#",
-    icon: (
-      <>
-        <circle cx="9" cy="7" r="3" />
-        <path d="M3 21v-3a6 6 0 0 1 9-5m4-2 1 .5 1-.5 1 1-.5 1 .5 1 1 .5v1l-1 .5-.5 1 .5 1-1 1-1-.5-1 .5-1-1 .5-1-.5-1-1-.5v-1l1-.5.5-1-.5-1 1-1Z" />
-        <circle cx="17" cy="15.5" r="1.5" />
-      </>
-    ),
-    children: [
-      {
-        label: "Danh sách NS chờ đánh giá",
-        href: "/manager/pending",
-        icon: (
-          <>
-            <rect x="4" y="4" width="13" height="17" rx="2" />
-            <path d="M8 4V2h5v2M8 9h5m-5 4h3" />
-            <circle cx="17" cy="17" r="4" />
-            <path d="M17 15v2l1 1" />
-          </>
-        ),
-      },
-      {
-        label: "Danh sách NS đã đánh giá",
-        href: "/manager/reviewed",
-        icon: (
-          <>
-            <circle cx="12" cy="12" r="9" />
-            <path d="m7 12 3 3 7-7" />
-          </>
-        ),
-      },
-    ],
-  },
-  {
-    label: "Quản lý Nhân sự",
-    href: "#",
-    icon: (
-      <>
-        <circle cx="12" cy="6" r="3" />
-        <path d="M6 21v-3a6 6 0 0 1 12 0v3M3 21v-4a4 4 0 0 1 3-4m15 8v-4a4 4 0 0 0-3-4" />
-        <path d="M5 5a3 3 0 0 0 0 6m14-6a3 3 0 0 1 0 6" />
-      </>
-    ),
-    children: [
-      {
-        label: "Danh sách chờ nhận xét",
-        href: "/hr/pending",
-        icon: (
-          <>
-            <path d="M21 11v6a2 2 0 0 1-2 2H8l-5 3V5a2 2 0 0 1 2-2h8" />
-            <path d="m13 12 2-.5L22 4.5 19.5 2l-7 7L12 12Z" />
-          </>
-        ),
-      },
-      {
-        label: "Đã nhận xét",
-        href: "/hr/reviewed",
-        icon: (
-          <>
-            <rect x="4" y="3" width="16" height="18" rx="2" />
-            <path d="M8 8h3m-3 4h3m3 0 2 2 3-4M8 16h3" />
-          </>
-        ),
-      },
-    ],
-  },
-  {
-    label: "HR tổng hợp",
-    href: "#",
-    icon: <><rect x="3" y="3" width="18" height="18" rx="3" /><path d="M7 16v-4m5 4V8m5 8v-6" /></>,
-    children: [{
-      label: "Danh sách đánh giá",
-      href: "/admin/evaluationList",
-      icon: <><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 8h6m-6 4h6m-6 4h3" /></>,
-    }],
-  },
-  {
-    label: "Cấu hình",
-    href: "#",
-    icon: <><path d="m10 3-1 3-3 1-3-1-1 4 2 2-1 3 3 2 3-1 2 2 4-1 1-3 3-1 1-4-3-1-1-3Z" /><circle cx="11" cy="11" r="3" /></>,
-    children: [{
-      label: "Quản lý Permission",
-      href: "/admin/permission",
-      icon: <><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z" /><path d="m8 12 3 3 5-5" /></>,
-    }, {
-      label: "Quản lý menu",
-      href: "/admin/menu",
-      icon: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /><path d="M6.5 10v7.5H14M10 6.5h7.5V14" /></>,
-    }],
-  },
-];
+function menuHref(url?: string | null) {
+  if (!url?.startsWith("/")) return "#";
+  try {
+    const target = new URL(url, "https://kpi.local");
+    return target.origin === "https://kpi.local"
+      ? (legacyRoutes[target.pathname] ?? target.pathname) + target.search + target.hash : "#";
+  } catch { return "#"; }
+}
+
+function containsPath(menu: MenuDto, pathname: string): boolean {
+  return menuHref(menu.url).split(/[?#]/)[0] === pathname || menu.children?.some(child => containsPath(child, pathname));
+}
+
+function sortMenus(menus: MenuDto[]): MenuDto[] {
+  return [...menus].sort((a, b) => a.orderNo - b.orderNo)
+    .map(menu => ({ ...menu, children: sortMenus(menu.children ?? []) }));
+}
 
 export function Sidebar() {
+  const [navigation, setNavigation] = useState<MenuDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [menuRevision, setMenuRevision] = useState(0);
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const pathname = usePathname();
   const router = useRouter();
   const [selectedPathname, setSelectedPathname] = useOptimistic(pathname);
-  const activeIndex = navigation.findIndex(
-    (item) => item.href === selectedPathname || item.children?.some((child) => child.href === selectedPathname),
-  );
+  const selectedGroupIndex = navigation.findIndex(item => item.id === selectedGroupId && containsPath(item, selectedPathname));
+  const activeIndex = selectedGroupIndex >= 0 ? selectedGroupIndex : navigation.findIndex(item => containsPath(item, selectedPathname));
   const [collapsed, setCollapsed] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    "Thông tin chung": true,
-  });
+  const [openGroups, setOpenGroups] = useState<Record<number, boolean>>({});
   const [mobileOpen, setMobileOpen] = useState(false);
   const [highlightOffset, setHighlightOffset] = useState(0);
   const [flyoutTop, setFlyoutTop] = useState(0);
@@ -201,6 +76,24 @@ export function Sidebar() {
   const visiblyCollapsed = collapsed && !mobileOpen;
   const flyoutIndex = visiblyCollapsed ? (hoveredIndex ?? focusedIndex) : null;
   const flyoutItem = visiblyCollapsed ? navigation[flyoutIndex ?? lastFlyoutIndex] : null;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const refresh = () => setMenuRevision(value => value + 1);
+    setLoading(true); setError("");
+    menuApi.my(controller.signal).then(menus => {
+      if (controller.signal.aborted) return;
+      setNavigation(sortMenus(menus));
+      setHoveredIndex(null); setFocusedIndex(null); setLastFlyoutIndex(0);
+    }).catch(cause => {
+      if (controller.signal.aborted) return;
+      const message = cause instanceof Error && cause.message === "UNAUTHORIZED"
+        ? "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại." : "Chưa tải được menu. Vui lòng thử lại.";
+      setNavigation([]); setError(message); notify("error", message, "sidebar-menus");
+    }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    window.addEventListener(MENUS_CHANGED, refresh);
+    return () => { controller.abort(); window.removeEventListener(MENUS_CHANGED, refresh); };
+  }, [menuRevision]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -255,7 +148,7 @@ export function Sidebar() {
       surface?.removeEventListener("scroll", measure);
       window.removeEventListener("resize", measure);
     };
-  }, [highlightedIndex, mobileOpen, visiblyCollapsed, flyoutIndex]);
+  }, [highlightedIndex, mobileOpen, visiblyCollapsed, flyoutIndex, navigation]);
 
   useEffect(() => {
     if (flyoutIndex === null) return;
@@ -289,49 +182,41 @@ export function Sidebar() {
     }, 180);
   }
 
-  function navigate(event: { preventDefault: () => void }, href: string) {
+  function navigate(event: { preventDefault: () => void }, href: string, index: number) {
     if (href === "#") return;
     event.preventDefault();
     cancelReturn();
     setMobileOpen(false);
     setHoveredIndex(null);
     setFocusedIndex(null);
+    setSelectedGroupId(navigation[index].id);
     startTransition(() => {
-      setSelectedPathname(href);
+      setSelectedPathname(new URL(href, window.location.origin).pathname);
       router.push(href);
     });
   }
 
-  function renderSubitems(item: NavigationItem, index: number) {
-    return item.children?.map((child) => (
-      <Link
-        key={child.href}
-        href={child.href}
-        className={styles.subitem}
-        aria-current={child.href === selectedPathname ? "page" : undefined}
-        onNavigate={(event) => navigate(event, child.href)}
-        onPointerEnter={() => {
-          cancelReturn();
-          setHoveredIndex(index);
-        }}
-        onFocus={(event) => {
+  function renderSubitems(item: MenuDto, index: number) {
+    return item.children.map(child => {
+      const href = menuHref(child.url);
+      const hasChildren = child.children.length > 0;
+      const open = openGroups[child.id] ?? containsPath(child, selectedPathname);
+      const submenuId = `sidebar-child-${child.id}`;
+      const interaction = {
+        className: styles.subitem,
+        onPointerEnter: () => { cancelReturn(); setHoveredIndex(index); },
+        onFocus: (event: FocusEvent<HTMLElement>) => {
           if (event.currentTarget.matches(":focus-visible")) setFocusedIndex(index);
-        }}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          {child.icon}
-        </svg>
-        <span>{child.label}</span>
-      </Link>
-    ));
+        },
+      };
+      const content = <><NavigationIcon name={child.icon} fallback /><span>{child.title}</span>{hasChildren && <ChevronDownIcon className={styles.nestedChevron} data-open={open} aria-hidden="true" />}</>;
+      return <div key={child.id}>
+        {hasChildren ? <button {...interaction} type="button" aria-expanded={open} aria-controls={submenuId} onClick={() => setOpenGroups(value => ({ ...value, [child.id]: !open }))}>{content}</button>
+          : href === "#" ? <button {...interaction} type="button" disabled title="Menu chưa có đường dẫn">{content}</button>
+          : <Link {...interaction} href={href} aria-current={containsPath(child, selectedPathname) ? "page" : undefined} onNavigate={event => navigate(event, href, index)}>{content}</Link>}
+        {hasChildren && <div id={submenuId} className={styles.nestedMenu} hidden={!open}>{renderSubitems(child, index)}</div>}
+      </div>;
+    });
   }
 
   const sidebar = (
@@ -346,7 +231,7 @@ export function Sidebar() {
       onKeyDown={(event) => {
         if (flyoutIndex === null) return;
         if (event.key === "ArrowRight" && event.target === itemRefs.current[flyoutIndex]) {
-          const firstLink = flyoutRef.current?.querySelector("a");
+          const firstLink = flyoutRef.current?.querySelector<HTMLElement>("a, button:not(:disabled)");
           if (firstLink) {
             event.preventDefault();
             firstLink.focus();
@@ -438,21 +323,24 @@ export function Sidebar() {
             aria-label="Điều hướng chính"
             style={{ "--highlight-offset": `${highlightOffset}px` } as CSSProperties}
           >
-            <div className={styles.indicator} aria-hidden="true">
+            {!navigation.length && <div className={styles.menuStatus} role={error ? "alert" : "status"}>
+              <p>{error || (loading ? "Đang tải menu…" : "Tài khoản chưa có menu được cấp.")}</p>
+              {error && <button type="button" onClick={() => setMenuRevision(value => value + 1)}>Thử lại</button>}
+            </div>}
+            {!!navigation.length && <div className={styles.indicator} aria-hidden="true">
               <span className={styles.cutout}>
                 <span className={styles.recessShadow} />
               </span>
-            </div>
+            </div>}
             {navigation.map((item, index) => {
-              const groupOpen =
-                openGroups[item.label] ??
-                item.children?.some((child) => child.href === selectedPathname) ??
-                false;
-              const submenuId = `sidebar-submenu-${index}`;
+              const hasChildren = item.children.length > 0;
+              const href = menuHref(item.url);
+              const groupOpen = openGroups[item.id] ?? containsPath(item, selectedPathname);
+              const submenuId = `sidebar-submenu-${item.id}`;
               const interaction = {
                 className: styles.item,
                 "data-highlighted": highlightedIndex === index,
-                "aria-label": item.label,
+                "aria-label": item.title,
                 ref: (element: HTMLElement | null) => {
                   itemRefs.current[index] = element;
                 },
@@ -466,20 +354,9 @@ export function Sidebar() {
               };
               const content = (
                 <>
-                  <svg
-                    className={styles.icon}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.65"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    {item.icon}
-                  </svg>
-                  <span className={styles.label}>{item.label}</span>
-                  {item.children ? (
+                  <NavigationIcon name={item.icon} className={styles.icon} fallback />
+                  <span className={styles.label}>{item.title}</span>
+                  {hasChildren ? (
                     <svg
                       className={styles.groupChevron}
                       data-open={groupOpen}
@@ -511,8 +388,8 @@ export function Sidebar() {
               );
 
               return (
-                <div key={item.label} className={styles.group}>
-                  {item.children ? (
+                <div key={item.id} className={styles.group}>
+                  {hasChildren ? (
                     <button
                       {...interaction}
                       type="button"
@@ -520,22 +397,24 @@ export function Sidebar() {
                       aria-controls={visiblyCollapsed ? "sidebar-flyout" : submenuId}
                       onClick={() => {
                         if (visiblyCollapsed) setFocusedIndex(index);
-                        else setOpenGroups((value) => ({ ...value, [item.label]: !groupOpen }));
+                        else setOpenGroups((value) => ({ ...value, [item.id]: !groupOpen }));
                       }}
                     >
                       {content}
                     </button>
+                  ) : href === "#" ? (
+                    <button {...interaction} type="button" disabled title="Menu chưa có đường dẫn">{content}</button>
                   ) : (
                     <Link
                       {...interaction}
-                      href={item.href}
-                      onNavigate={(event) => navigate(event, item.href)}
+                      href={href}
+                      onNavigate={(event) => navigate(event, href, index)}
                       aria-current={activeIndex === index ? "page" : undefined}
                     >
                       {content}
                     </Link>
                   )}
-                  {item.children && (
+                  {hasChildren && (
                     <div
                       id={submenuId}
                       className={styles.submenu}
@@ -588,12 +467,12 @@ export function Sidebar() {
             </svg>
           </span>
           <div className={styles.flyoutBody}>
-            {flyoutItem.children ? (
-              <nav className={styles.flyoutLinks} aria-label={flyoutItem.label}>
+            {flyoutItem.children.length > 0 ? (
+              <nav className={styles.flyoutLinks} aria-label={flyoutItem.title}>
                 {renderSubitems(flyoutItem, flyoutIndex ?? lastFlyoutIndex)}
               </nav>
             ) : (
-              <span className={styles.flyoutHint}>{flyoutItem.label}</span>
+              <span className={styles.flyoutHint}>{flyoutItem.title}</span>
             )}
           </div>
         </div>
