@@ -7,7 +7,6 @@ import { ActivityLogIcon, ArrowRightIcon, CheckIcon, ClockIcon, ChevronDownIcon,
 import { notify } from "@/components/ui/toast";
 import { generalHrEvaluationApi as api } from "../services/generalHrEvaluationApi";
 import { evaluationLookupApi } from "../services/evaluationLookupApi";
-import { loadGeneralHrExport, createGeneralHrWorkbook } from "../generalHrExport";
 import { generalHrStatusOptions, UserRoleSystem, type ApprovalHistoryEntry, type EvaluationApprover, type EvaluationFilterOption, type EvaluationTypeOption, type GeneralHrEvaluationDto, type GeneralHrEvaluationRequest, type PagedResult } from "@/types/evaluation";
 import { formatEvaluationDate, requestMessage, companyOptions, periodOptions, evaluationTypeOptions, statusKey, hrStatusLabel } from "../evaluationDisplay";
 import { Pagination } from "@/components/ui/pagination";
@@ -38,15 +37,16 @@ export function GeneralHrEvaluations() {
   const [reviewers, setReviewers] = useState<EvaluationFilterOption[]>([]);
   const [lookupBusy, setLookupBusy] = useState(true), [departmentBusy, setDepartmentBusy] = useState(true);
   const [lookupError, setLookupError] = useState(""), [departmentError, setDepartmentError] = useState("");
-  const [exportStatus, setExportStatus] = useState<"idle" | "loading" | "complete">("idle");
-  const [exportProgress, setExportProgress] = useState({ loaded: 0, total: 0, percent: 0 });
+  const [exportStatus, setExportStatus] = useState<"idle" | "loading" | "generating" | "complete">("idle");
+  const [exportTotal, setExportTotal] = useState(0);
   const exporting = exportStatus !== "idle";
+  const exportLabel = exportStatus === "complete" ? "Đã tải Excel" : exportStatus === "generating" ? "Đang tạo Excel" : "Đang lấy dữ liệu";
   const exportController = useRef<AbortController | null>(null);
   const exportButton = useRef<HTMLButtonElement>(null), exportCancelButton = useRef<HTMLButtonElement>(null);
   const [dialog, setDialog] = useState<{ mode: HrDialogMode; row: GeneralHrEvaluationDto } | null>(null);
   const [trackedId, setTrackedId] = useState<number | null>(null);
   const [trackingOpen, setTrackingOpen] = useState(true);
-  const requestBody = useMemo<GeneralHrEvaluationRequest>(() => ({ Page: page, PageSize: pageSize, Filters: { keyword: applied.keyword, companyid: applied.companyId, departmentid: applied.departmentId, evaluationtypeid: applied.typeId, periodid: applied.periodId, userapprove: applied.reviewerId, status: applied.statuses.join(";"), sortBy: "Id", sortOrder: applied.order } }), [applied, page, pageSize]);
+  const requestBody = useMemo<GeneralHrEvaluationRequest>(() => ({ Page: page, PageSize: pageSize, Filters: { keyword: applied.keyword, companyid: applied.companyId, departmentid: applied.departmentId, evaluationtypeid: applied.typeId, periodid: applied.periodId, userapprove: applied.reviewerId, status: applied.statuses.join(";"), ismatchall: !applied.statuses.length || applied.statuses.length === generalHrStatusOptions.length ? "true" : "false", sortBy: "Id", sortOrder: applied.order } }), [applied, page, pageSize]);
   const requestKey = JSON.stringify(requestBody);
   const data = snapshot?.key === requestKey ? snapshot.data : null;
   const trackedRow = trackingOpen ? data?.items.find((row) => row.id === trackedId) ?? data?.items[0] : undefined;
@@ -106,23 +106,23 @@ export function GeneralHrEvaluations() {
   async function exportExcel() {
     if (!data?.total || exportController.current) return;
     const controller = new AbortController(); exportController.current = controller;
-    setExportProgress({ loaded: 0, total: data.total, percent: 0 }); setExportStatus("loading");
+    setExportTotal(data.total); setExportStatus("loading");
     requestAnimationFrame(() => exportCancelButton.current?.focus({ preventScroll: true }));
     try {
-      const result = await loadGeneralHrExport(requestBody, controller.signal, (loaded, total) => {
-        if (exportController.current === controller) setExportProgress({ loaded, total, percent: total ? Math.round(loaded / total * 100) : 0 });
-      });
+      const result = await api.getPaged({ ...requestBody, Page: 1, PageSize: data.total }, controller.signal);
       controller.signal.throwIfAborted();
-      if (!result.total) throw new Error("INCOMPLETE_EXPORT");
-      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      if (!result.total || result.items.length !== result.total) throw new Error("INCOMPLETE_EXPORT");
+      setExportTotal(result.total); setExportStatus("generating");
+      const { createGeneralHrWorkbook } = await import("../generalHrExport");
       controller.signal.throwIfAborted();
-      const bytes = createGeneralHrWorkbook(result.items);
-      const url = URL.createObjectURL(new Blob([bytes.buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+      const blob = await createGeneralHrWorkbook(result.items);
+      controller.signal.throwIfAborted();
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a"); link.href = url; link.download = `danh-gia-kpi-${new Date().toISOString().slice(0, 10)}.xlsx`; link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       setExportStatus("complete");
       notify("success", `Đã xuất ${result.total} bản đánh giá.`);
-      await new Promise<void>((resolve) => setTimeout(resolve, 240));
+      await new Promise<void>((resolve) => setTimeout(resolve, 900));
     } catch (cause) {
       if (!controller.signal.aborted) notify("error", requestMessage(cause, "Chưa xuất được đầy đủ dữ liệu. Vui lòng thử lại."));
     } finally {
@@ -137,15 +137,16 @@ export function GeneralHrEvaluations() {
     <header className={s.hero} data-exporting={exporting}>
         <div className={s.heroCopy}><h1 id="general-hr-title">Theo dõi đánh giá<span>.</span></h1><p>Nắm rõ tiến trình. Theo sát người duyệt.</p><span className={s.heroScope}><PersonIcon aria-hidden="true" />HR tổng hợp · Công ty theo quyền của bạn</span></div>
         <div className={s.heroActions}>
-          <div className={s.exportControl} data-active={exporting}>
+          <div className={s.exportControl} data-active={exporting} data-state={exportStatus}>
             <span className={s.exportSurface} aria-hidden="true" onTransitionEnd={(event) => { if (event.propertyName === "clip-path" && !exportController.current) exportButton.current?.focus({ preventScroll: true }); }} />
             <button ref={exportButton} type="button" className={s.exportButton} aria-label="Xuất Excel" aria-hidden={exporting || undefined} tabIndex={exporting ? -1 : 0} onClick={exportExcel} disabled={loading || !!error || !data?.total || exporting}><DownloadIcon aria-hidden="true" /><span>Xuất Excel</span></button>
             <div className={s.exportProgress} aria-hidden={!exporting} inert={!exporting}>
-              <div><div className={s.exportProgressLabel}><span id="hr-export-label">{exportStatus === "complete" ? "Đã xuất Excel" : "Đang xuất Excel"}</span><strong>{exportProgress.percent}%</strong></div><div className={s.exportTrack} role="progressbar" aria-labelledby="hr-export-label" aria-valuemin={0} aria-valuemax={100} aria-valuenow={exportProgress.percent} aria-valuetext={`${exportProgress.loaded} / ${exportProgress.total} hồ sơ`}><span style={{ transform: `scaleX(${exportProgress.percent / 100})` }} /></div></div>
-              <button ref={exportCancelButton} type="button" className={s.exportCancel} aria-label={exportStatus === "complete" ? "Đã xuất Excel" : "Hủy xuất Excel"} disabled={exportStatus === "complete"} onClick={cancelExport}>{exportStatus === "complete" ? <CheckIcon aria-hidden="true" /> : <Cross2Icon aria-hidden="true" />}</button>
+              <span className={s.exportGlyph} aria-hidden="true"><DownloadIcon /><CheckIcon /></span>
+              <div><div className={s.exportProgressLabel}><span id="hr-export-label">{exportLabel}</span><strong>XLSX</strong></div><div className={s.exportTrack} role="progressbar" aria-labelledby="hr-export-label" aria-valuemin={0} aria-valuemax={100} aria-valuenow={exportStatus === "complete" ? 100 : undefined} aria-valuetext={exportLabel}><span /></div></div>
+              <button ref={exportCancelButton} type="button" className={s.exportCancel} aria-label={exportStatus === "complete" ? "Đóng thông báo tải Excel" : "Hủy xuất Excel"} onClick={cancelExport}><Cross2Icon aria-hidden="true" /></button>
             </div>
           </div>
-          <span role="status">{exporting ? `${exportProgress.loaded} / ${exportProgress.total} hồ sơ` : ""}</span>
+          <span role="status">{exporting ? `${exportLabel} · ${exportTotal.toLocaleString("vi-VN")} hồ sơ` : ""}</span>
         </div>
     </header>
     <div className={s.workspace}>

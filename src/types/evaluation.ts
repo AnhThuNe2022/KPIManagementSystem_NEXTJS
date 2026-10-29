@@ -142,6 +142,7 @@ export interface GeneralHrEvaluationRequest {
     keyword?: string;
     departmentid?: string;
     status: string;
+    ismatchall: "true" | "false";
     companyid?: string;
     evaluationtypeid?: string;
     periodid?: string;
@@ -161,6 +162,7 @@ export interface GeneralHrEvaluationDto {
   id: number;
   userId: string;
   name: string;
+  email?: string | null;
   status: string;
   templateId?: number | null;
   systemCode?: string | null;

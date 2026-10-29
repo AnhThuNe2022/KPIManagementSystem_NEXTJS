@@ -63,20 +63,36 @@
 .exportSurface { position: absolute; right: 0; top: -8px; width: 300px; height: 60px; border-radius: 12px; background: #fff; box-shadow: 0 4px 12px rgb(4 12 43 / .25), inset 0 1px 0 rgb(255 255 255 / .7); clip-path: inset(8px 0 8px calc(100% - 128px) round 9px); transition: clip-path 280ms var(--ease-out), background-color 200ms ease, box-shadow 200ms ease; pointer-events: none; }
 .exportButton { position: absolute; right: 0; top: 0; display: inline-flex; align-items: center; justify-content: center; gap: 9px; width: 128px; min-height: 44px; padding: 10px 12px; border: 0; border-radius: 9px; background: transparent; color: #182970; font-size: 13px !important; font-weight: 750 !important; white-space: nowrap; }
 .hero .exportButton { transition: opacity 140ms var(--ease-out) 120ms, visibility 0s 120ms; }
-.exportButton svg { width: 17px; height: 17px; }
+.exportButton svg { width: 17px; height: 17px; color: #e83645; transition: transform 160ms var(--ease-out); }
+.exportButton:active { transform: scale(.97); }
 .hero .exportButton:disabled { opacity: .65; }
 .hero .exportButton:focus-visible { outline-color: var(--hr-action); }
 .exportControl[data-active="true"] .exportSurface { clip-path: inset(0 round 12px); background: #152359; box-shadow: inset 4px 5px 12px rgb(4 11 37 / .65), inset -1px -1px 2px rgb(116 141 225 / .35); transition-duration: 250ms, 180ms, 180ms; transition-timing-function: var(--ease-in-out), ease, ease; }
 .hero .exportControl[data-active="true"] .exportButton { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 100ms var(--ease-out), visibility 0s 100ms; }
-.exportProgress { position: absolute; right: 0; top: -8px; display: grid; grid-template-columns: minmax(0, 1fr) 36px; align-items: center; gap: 14px; width: 300px; height: 60px; padding: 9px 10px 9px 16px; color: #e5ecff; opacity: 0; transform: translateX(12px); visibility: hidden; transition: opacity 100ms var(--ease-out), transform 280ms var(--ease-out), visibility 0s 100ms; }
+.exportProgress { position: absolute; right: 0; top: -8px; display: grid; grid-template-columns: 38px minmax(0, 1fr) 30px; align-items: center; gap: 10px; width: 300px; height: 60px; padding: 10px 12px; color: #e5ecff; opacity: 0; transform: translateX(12px); visibility: hidden; transition: opacity 100ms var(--ease-out), transform 280ms var(--ease-out), visibility 0s 100ms; }
 .exportControl[data-active="true"] .exportProgress { opacity: 1; transform: none; visibility: visible; transition-delay: 70ms, 0s, 0s; }
-.exportProgressLabel { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; font-size: 13px; line-height: 1.2; white-space: nowrap; }
-.exportProgressLabel strong { font-weight: 750; }
-.exportTrack { height: 8px; border-radius: 3px; background: #081238; box-shadow: inset 2px 3px 5px rgb(1 6 24 / .8), inset -1px -1px 2px #3d4e88; overflow: hidden; }
-.exportTrack > span { display: block; width: 100%; height: 100%; transform-origin: left; border-radius: inherit; background: linear-gradient(180deg, #c0d1ff, #809beb); box-shadow: inset 0 1px 0 #e9efff, 0 1px 3px #02091e; transition: transform 180ms linear; }
-.exportCancel { display: inline-grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 9px; background: #23366f; color: #e5ecff; box-shadow: 2px 3px 6px rgb(2 9 31 / .5), inset 0 1px 0 #40538d; }
+.exportGlyph { position: relative; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: #263b7b; color: #bed0ff; overflow: hidden; transition: background-color 200ms ease, color 200ms ease; }
+.exportGlyph > svg { position: absolute; width: 21px; height: 21px; transition: transform 250ms var(--ease-out), opacity 200ms ease; }
+.exportGlyph > svg:last-child { opacity: 0; transform: translateY(10px) scale(.9); }
+.exportControl:is([data-state="loading"], [data-state="generating"]) .exportGlyph > svg:first-child { animation: exportDownload 1200ms linear infinite; }
+.exportControl[data-state="complete"] .exportGlyph { background: #d4fbe9; color: #08774e; }
+.exportControl[data-state="complete"] .exportGlyph > svg:first-child { opacity: 0; transform: translateY(-10px); }
+.exportControl[data-state="complete"] .exportGlyph > svg:last-child { opacity: 1; transform: none; }
+.exportProgressLabel { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 9px; font-size: 12px; font-weight: 650; line-height: 1.2; white-space: nowrap; }
+.exportProgressLabel strong { padding: 2px 4px; border-radius: 4px; background: #2d417c; color: #cbd8ff; font-size: 9px; font-weight: 750; letter-spacing: .04em; }
+.exportTrack { height: 4px; border-radius: 4px; background: #081238; overflow: hidden; }
+.exportTrack > span { display: block; width: 100%; height: 100%; transform: translateX(-32%) scaleX(.32); transform-origin: left; border-radius: inherit; background: linear-gradient(90deg, #ff6875 0 16%, #9db9ff 16% 100%); }
+.exportControl:is([data-state="loading"], [data-state="generating"]) .exportTrack > span { animation: exportTravel 1200ms linear infinite; }
+.exportControl[data-state="complete"] .exportTrack > span { transform: none; background: #66e2b0; transition: transform 250ms var(--ease-out); }
+.exportCancel { display: inline-grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 8px; background: #23366f; color: #e5ecff; }
 .exportCancel svg { width: 17px; height: 17px; }
 .hero .exportCancel:focus-visible { outline-color: #e5ecff; }
+@keyframes exportTravel { to { transform: translateX(100%) scaleX(.32); } }
+@keyframes exportDownload { 0%, 100% { transform: translateY(-2px); opacity: .7; } 50% { transform: translateY(2px); opacity: 1; } }
+@media (hover: hover) and (pointer: fine) {
+  .exportButton:hover > svg { transform: translateY(2px); }
+  .exportCancel:hover { background: #354e94; }
+}
 .filters { position: relative; padding: 12px; }
 .searchRow { display: grid; grid-template-columns: minmax(180px, 1.5fr) repeat(3, minmax(125px, 1fr)) auto; align-items: end; gap: 10px; }
 .filterActions { display: flex; align-items: center; justify-content: flex-end; gap: 7px; }
@@ -660,6 +676,10 @@
   .exportSurface { transition: background-color 100ms ease, box-shadow 100ms ease; }
   .exportProgress { transform: none; transition: opacity 100ms ease, visibility 0s; }
   .exportTrack > span { transition-duration: 0s; }
+  .exportControl:is([data-state="loading"], [data-state="generating"]) :is(.exportTrack > span, .exportGlyph > svg:first-child) { animation: none; transform: none; opacity: .7; }
+  .exportGlyph > svg, .exportButton > svg { transition: opacity 100ms ease; }
+  .exportGlyph > svg:last-child, .exportControl[data-state="complete"] .exportGlyph > svg:first-child { transform: none; }
+  .exportButton:active, .exportButton:hover > svg { transform: none; }
   .dialog[open], .dialog[data-variant][open] { animation: fadeArrive 100ms ease-out; }
   .dialog::backdrop { animation: none; backdrop-filter: none; }
   :is(.page, .dialog) button, .table tbody tr, .targetOption { transition-duration: 0s; }

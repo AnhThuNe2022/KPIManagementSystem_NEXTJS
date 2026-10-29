@@ -8,7 +8,7 @@ export const generalHrEvaluationApi = {
   async getPaged(body: GeneralHrEvaluationRequest, signal?: AbortSignal) {
     const response = await request<{ data: PagedResult<GeneralHrEvaluationDto> }>("/evaluation/paged", {
       method: "POST",
-      body: JSON.stringify({ ...body, Filters: { ...body.Filters, ismatchall: "false" } }),
+      body: JSON.stringify(body),
       signal,
     });
     return response.data;
