@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { CheckIcon, ChevronDownIcon, MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import styles from "./searchable-select.module.css";
 
-export type SearchableSelectOption = { id: string; name: string };
+export type SearchableSelectOption = { id: string; name: string; icon?: ReactNode };
 
 type Props = {
   id: string;
@@ -46,7 +46,7 @@ export function SearchableSelect(props: Props) {
   const popupId = id + "-options";
   const listId = id + "-list";
   const anchor = "--search-select-" + (id + reactId).replace(/[^a-zA-Z0-9_-]/g, "");
-  const choices = [{ id: "", name: placeholder }, ...options];
+  const choices: readonly SearchableSelectOption[] = [{ id: "", name: placeholder }, ...options];
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -56,9 +56,10 @@ export function SearchableSelect(props: Props) {
   const selected = props.multiple ? props.value : [props.value];
   const visible = onSearchChange ? choices : choices.filter((option) => searchableText(option.name).includes(searchableText(query)));
   const activeIndex = Math.min(active, visible.length - 1);
+  const currentOption = props.multiple ? undefined : options.find(option => option.id === props.value);
   const current = props.multiple
     ? selected.length ? `${selected.length} ${label.toLocaleLowerCase("vi")} đã chọn` : placeholder
-    : valueLabel || options.find((option) => option.id === props.value)?.name || placeholder;
+    : valueLabel || currentOption?.name || placeholder;
 
   function choose(next: string) {
     if (props.multiple) {
@@ -104,7 +105,7 @@ export function SearchableSelect(props: Props) {
         aria-invalid={invalid || undefined}
         style={{ anchorName: anchor } as CSSProperties}
       >
-        <span>{current}</span><ChevronDownIcon aria-hidden="true" />
+        <span className={styles.optionLabel}>{currentOption?.icon && <span className={styles.optionIcon} aria-hidden="true">{currentOption.icon}</span>}<span className={styles.selectedText}>{current}</span></span><ChevronDownIcon aria-hidden="true" />
       </button>
       <div
         ref={popup}
@@ -173,7 +174,7 @@ export function SearchableSelect(props: Props) {
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => choose(option.id)}
             >
-              <span>{option.name}</span>{(option.id ? selected.includes(option.id) : props.multiple ? !selected.length : props.value === "") && <CheckIcon aria-hidden="true" />}
+              <span className={styles.optionLabel}>{option.icon && <span className={styles.optionIcon} aria-hidden="true">{option.icon}</span>}<span>{option.name}</span></span>{(option.id ? selected.includes(option.id) : props.multiple ? !selected.length : props.value === "") && <CheckIcon aria-hidden="true" />}
             </button>
           ))}
         </div>

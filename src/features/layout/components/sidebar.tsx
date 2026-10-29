@@ -166,6 +166,10 @@ const navigation: NavigationItem[] = [
       label: "Quản lý Permission",
       href: "/admin/permission",
       icon: <><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z" /><path d="m8 12 3 3 5-5" /></>,
+    }, {
+      label: "Quản lý menu",
+      href: "/admin/menu",
+      icon: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /><path d="M6.5 10v7.5H14M10 6.5h7.5V14" /></>,
     }],
   },
 ];
