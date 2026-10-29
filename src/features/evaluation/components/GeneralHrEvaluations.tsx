@@ -4,7 +4,7 @@ import Image from "next/image";
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import { ActivityLogIcon, ArrowRightIcon, CheckIcon, ClockIcon, ChevronDownIcon, Cross2Icon, DotsHorizontalIcon, DownloadIcon, ExclamationTriangleIcon, EyeOpenIcon, FileTextIcon, MagnifyingGlassIcon, MixerHorizontalIcon, PersonIcon, ReloadIcon, ResetIcon, TrashIcon, UpdateIcon } from "@radix-ui/react-icons";
-import { toast } from "sonner";
+import { notify } from "@/components/ui/toast";
 import { generalHrEvaluationApi as api } from "../services/generalHrEvaluationApi";
 import { evaluationLookupApi } from "../services/evaluationLookupApi";
 import { loadGeneralHrExport, createGeneralHrWorkbook } from "../generalHrExport";
@@ -121,10 +121,10 @@ export function GeneralHrEvaluations() {
       const link = document.createElement("a"); link.href = url; link.download = `danh-gia-kpi-${new Date().toISOString().slice(0, 10)}.xlsx`; link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       setExportStatus("complete");
-      toast.success(`Đã xuất ${result.total} bản đánh giá.`);
+      notify("success", `Đã xuất ${result.total} bản đánh giá.`);
       await new Promise<void>((resolve) => setTimeout(resolve, 240));
     } catch (cause) {
-      if (!controller.signal.aborted) toast.error(requestMessage(cause, "Chưa xuất được đầy đủ dữ liệu. Vui lòng thử lại."));
+      if (!controller.signal.aborted) notify("error", requestMessage(cause, "Chưa xuất được đầy đủ dữ liệu. Vui lòng thử lại."));
     } finally {
       if (exportController.current === controller) {
         exportController.current = null; setExportStatus("idle");
@@ -298,9 +298,13 @@ function GeneralHrEvaluationDialog({ mode, row, onClose, onModeChange, onMutated
       if (mode === "delete") await api.remove(row.id);
       else if (mode === "status" && selected !== null) await api.changeStatus({ EvalId: row.id, Status: selected, Reason: reason.trim() });
       else return;
-      toast.success(mode === "delete" ? `Đã xóa bản đánh giá #${row.id}.` : "Đã cập nhật trạng thái bản đánh giá.");
+      notify("success", mode === "delete" ? `Đã xóa bản đánh giá #${row.id}.` : "Đã cập nhật trạng thái bản đánh giá.");
       onMutated();
-    } catch (cause: unknown) { setError(requestMessage(cause, mode === "delete" ? "Chưa xóa được hồ sơ. Vui lòng thử lại." : "Chưa cập nhật được trạng thái. Vui lòng thử lại.")); }
+    } catch (cause: unknown) {
+      const message = requestMessage(cause, mode === "delete" ? "Chưa xóa được hồ sơ. Vui lòng thử lại." : "Chưa cập nhật được trạng thái. Vui lòng thử lại.");
+      setError(message);
+      notify("error", message);
+    }
     finally { busyRef.current = false; setBusy(false); }
   }
 

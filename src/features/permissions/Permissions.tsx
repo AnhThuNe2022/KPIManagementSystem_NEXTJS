@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useRef, useState, type FormEvent } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { toast } from "sonner";
+import { notify } from "@/components/ui/toast";
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, ChevronRightIcon, Cross2Icon, DesktopIcon, InfoCircledIcon, LockClosedIcon, MagnifyingGlassIcon, PersonIcon, PlusIcon, ReloadIcon, SymbolIcon, TrashIcon } from "@radix-ui/react-icons";
 import { Pagination } from "@/components/ui/pagination";
 import { permissionApi, permissionError, type Assignment, type AssignmentTab, type Permission, type PermissionDraft, type PermissionPage } from "./permissionApi";
@@ -142,8 +142,12 @@ export function Permissions() {
         updateQuery({ permission: null, tab: null, q: null, page: null });
       }
       setRevision(value => value + 1); setDetailRevision(value => value + 1);
-      setNotice({ error: false, text: creating ? "Đã tạo quyền mới. Chọn quyền để phân quyền màn hình, vai trò và người dùng." : "Đã lưu thông tin quyền." });
-    } catch (error) { setNotice({ error: true, text: permissionError(error) }); }
+      notify("success", creating ? "Đã tạo quyền mới. Chọn quyền để phân quyền màn hình, vai trò và người dùng." : "Đã lưu thông tin quyền.");
+    } catch (error) {
+      const message = permissionError(error);
+      setNotice({ error: true, text: message });
+      notify("error", message);
+    }
     finally { mutationLock.current = false; setBusy(""); }
   }
   async function remove() {
@@ -153,8 +157,13 @@ export function Permissions() {
       await permissionApi.remove(current.id);
       setConfirmation(null); setDetail(null); setDraft({ ...blank });
       updateQuery({ permission: null, tab: null, page: page > 1 && list?.items.length === 1 ? page - 1 : page });
-      setRevision(value => value + 1); setNotice({ error: false, text: "Đã xóa quyền được chọn." });
-    } catch (error) { setConfirmation({ type: "delete", error: permissionError(error) }); }
+      setRevision(value => value + 1); setNotice(null);
+      notify("success", "Đã xóa quyền được chọn.");
+    } catch (error) {
+      const message = permissionError(error);
+      setConfirmation({ type: "delete", error: message });
+      notify("error", message);
+    }
     finally { mutationLock.current = false; setBusy(""); }
   }
   async function toggle(target: Assignment) {
@@ -170,8 +179,9 @@ export function Permissions() {
         setAssignments(value => Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, entry.tab === tab && entry.data ? { ...entry, data: { ...entry.data, items: entry.data.items.map(item => item.id === target.id ? { ...item, isAssigned: assigned } : item) } } : entry])));
         setCounts(value => value[tab] == null ? value : { ...value, [tab]: Math.max(0, value[tab]! + (assigned ? 1 : -1)) });
       }
+      notify("success", `${assigned ? "Đã cấp" : "Đã thu hồi"} quyền ${current.code} ${assigned ? "cho" : "của"} ${assignmentLabel(target)}.`, key);
     } catch (error) {
-      toast.error(`${assignmentLabel(target)}: ${permissionError(error)}`, { id: key, position: "bottom-right", style: { background: "var(--panel-paper)", color: "rgb(var(--color-text))", borderColor: "rgb(var(--color-border))" } });
+      notify("error", `${assignmentLabel(target)}: ${permissionError(error)}`, key);
     }
     finally { assignmentLocks.current.delete(key); setPendingAssignments(new Set(assignmentLocks.current)); }
   }

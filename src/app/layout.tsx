@@ -1,7 +1,7 @@
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import type { Metadata } from "next";
-import { Toaster } from "sonner";
+import { AppToaster } from "@/components/ui/toast";
 export const metadata: Metadata = {
   title: "KPI Management System",
   description: "DCG KPI management platform",
@@ -20,9 +20,7 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           {children}
-          <Toaster
-          position="top-right"
-        />
+          <AppToaster />
         </AuthProvider>
       </body>
     </html>

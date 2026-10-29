@@ -6,7 +6,7 @@ import { ActivityLogIcon, CalendarIcon, FileTextIcon, LayersIcon, MixIcon, PlusI
 import { Pagination } from "@/components/ui/pagination";
 import styles from "../evaluation-list.module.css";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { notify } from "@/components/ui/toast";
 
 import { evaluationApi } from "@/features/evaluation/services/evaluationApi";
 import { requestMessage } from "../evaluationDisplay";
@@ -45,7 +45,7 @@ export default function EvaluationList() {
           ? error.message
           : "Lỗi không xác định.";
 
-      toast.error(`Lỗi tải danh sách: ${requestMessage(error, message)}`);
+      notify("error", `Lỗi tải danh sách: ${requestMessage(error, message)}`);
     } finally {
       if (!signal.aborted) setLoading(false);
     }

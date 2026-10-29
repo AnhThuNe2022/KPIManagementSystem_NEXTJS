@@ -30,6 +30,7 @@ import styles from "../evaluation-common.module.css";
 import pending from "../pending-evaluations.module.css";
 import { Pagination } from "@/components/ui/pagination";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { notify } from "@/components/ui/toast";
 import { evaluationLookupApi } from "../services/evaluationLookupApi";
 import { formatEvaluationDate, requestMessage, companyOptions, periodOptions, evaluationTypeOptions } from "../evaluationDisplay";
 
@@ -239,13 +240,16 @@ export function PendingEvaluations({
         completed += 1;
       }
       setRejectTargets(null);
+      notify("success", `Đã từ chối ${completed} bản đánh giá.`);
     } catch (cause) {
       setRejectTargets(rejectTargets.slice(completed));
       const message =
         cause instanceof Error && cause.message === "FORBIDDEN"
           ? "Bạn chưa có quyền từ chối bản đánh giá này."
           : requestMessage(cause, "Chưa từ chối được bản đánh giá. Vui lòng thử lại.");
-      setRejectError(completed ? `Đã từ chối ${completed} bản. ${message}` : message);
+      const feedback = completed ? `Đã từ chối ${completed}/${rejectTargets.length} bản. ${message}` : message;
+      setRejectError(feedback);
+      notify(completed ? "warning" : "error", feedback);
     } finally {
       if (completed) setRevision((value) => value + 1);
       rejectInFlight.current = false;

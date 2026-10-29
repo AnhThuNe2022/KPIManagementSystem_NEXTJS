@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" role="img" aria-label="Cảnh báo">
+  <g fill="#303087">
+    <path d="M11.4 4.5V8.9L6.8 17.5L4 18.7Z"/>
+    <path d="M12.6 4.5L20 18.7L17.2 17.5L12.6 8.9Z"/>
+    <path d="M7 18.5H17L19.2 20.5H4.8Z"/>
+  </g>
+  <g fill="#E21C2B">
+    <path d="M11 10.5H13L12.75 14.7H11.25Z"/>
+    <path d="M11 15.8H13V17.8H11Z"/>
+  </g>
+</svg>

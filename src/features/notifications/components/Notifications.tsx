@@ -24,6 +24,7 @@ import type { NotificationItem, NotificationPage } from "@/types/notification";
 import styles from "../notifications.module.css";
 import { searchText, internalNotificationLink } from "@/features/notifications/notificationUtils";
 import { Pagination } from "@/components/ui/pagination";
+import { notify } from "@/components/ui/toast";
 
 type Status = "all" | "unread" | "read";
 const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
@@ -127,19 +128,20 @@ export function Notifications() {
     return () => controller.abort();
   }, [filtering, requestPage, requestSize, requestKey, revision]);
 
-  async function mutate(action: () => Promise<unknown>, onSuccess?: () => void) {
+  async function mutate(action: () => Promise<unknown>, message: string, onSuccess?: () => void) {
     if (disabled) return;
     setBusy(true);
     setError("");
     try {
       await action();
+      notify("success", message);
       onSuccess?.();
     } catch (cause) {
-      setError(
-        cause instanceof Error && cause.message === "UNAUTHORIZED"
-          ? "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
-          : "Không cập nhật được thông báo. Vui lòng thử lại.",
-      );
+      const message = cause instanceof Error && cause.message === "UNAUTHORIZED"
+        ? "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
+        : "Không cập nhật được thông báo. Vui lòng thử lại.";
+      setError(message);
+      notify("error", message);
     } finally {
       setBusy(false);
     }
@@ -151,7 +153,7 @@ export function Notifications() {
       if (href) router.push(href);
     };
     if (item.isRead) navigate();
-    else void mutate(() => notificationApi.markRead(item.id), navigate);
+    else void mutate(() => notificationApi.markRead(item.id), "Đã đánh dấu thông báo là đã đọc.", navigate);
   }
 
   return (
@@ -182,7 +184,7 @@ export function Notifications() {
               type="button"
               className={`${styles.button} ${styles.primary}`}
               disabled={disabled || !data?.unreadCount}
-              onClick={() => void mutate(() => notificationApi.markAllRead())}
+              onClick={() => void mutate(() => notificationApi.markAllRead(), "Đã đánh dấu tất cả thông báo là đã đọc.")}
             >
               <CheckIcon aria-hidden="true" />
               Đọc tất cả
@@ -428,7 +430,7 @@ export function Notifications() {
                                   title="Đánh dấu đã đọc"
                                   aria-label={`Đánh dấu đã đọc: ${item.message}`}
                                   onClick={() =>
-                                    void mutate(() => notificationApi.markRead(item.id))
+                                    void mutate(() => notificationApi.markRead(item.id), "Đã đánh dấu thông báo là đã đọc.")
                                   }
                                 >
                                   <CheckIcon aria-hidden="true" />
@@ -441,7 +443,7 @@ export function Notifications() {
                                 title="Xóa thông báo"
                                 aria-label={`Xóa thông báo: ${item.message}`}
                                 onClick={() =>
-                                  void mutate(() => notificationApi.deleteOne(item.id))
+                                  void mutate(() => notificationApi.deleteOne(item.id), "Đã xóa thông báo.")
                                 }
                               >
                                 <TrashIcon aria-hidden="true" />
@@ -546,6 +548,7 @@ export function Notifications() {
             onClick={() =>
               void mutate(
                 () => notificationApi.deleteAll(),
+                "Đã xóa tất cả thông báo.",
                 () => {
                   confirmRef.current?.close();
                   setPage(1);

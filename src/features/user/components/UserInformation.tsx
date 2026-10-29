@@ -40,7 +40,7 @@ import {
 import {
   ChangePasswordDto,
 } from "@/types/employee";
-import { toast } from "sonner";
+import { notify } from "@/components/ui/toast";
 import { companyApi } from "../service/companyApi";
 import ComplaintDialog from "./ComplaintDialog";
 import { ConditionStatus, EnumCodeNoti, NotificationDto } from "@/types/notification";
@@ -238,6 +238,7 @@ export default function UserInforPage() {
   });
 
   closeAssignmentDialog();
+  notify("info", "Đã cập nhật bản nháp đơn vị công tác. Nhấn Lưu thay đổi để lưu vào hệ thống.");
 };
 
   const saveAssignments = async () => {
@@ -256,15 +257,14 @@ export default function UserInforPage() {
         );
 
         if (!result.success) {
-          setError(
-            result.message ??
-              "Không thể cập nhật đơn vị công tác."
-          );
+          const message = result.message ?? "Không thể cập nhật đơn vị công tác.";
+          setError(message);
+          notify("error", message);
 
           return;
         }
 
-        toast.success("Cập nhật thành công!");
+        notify("success", "Đã lưu đơn vị công tác.");
       }
 
       await loadAssignments(user.id);
@@ -274,6 +274,7 @@ export default function UserInforPage() {
       setError(
         "Không thể cập nhật đơn vị công tác."
       );
+      notify("error", "Không thể cập nhật đơn vị công tác. Vui lòng thử lại.");
     } finally {
       setIsLoading(false);
     }
@@ -298,7 +299,7 @@ export default function UserInforPage() {
     const reason = complaintReason.trim();
 
     if (!reason) {
-      toast.error("Vui lòng nhập nội dung báo lỗi.");
+      notify("error", "Vui lòng nhập nội dung báo lỗi.");
       return;
     }
 
@@ -314,14 +315,14 @@ export default function UserInforPage() {
       setIsComplaintDialogOpen(false);
       setComplaintReason("");
 
-      toast.success("Đã gửi thành công!");
+      notify("success", "Đã gửi báo lỗi tới người tiếp nhận.");
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
           : "Không thể gửi báo lỗi.";
 
-      toast.error(message);
+      notify("error", message);
     } finally {
       setIsLoading(false);
     }
@@ -361,7 +362,7 @@ const createComplaint = async (
 
   // Không có company nào thì không thể xác định receiver
   if (companyIds.length === 0) {
-    toast.warning(
+    notify("warning",
       "Không tìm thấy công ty của nhân viên."
     );
 
@@ -411,7 +412,7 @@ const createComplaint = async (
   );
 
   if (receivers.length === 0) {
-    toast.warning(
+    notify("warning",
       "Không tìm thấy người tiếp nhận."
     );
 
@@ -498,6 +499,7 @@ const createComplaint = async (
     ) => {
     if (!user?.id) {
       setError("Không tìm thấy người dùng.");
+      notify("error", "Không tìm thấy người dùng.");
       return;
     }
     try {
@@ -509,18 +511,16 @@ const createComplaint = async (
         model
       );
 
-      toast.success("Đổi mật khẩu thành công!");
+      notify("success", "Đã đổi mật khẩu.");
 
       closePasswordChange();
 
     } catch (err) {
       console.error(err);
 
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Không thể thay đổi mật khẩu."
-      );
+      const message = err instanceof Error ? err.message : "Không thể thay đổi mật khẩu.";
+      setError(message);
+      notify("error", message);
     } finally {
       setIsLoading(false);
     }
@@ -549,6 +549,7 @@ const createComplaint = async (
       // Chưa tồn tại trên DB
       return prev.filter(assignment => assignment !== item);
     });
+    notify("info", "Đã gỡ đơn vị khỏi bản nháp. Nhấn Lưu thay đổi để lưu vào hệ thống.");
   };
 
   /**
