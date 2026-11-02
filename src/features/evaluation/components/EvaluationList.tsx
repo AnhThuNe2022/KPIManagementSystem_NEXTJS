@@ -3,14 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { ActivityLogIcon, CalendarIcon, FileTextIcon, LayersIcon, MixIcon, PlusIcon } from "@radix-ui/react-icons";
-import { Pagination } from "@/components/ui/pagination";
-import styles from "../evaluation-list.module.css";
+import { Pagination } from "@/components/ui/Pagination";
+import "./EvaluationList.css";
 import { useRouter } from "next/navigation";
-import { notify } from "@/components/ui/toast";
+import { notify } from "@/components/ui/Toaster";
 
 import { evaluationApi } from "@/features/evaluation/services/evaluationApi";
 import { requestMessage } from "../evaluationDisplay";
-import type { EvaluationDto } from "@/types/evaluation";
+import type { EvaluationDto } from "@/features/evaluation/types";
 
 export default function EvaluationList() {
   const router = useRouter();
@@ -63,9 +63,9 @@ export default function EvaluationList() {
 
   if (loading) {
     return (
-      <div className={styles.page} role="status" aria-label="Đang tải bản đánh giá" aria-busy="true">
-        <div className={styles.loadingHeader} />
-        <div className={styles.loadingTable}>
+      <div className="evaluation-list__page" role="status" aria-label="Đang tải bản đánh giá" aria-busy="true">
+        <div className="evaluation-list__loadingHeader" />
+        <div className="evaluation-list__loadingTable">
           <div /><div /><div />
         </div>
         <span className="sr-only">Đang tải dữ liệu...</span>
@@ -74,42 +74,42 @@ export default function EvaluationList() {
   }
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerContent}>
-          <span className={styles.eyebrow}>Đánh giá KPI</span>
+    <div className="evaluation-list__page">
+      <header className="evaluation-list__header">
+        <div className="evaluation-list__headerContent">
+          <span className="evaluation-list__eyebrow">Đánh giá KPI</span>
           {/* TITLE */}
           <h1
-            className={styles.title}
+            className="evaluation-list__title"
           >
             Danh sách bản đánh giá
           </h1>
-          <p className={styles.description}>Theo dõi và cập nhật các bản đánh giá KPI của bạn.</p>
+          <p className="evaluation-list__description">Theo dõi và cập nhật các bản đánh giá KPI của bạn.</p>
 
           {/* CREATE BUTTON */}
-          <div className={styles.createAction}>
+          <div className="evaluation-list__createAction">
             <button
               type="button"
               onClick={createNew}
               title="Tạo mới"
-              className={styles.createButton}
+              className="evaluation-list__createButton"
             >
               <PlusIcon aria-hidden="true" />
               Tạo bản đánh giá
             </button>
           </div>
         </div>
-        <div className={styles.illustration} aria-hidden="true">
+        <div className="evaluation-list__illustration" aria-hidden="true">
           <Image src="/images/evaluation-mole.webp" alt="" width={640} height={533} sizes="(max-width: 520px) 112px, (max-width: 1024px) 152px, 176px" />
         </div>
       </header>
 
       {/* TABLE */}
       <div
-        className={styles.list}
+        className="evaluation-list__list"
       >
-        <div className={styles.tableWrap}>
-          <table className={styles.table} aria-label="Danh sách bản đánh giá">
+        <div className="evaluation-list__tableWrap">
+          <table className="evaluation-list__table" aria-label="Danh sách bản đánh giá">
             {/* HEADER */}
             <thead>
               <tr
@@ -129,7 +129,7 @@ export default function EvaluationList() {
                     font-semibold
                   "
                 >
-                  <span className={styles.columnLabel}><LayersIcon aria-hidden="true" />Loại kỳ</span>
+                  <span className="evaluation-list__columnLabel"><LayersIcon aria-hidden="true" />Loại kỳ</span>
                 </th>
 
                 <th
@@ -143,7 +143,7 @@ export default function EvaluationList() {
                     font-semibold
                   "
                 >
-                  <span className={styles.columnLabel}><FileTextIcon aria-hidden="true" />Tên bản đánh giá</span>
+                  <span className="evaluation-list__columnLabel"><FileTextIcon aria-hidden="true" />Tên bản đánh giá</span>
                 </th>
 
                 <th
@@ -158,7 +158,7 @@ export default function EvaluationList() {
                     whitespace-nowrap
                   "
                 >
-                  <span className={styles.columnLabel}><CalendarIcon aria-hidden="true" />Ngày nộp</span>
+                  <span className="evaluation-list__columnLabel"><CalendarIcon aria-hidden="true" />Ngày nộp</span>
                 </th>
 
                 <th
@@ -172,7 +172,7 @@ export default function EvaluationList() {
                     font-semibold
                   "
                 >
-                  <span className={styles.columnLabel}><ActivityLogIcon aria-hidden="true" />Trạng thái</span>
+                  <span className="evaluation-list__columnLabel"><ActivityLogIcon aria-hidden="true" />Trạng thái</span>
                 </th>
 
                 <th
@@ -187,7 +187,7 @@ export default function EvaluationList() {
                     font-semibold
                   "
                 >
-                  <span className={styles.columnLabel}><MixIcon aria-hidden="true" />Thao tác</span>
+                  <span className="evaluation-list__columnLabel"><MixIcon aria-hidden="true" />Thao tác</span>
                 </th>
               </tr>
             </thead>
@@ -206,7 +206,7 @@ export default function EvaluationList() {
                       text-[rgb(var(--color-muted))]
                     "
                   >
-                    <div className={styles.empty}>
+                    <div className="evaluation-list__empty">
                       <FileTextIcon aria-hidden="true" />
                       <strong>Chưa có bản đánh giá</strong>
                       <p>Chọn “Tạo bản đánh giá” để bắt đầu.</p>
@@ -237,7 +237,7 @@ export default function EvaluationList() {
                         align-middle
                       "
                     >
-                      <span className={styles.period}>{item.period}</span>
+                      <span className="evaluation-list__period">{item.period}</span>
                     </td>
 
                     {/* TÊN */}
@@ -250,7 +250,7 @@ export default function EvaluationList() {
                         align-middle
                       "
                     >
-                      <span className={styles.templateName}><FileTextIcon aria-hidden="true" />{item.templateName}</span>
+                      <span className="evaluation-list__templateName"><FileTextIcon aria-hidden="true" />{item.templateName}</span>
                     </td>
 
                     {/* NGÀY */}
@@ -277,7 +277,7 @@ export default function EvaluationList() {
                         align-middle
                       "
                     >
-                      <span className={styles.status} data-status={item.status?.toLowerCase()}>
+                      <span className="evaluation-list__status" data-status={item.status?.toLowerCase()}>
                         {convertStatusToDisplay(item.status)}
                       </span>
                     </td>
@@ -292,7 +292,7 @@ export default function EvaluationList() {
                         align-middle
                       "
                     >
-                      <div className={styles.rowActions}>
+                      <div className="evaluation-list__rowActions">
                         {/* VIEW */}
                         <button
                           type="button"
@@ -301,7 +301,7 @@ export default function EvaluationList() {
                               `/evaluationDetail/${item.id}`
                             )
                           }
-                          className={styles.viewButton}
+                          className="evaluation-list__viewButton"
                         >
                           <EyeIcon />
                           Xem
@@ -316,7 +316,7 @@ export default function EvaluationList() {
                                 `/kpievaluation/${item.evalPeriodTemplateId}`
                               )
                             }
-                            className={styles.editButton}
+                            className="evaluation-list__editButton"
                           >
                             <EditIcon />
                             Cập nhật

@@ -1,8 +1,8 @@
 import React from "react";
 import { cookies } from "next/headers";
 import { appConfig } from "@/config/app";
-import { Sidebar } from "@/features/layout/components/sidebar";
-import { AppHeader } from "@/features/layout/components/app-header";
+import { Sidebar } from "@/features/layout/components/Sidebar";
+import { AppHeader } from "@/features/layout/components/AppHeader";
 
 export default async function MainLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const userName = (await cookies()).get(appConfig.userNameCookieName)?.value ?? "Người dùng";

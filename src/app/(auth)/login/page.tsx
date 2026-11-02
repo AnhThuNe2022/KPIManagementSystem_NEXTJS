@@ -2,9 +2,9 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import localFont from "next/font/local";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { LoginForm } from "@/features/auth/components/login-form";
-import { LoginBackdrop } from "@/features/auth/components/login-backdrop";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { LoginForm } from "@/features/auth/components/LoginForm";
+import { LoginBackdrop } from "@/features/auth/components/LoginBackdrop";
 import "@/features/auth/login.css";
 
 const manrope = localFont({ src: "../../../../public/fonts/manrope.ttf", display: "swap", variable: "--font-login" });

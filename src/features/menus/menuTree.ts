@@ -1,4 +1,4 @@
-import type { MenuDto } from "@/types/menu";
+import type { MenuDto } from "@/features/menus/types";
 
 export type MenuRow = { menu: MenuDto; ancestors: MenuDto[] };
 

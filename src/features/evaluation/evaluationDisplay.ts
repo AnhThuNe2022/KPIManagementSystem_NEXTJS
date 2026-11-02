@@ -1,6 +1,6 @@
-import { EvaluationStatus, type EvaluationFilterOption, type EvaluationTypeOption } from "@/types/evaluation";
-import type { CompanyDto } from "@/types/employee";
-import type { EvaluationPeriodDto, EvaluationTypeDto } from "./services/evaluationLookupApi";
+import { EvaluationStatus, type EvaluationFilterOption, type EvaluationTypeOption } from "@/features/evaluation/types";
+import type { CompanyDto } from "@/features/company/types";
+import type { EvaluationPeriodDto, EvaluationTypeDto } from "./types";
 
 const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
   day: "2-digit",

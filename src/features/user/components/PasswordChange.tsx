@@ -8,8 +8,9 @@ import {
   LockClosedIcon,
   PersonIcon,
 } from "@radix-ui/react-icons";
-import styles from "../user-information.module.css";
-import { ChangePasswordDto } from "@/types/employee";
+import "../user-common.css";
+import { ChangePasswordDto } from "@/features/user/types";
+import "./PasswordChange.css";
 
 interface PasswordChangeProps {
   isAdmin?: boolean;
@@ -134,10 +135,10 @@ return (
   <form
     id="password-form"
     onSubmit={handleSubmit}
-    className={styles.passwordForm}
+    className="user-common__passwordForm"
   >
-    <header className={styles.passwordHeader}>
-      <span className={styles.sectionIcon} aria-hidden="true"><LockClosedIcon /></span>
+    <header className="password-change__passwordHeader">
+      <span className="password-change__sectionIcon" aria-hidden="true"><LockClosedIcon /></span>
       <div><h2>Đổi mật khẩu</h2><p>Xác thực tài khoản trước khi đặt mật khẩu mới.</p></div>
     </header>
 
@@ -150,10 +151,10 @@ return (
           Phương thức đổi mật khẩu
         </label>
 
-        <div className={styles.methodOptions}>
+        <div className="password-change__methodOptions">
           {/* CMS */}
           <label
-            className={`${styles.methodOption}
+            className={`user-common__methodOption
               flex
               cursor-pointer
               items-start
@@ -192,7 +193,7 @@ return (
               "
             />
 
-            <span className={styles.methodIcon} aria-hidden="true"><DesktopIcon /></span>
+            <span className="password-change__methodIcon" aria-hidden="true"><DesktopIcon /></span>
 
             <div>
               <div className="text-sm font-medium text-[rgb(var(--color-text))]">
@@ -207,7 +208,7 @@ return (
 
           {/* KPI */}
           <label
-            className={`${styles.methodOption}
+            className={`user-common__methodOption
               flex
               cursor-pointer
               items-start
@@ -246,7 +247,7 @@ return (
               "
             />
 
-            <span className={styles.methodIcon} aria-hidden="true"><IdCardIcon /></span>
+            <span className="password-change__methodIcon" aria-hidden="true"><IdCardIcon /></span>
 
             <div>
               <div className="text-sm font-medium text-[rgb(var(--color-text))]">
@@ -831,7 +832,7 @@ return (
     <button
       type="submit"
       disabled={isSaving}
-      className={styles.primaryButton}
+      className="user-common__primaryButton"
     >
       <LockClosedIcon aria-hidden="true" />
       {isSaving ? "Đang cập nhật…" : "Cập nhật mật khẩu"}

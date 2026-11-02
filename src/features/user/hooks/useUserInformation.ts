@@ -6,10 +6,10 @@ import {
   useState,
 } from "react";
 
-import { userApi } from "../service/userApi";
-import { EmployeeInforDto } from "@/types/employee";
+import { userApi } from "../services/userApi";
+import { EmployeeInforDto } from "@/features/user/types";
 
-export function useUserInfor(userId?: string) {
+export function useUserInformation(userId?: string) {
   const [employee, setEmployee] =
     useState<EmployeeInforDto | null>(null);
 

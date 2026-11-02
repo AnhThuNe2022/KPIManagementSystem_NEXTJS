@@ -1,4 +1,5 @@
-import type { PagedResult, ReviewedEvaluationDto, ReviewedEvaluationFilters, ReviewRole } from "@/types/evaluation";
+import type { PagedResult } from "@/lib/api/types";
+import type { ReviewedEvaluationDto, ReviewedEvaluationFilters, ReviewRole } from "@/features/evaluation/types";
 import { request } from "@/lib/api/request";
 
 type ReviewedQuery = {

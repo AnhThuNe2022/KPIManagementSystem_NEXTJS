@@ -21,18 +21,22 @@ import { evaluationLookupApi } from "../services/evaluationLookupApi";
 import { reviewedEvaluationApi } from "../services/reviewedEvaluationApi";
 import {
   UserRoleSystem,
+} from "@/features/auth/types";
+import {
   type EvaluationFilterOption,
   type EvaluationTypeOption,
-  type PagedResult,
   type ReviewedEvaluationDto,
   type ReviewedEvaluationFilters,
   type ReviewRole,
-} from "@/types/evaluation";
-import styles from "../evaluation-common.module.css";
-import { Pagination } from "@/components/ui/pagination";
-import { SearchableSelect } from "@/components/ui/searchable-select";
+} from "@/features/evaluation/types";
+import {
+  type PagedResult,
+} from "@/lib/api/types";
+import "../evaluation-common.css";
+import { Pagination } from "@/components/ui/Pagination";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { formatEvaluationDate, requestMessage, companyOptions, periodOptions, evaluationTypeOptions } from "../evaluationDisplay";
-import reviewed from "../reviewed-evaluations.module.css";
+import "./ReviewedEvaluations.css";
 
 const emptyFilters: ReviewedEvaluationFilters = {
   keyword: "",
@@ -190,16 +194,16 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
   }
 
   return (
-    <section className={styles.page + " " + reviewed.page} aria-labelledby="reviewed-title">
-      <header className={reviewed.heading}>
-        <div><div className={reviewed.titleLine}><h1 id="reviewed-title">{title}</h1><span className={reviewed.total}><strong>{data?.total.toLocaleString("vi-VN") ?? "—"}</strong> bản đánh giá</span></div><p className={reviewed.description}>Tra cứu kết quả, người duyệt và lý do từ chối.</p></div>
-        <div className={reviewed.statusTabs} role="group" aria-label="Lọc theo trạng thái">
+    <section className={"evaluation-common__page" + " " + "reviewed-evaluations__page"} aria-labelledby="reviewed-title">
+      <header className="reviewed-evaluations__heading">
+        <div><div className="reviewed-evaluations__titleLine"><h1 id="reviewed-title">{title}</h1><span className="reviewed-evaluations__total"><strong>{data?.total.toLocaleString("vi-VN") ?? "—"}</strong> bản đánh giá</span></div><p className="reviewed-evaluations__description">Tra cứu kết quả, người duyệt và lý do từ chối.</p></div>
+        <div className="reviewed-evaluations__statusTabs" role="group" aria-label="Lọc theo trạng thái">
           <button type="button" aria-pressed={applied.status === ""} onClick={() => selectStatus("")}>
-            <svg className={reviewed.statusRoad} viewBox="0 0 160 80" fill="none" aria-hidden="true" focusable="false">
+            <svg className="reviewed-evaluations__statusRoad" viewBox="0 0 160 80" fill="none" aria-hidden="true" focusable="false">
               <path d="M6 82C62 69 135 60 109 45S76 28 155 14M40 84C91 67 149 57 125 44S99 29 160 19" stroke="currentColor" strokeWidth="2" />
               <path d="M23 83C79 68 141 58 117 44S87 29 158 16" stroke="currentColor" strokeDasharray="7 8" />
             </svg>
-            <span className={reviewed.statusIcon} aria-hidden="true">
+            <span className="reviewed-evaluations__statusIcon" aria-hidden="true">
               <svg viewBox="0 0 32 32" focusable="false">
                 <path d="m3 23 13-6 13 6-13 6Z" fill="#d42020" />
                 <path d="m3 17 13-6 13 6-13 6Z" fill="currentColor" />
@@ -209,16 +213,16 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
             <span>Tất cả</span>
           </button>
           <button type="button" data-status="Approved" aria-pressed={applied.status === "Approved"} onClick={() => selectStatus("Approved")}>
-            <span className={reviewed.statusIcon} aria-hidden="true"><CheckIcon /></span><span>Đã duyệt</span>
+            <span className="reviewed-evaluations__statusIcon" aria-hidden="true"><CheckIcon /></span><span>Đã duyệt</span>
           </button>
           <button type="button" data-status="Rejected" aria-pressed={applied.status === "Rejected"} onClick={() => selectStatus("Rejected")}>
-            <span className={reviewed.statusIcon} aria-hidden="true"><Cross2Icon /></span><span>Từ chối</span>
+            <span className="reviewed-evaluations__statusIcon" aria-hidden="true"><Cross2Icon /></span><span>Từ chối</span>
           </button>
         </div>
       </header>
 
       <form
-        className={styles.filters + " " + reviewed.filters}
+        className={"evaluation-common__filters" + " " + "reviewed-evaluations__filters"}
         onSubmit={applyFilters}
         onInvalid={(event) => {
           event.preventDefault();
@@ -227,10 +231,10 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
         }}
         aria-label="Lọc danh sách đã duyệt / từ chối"
       >
-        <div className={reviewed.primaryFilters} data-hr={hr}>
+        <div className="reviewed-evaluations__primaryFilters" data-hr={hr}>
           <label>
-            <span className={styles.srOnly}>Nhân viên</span>
-            <div className={styles.control + " " + reviewed.searchControl}>
+            <span className="evaluation-common__srOnly">Nhân viên</span>
+            <div className={"evaluation-common__control" + " " + "reviewed-evaluations__searchControl"}>
               <MagnifyingGlassIcon aria-hidden="true" />
               <input
                 type="search"
@@ -243,32 +247,32 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
               />
             </div>
           </label>
-          <div className={reviewed.selectField}>
+          <div className="reviewed-evaluations__selectField">
             <SearchableSelect id="reviewed-company-filter" label="Công ty" value={filters.companyId} options={companies} placeholder={lookupsBusy ? "Đang tải…" : "Tất cả công ty"} disabled={lookupsBusy || !companies.length} onChange={(companyId) => setFilters((value) => ({ ...value, companyId, departmentId: "" }))} />
           </div>
-          {hr && <div className={reviewed.selectField}>
+          {hr && <div className="reviewed-evaluations__selectField">
             <SearchableSelect id="reviewed-department-filter" label="Phòng ban" value={filters.departmentId} options={departments} placeholder={lookupsBusy || departmentBusy ? "Đang tải…" : "Tất cả phòng ban"} disabled={lookupsBusy || departmentBusy || !departments.length} onChange={(departmentId) => setFilters((value) => ({ ...value, departmentId }))} />
           </div>}
-          <div className={reviewed.filterButtons}>
-            <button type="button" className={styles.button + " " + reviewed.moreFilters} aria-expanded={advancedOpen} aria-controls="reviewed-extra-filters" onClick={() => setAdvancedOpen(!advancedOpen)}><MixerHorizontalIcon aria-hidden="true" />Lọc thêm{advancedCount > 0 && <b>{advancedCount}</b>}<ChevronDownIcon aria-hidden="true" /></button>
-            <button className={styles.button + " " + reviewed.clearButton} type="button" onClick={clearFilters} aria-label="Xóa tất cả bộ lọc" title="Xóa tất cả bộ lọc"><ReloadIcon aria-hidden="true" /></button>
-            <button className={styles.button + " " + styles.primary} type="submit" disabled={loading}><MagnifyingGlassIcon aria-hidden="true" />{loading ? "Đang tải…" : "Áp dụng"}</button>
+          <div className="reviewed-evaluations__filterButtons">
+            <button type="button" className={"evaluation-common__button" + " " + "reviewed-evaluations__moreFilters"} aria-expanded={advancedOpen} aria-controls="reviewed-extra-filters" onClick={() => setAdvancedOpen(!advancedOpen)}><MixerHorizontalIcon aria-hidden="true" />Lọc thêm{advancedCount > 0 && <b>{advancedCount}</b>}<ChevronDownIcon aria-hidden="true" /></button>
+            <button className={"evaluation-common__button" + " " + "reviewed-evaluations__clearButton"} type="button" onClick={clearFilters} aria-label="Xóa tất cả bộ lọc" title="Xóa tất cả bộ lọc"><ReloadIcon aria-hidden="true" /></button>
+            <button className={"evaluation-common__button" + " " + "evaluation-common__primary"} type="submit" disabled={loading}><MagnifyingGlassIcon aria-hidden="true" />{loading ? "Đang tải…" : "Áp dụng"}</button>
           </div>
         </div>
-        <div className={reviewed.advancedFilters} id="reviewed-extra-filters" hidden={!advancedOpen}>
+        <div className="reviewed-evaluations__advancedFilters" id="reviewed-extra-filters" hidden={!advancedOpen}>
           {hr && <>
-            <div className={reviewed.selectField}>
+            <div className="reviewed-evaluations__selectField">
               <span>Loại đánh giá</span>
               <SearchableSelect id="reviewed-type-filter" label="Loại đánh giá" value={filters.typeId} options={types} placeholder={lookupsBusy ? "Đang tải…" : "Tất cả loại đánh giá"} disabled={lookupsBusy || !types.length} onChange={(typeId) => setFilters((value) => ({ ...value, typeId, periodId: "" }))} />
             </div>
-            <div className={reviewed.selectField}>
+            <div className="reviewed-evaluations__selectField">
               <span>Kỳ đánh giá</span>
               <SearchableSelect id="reviewed-period-filter" label="Kỳ đánh giá" value={filters.periodId} options={availablePeriods} placeholder={lookupsBusy ? "Đang tải…" : !availablePeriods.length ? "Chưa có kỳ đánh giá" : "Tất cả kỳ đánh giá"} disabled={lookupsBusy || !availablePeriods.length} onChange={(periodId) => setFilters((value) => ({ ...value, periodId }))} />
             </div>
           </>}
           <label>
             <span>Từ ngày</span>
-            <div className={`${styles.control} ${reviewed.dateControl}`}>
+            <div className={`evaluation-common__control reviewed-evaluations__dateControl`}>
               <input
                 type="date"
                 value={filters.from}
@@ -284,7 +288,7 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
           </label>
           <label>
             <span>Đến ngày</span>
-            <div className={`${styles.control} ${reviewed.dateControl}`}>
+            <div className={`evaluation-common__control reviewed-evaluations__dateControl`}>
               <input
                 type="date"
                 value={filters.to}
@@ -300,15 +304,15 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
             </div>
           </label>
         </div>
-        {appliedLabels.length > 0 && <div className={reviewed.appliedFilters}><span>Đang lọc</span>{appliedLabels.map((label, index) => <span key={index} className={reviewed.filterChip}>{label}</span>)}<button type="button" onClick={clearFilters}><Cross2Icon aria-hidden="true" />Xóa lọc</button></div>}
+        {appliedLabels.length > 0 && <div className="reviewed-evaluations__appliedFilters"><span>Đang lọc</span>{appliedLabels.map((label, index) => <span key={index} className="reviewed-evaluations__filterChip">{label}</span>)}<button type="button" onClick={clearFilters}><Cross2Icon aria-hidden="true" />Xóa lọc</button></div>}
         {filterError && (
-          <p className={styles.error} id="reviewed-filter-error" role="alert">
+          <p className="evaluation-common__error" id="reviewed-filter-error" role="alert">
             <InfoCircledIcon aria-hidden="true" />
             {filterError}
           </p>
         )}
         {(lookupError || departmentError) && (
-          <div className={styles.error} role="alert">
+          <div className="evaluation-common__error" role="alert">
             <InfoCircledIcon aria-hidden="true" />
             <span>{lookupError || departmentError}</span>
             <button type="button" onClick={() => setLookupRevision((value) => value + 1)}>
@@ -319,19 +323,19 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
 
       </form>
 
-      <div className={styles.inbox} aria-busy={loading}>
-        <div className={styles.listHeading + " " + reviewed.listHeading}>
+      <div className="evaluation-common__inbox" aria-busy={loading}>
+        <div className={"evaluation-common__listHeading" + " " + "reviewed-evaluations__listHeading"}>
           <div>
-            <span className={styles.listIcon + " " + reviewed.listIcon}>
+            <span className={"evaluation-common__listIcon" + " " + "reviewed-evaluations__listIcon"}>
               <FileTextIcon aria-hidden="true" />
             </span>
             <h2>Bản đánh giá đã xử lý</h2>
-            <span className={styles.count}>{data?.total ?? "—"}</span>
+            <span className="evaluation-common__count">{data?.total ?? "—"}</span>
           </div>
-          <div className={reviewed.listTools}>
+          <div className="reviewed-evaluations__listTools">
             <label>
-              <span className={styles.srOnly}>Sắp xếp</span>
-              <div className={styles.control}>
+              <span className="evaluation-common__srOnly">Sắp xếp</span>
+              <div className="evaluation-common__control">
                 <select value={applied.sortBy} onChange={(event) => {
                   const sortBy = event.target.value;
                   setFilters((value) => ({ ...value, sortBy }));
@@ -346,18 +350,18 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
                 <ChevronDownIcon aria-hidden="true" />
               </div>
             </label>
-            <button className={styles.refresh} type="button" title="Tải lại danh sách" aria-label="Tải lại danh sách" disabled={loading} onClick={() => setRevision((value) => value + 1)}><ReloadIcon aria-hidden="true" /></button>
+            <button className="evaluation-common__refresh" type="button" title="Tải lại danh sách" aria-label="Tải lại danh sách" disabled={loading} onClick={() => setRevision((value) => value + 1)}><ReloadIcon aria-hidden="true" /></button>
           </div>
         </div>
         {error ? (
-          <div className={styles.empty} role="alert">
-            <span className={styles.emptyIcon}>
+          <div className="evaluation-common__empty" role="alert">
+            <span className="evaluation-common__emptyIcon">
               <InfoCircledIcon aria-hidden="true" />
             </span>
             <h3>Chưa tải được danh sách</h3>
             <p>{error}</p>
             <button
-              className={styles.button}
+              className="evaluation-common__button"
               type="button"
               onClick={() => setRevision((value) => value + 1)}
             >
@@ -365,7 +369,7 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
             </button>
             {error.includes("đăng nhập") && (
               <Link
-                className={styles.loginLink}
+                className="evaluation-common__loginLink"
                 href={`/login?next=${hr ? "/hr/reviewed" : "/manager/reviewed"}`}
               >
                 Đăng nhập lại
@@ -373,10 +377,10 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
             )}
           </div>
         ) : loading || !ready ? (
-          <div className={styles.loading} role="status">
-            <span className={styles.srOnly}>Đang tải danh sách</span>
+          <div className="evaluation-common__loading" role="status">
+            <span className="evaluation-common__srOnly">Đang tải danh sách</span>
             {[0, 1, 2].map((row) => (
-              <div key={row} className={styles.skeleton} aria-hidden="true">
+              <div key={row} className="evaluation-common__skeleton" aria-hidden="true">
                 <i />
                 <div>
                   <i />
@@ -387,8 +391,8 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
             ))}
           </div>
         ) : !data?.items.length ? (
-          <div className={styles.empty}>
-            <span className={styles.emptyIcon}>
+          <div className="evaluation-common__empty">
+            <span className="evaluation-common__emptyIcon">
               <CheckCircledIcon aria-hidden="true" />
             </span>
             <h3>{activeFilters ? "Chưa có kết quả phù hợp" : "Chưa có bản đánh giá đã xử lý"}</h3>
@@ -398,32 +402,32 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
                 : "Các bản đánh giá đã duyệt hoặc từ chối sẽ xuất hiện tại đây."}
             </p>
             {activeFilters > 0 && (
-              <button className={styles.button} type="button" onClick={clearFilters}>
+              <button className="evaluation-common__button" type="button" onClick={clearFilters}>
                 Xóa bộ lọc
               </button>
             )}
           </div>
         ) : (
-          <div className={styles.tableWrap}>
-            <table className={`${styles.table} ${reviewed.table}`}>
-              <caption className={styles.srOnly}>{title}</caption>
+          <div className="evaluation-common__tableWrap">
+            <table className={`evaluation-common__table reviewed-evaluations__table`}>
+              <caption className="evaluation-common__srOnly">{title}</caption>
               <thead><tr>
-                <th scope="col" className={reviewed.employeeColumn}>Nhân viên</th>
-                <th scope="col" className={reviewed.periodColumn}>Kỳ đánh giá</th>
-                <th scope="col" className={reviewed.statusColumn}>Trạng thái</th>
-                <th scope="col" className={reviewed.reviewerColumn}>Người duyệt</th>
-                <th scope="col" className={reviewed.scoresColumn}>Điểm đánh giá</th>
-                <th scope="col" className={reviewed.resultColumn}>Kết quả</th>
-                <th scope="col" className={reviewed.actionsColumn}><span className={styles.srOnly}>Thao tác</span></th>
+                <th scope="col" className="reviewed-evaluations__employeeColumn">Nhân viên</th>
+                <th scope="col" className="reviewed-evaluations__periodColumn">Kỳ đánh giá</th>
+                <th scope="col" className="reviewed-evaluations__statusColumn">Trạng thái</th>
+                <th scope="col" className="reviewed-evaluations__reviewerColumn">Người duyệt</th>
+                <th scope="col" className="reviewed-evaluations__scoresColumn">Điểm đánh giá</th>
+                <th scope="col" className="reviewed-evaluations__resultColumn">Kết quả</th>
+                <th scope="col" className="reviewed-evaluations__actionsColumn"><span className="evaluation-common__srOnly">Thao tác</span></th>
               </tr></thead>
               <tbody>{data.items.map((item) => <tr key={item.id + ":" + item.evalid} data-status={item.status}>
-                <td data-label="Nhân viên" className={reviewed.employeeCell}><div className={styles.employee}><span className={styles.avatar} aria-hidden="true"><PersonIcon aria-hidden="true" /></span><div><strong>{item.employeeName || "Chưa có tên"}</strong><span>{item.employeeCode || "—"}</span><span className={reviewed.department}>{item.departmentName || "—"}</span></div></div></td>
-                <td data-label="Kỳ đánh giá" className={reviewed.periodCell}><div className={reviewed.periodIdentity}><span className={reviewed.periodIcon}><CalendarIcon aria-hidden="true" /></span><span className={reviewed.period}>{item.periodLabel || "—"}</span></div></td>
-                <td data-label="Trạng thái" className={reviewed.statusCell}><span className={reviewed.status} data-status={item.status}><i aria-hidden="true" />{item.status === "Rejected" ? "Từ chối" : item.status === "Approved" ? "Đã duyệt" : item.status}</span>{item.rejectedReason && <p className={reviewed.reason}>{item.rejectedReason}</p>}</td>
-                <td data-label="Người duyệt" className={reviewed.reviewerCell}><strong>{item.approverName || "—"}</strong><span className={reviewed.reviewDate}><ClockIcon aria-hidden="true" /><time dateTime={formatEvaluationDate(item.approvedDate) !== "—" ? item.approvedDate! : undefined}>{formatEvaluationDate(item.approvedDate)}</time></span></td>
-                <td data-label="Điểm đánh giá" className={reviewed.scoreCell}><dl className={reviewed.scores}><div><dt>Tổng điểm</dt><dd>{item.totalScore == null ? "—" : scoreFormatter.format(item.totalScore)}</dd></div><div><dt>Quản lý</dt><dd>{item.managerSocre == null ? "—" : scoreFormatter.format(item.managerSocre)}</dd></div></dl></td>
-                <td data-label="Kết quả" className={reviewed.resultCell}><span className={reviewed.result} data-empty={!item.band}>{item.band || "—"}</span></td>
-                <td data-label="Thao tác" className={reviewed.actionsCell}><button className={styles.button + " " + styles.viewButton} type="button" aria-label={"Xem bản đánh giá của " + (item.employeeName || item.employeeCode || "nhân viên")} disabled><EyeOpenIcon aria-hidden="true" />Xem</button></td>
+                <td data-label="Nhân viên" className="reviewed-evaluations__employeeCell"><div className="evaluation-common__employee"><span className="evaluation-common__avatar" aria-hidden="true"><PersonIcon aria-hidden="true" /></span><div><strong>{item.employeeName || "Chưa có tên"}</strong><span>{item.employeeCode || "—"}</span><span className="reviewed-evaluations__department">{item.departmentName || "—"}</span></div></div></td>
+                <td data-label="Kỳ đánh giá" className="reviewed-evaluations__periodCell"><div className="reviewed-evaluations__periodIdentity"><span className="reviewed-evaluations__periodIcon"><CalendarIcon aria-hidden="true" /></span><span className="reviewed-evaluations__period">{item.periodLabel || "—"}</span></div></td>
+                <td data-label="Trạng thái" className="reviewed-evaluations__statusCell"><span className="reviewed-evaluations__status" data-status={item.status}><i aria-hidden="true" />{item.status === "Rejected" ? "Từ chối" : item.status === "Approved" ? "Đã duyệt" : item.status}</span>{item.rejectedReason && <p className="reviewed-evaluations__reason">{item.rejectedReason}</p>}</td>
+                <td data-label="Người duyệt" className="reviewed-evaluations__reviewerCell"><strong>{item.approverName || "—"}</strong><span className="reviewed-evaluations__reviewDate"><ClockIcon aria-hidden="true" /><time dateTime={formatEvaluationDate(item.approvedDate) !== "—" ? item.approvedDate! : undefined}>{formatEvaluationDate(item.approvedDate)}</time></span></td>
+                <td data-label="Điểm đánh giá" className="reviewed-evaluations__scoreCell"><dl className="reviewed-evaluations__scores"><div><dt>Tổng điểm</dt><dd>{item.totalScore == null ? "—" : scoreFormatter.format(item.totalScore)}</dd></div><div><dt>Quản lý</dt><dd>{item.managerSocre == null ? "—" : scoreFormatter.format(item.managerSocre)}</dd></div></dl></td>
+                <td data-label="Kết quả" className="reviewed-evaluations__resultCell"><span className="reviewed-evaluations__result" data-empty={!item.band}>{item.band || "—"}</span></td>
+                <td data-label="Thao tác" className="reviewed-evaluations__actionsCell"><button className={"evaluation-common__button" + " " + "evaluation-common__viewButton"} type="button" aria-label={"Xem bản đánh giá của " + (item.employeeName || item.employeeCode || "nhân viên")} disabled><EyeOpenIcon aria-hidden="true" />Xem</button></td>
               </tr>)}</tbody>
             </table>
           </div>

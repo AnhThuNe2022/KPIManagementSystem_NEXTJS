@@ -1,5 +1,5 @@
 import writeExcelFile from "write-excel-file/browser";
-import type { GeneralHrEvaluationDto } from "@/types/evaluation";
+import type { GeneralHrEvaluationDto } from "@/features/evaluation/types";
 import { formatEvaluationDate, hrStatusLabel } from "./evaluationDisplay";
 
 export function createGeneralHrWorkbook(items: GeneralHrEvaluationDto[]) {

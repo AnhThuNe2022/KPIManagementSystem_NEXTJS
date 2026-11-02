@@ -1,5 +1,6 @@
 import { request } from "@/lib/api/request";
-import type { ApiResponse, EvaluationDto, PagedRequest, PagedResult } from "@/types/evaluation";
+import type { ApiResponse, PagedRequest, PagedResult } from "@/lib/api/types";
+import type { EvaluationDto } from "@/features/evaluation/types";
 
 export const evaluationApi = {
   getPaged(body: PagedRequest, signal?: AbortSignal) {

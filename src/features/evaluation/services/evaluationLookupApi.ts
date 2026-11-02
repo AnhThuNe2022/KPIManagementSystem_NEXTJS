@@ -1,21 +1,18 @@
-import { EvaluationStatus, UserRoleSystem, type ReviewRole } from "@/types/evaluation";
-import type { CompanyDto, DepartmentDto } from "@/types/employee";
+import { EvaluationStatus, type ReviewRole } from "@/features/evaluation/types";
+import { UserRoleSystem } from "@/features/auth/types";
 import { request } from "@/lib/api/request";
-
-export type EvaluationPeriodDto = { id: number | string; name: string };
-export type EvaluationTypeDto = EvaluationPeriodDto & { listKPIEvaluationPeriodDto: EvaluationPeriodDto[] };
+import { companyApi } from "@/features/company/services/companyApi";
+import { departmentApi } from "@/features/department/services/departmentApi";
+import type { EvaluationPeriodDto, EvaluationTypeDto } from "../types";
 
 export const evaluationLookupApi = {
   getCompanies(level: ReviewRole, signal?: AbortSignal) {
     return level === UserRoleSystem.HR
-      ? request<CompanyDto[]>("/company/by-manager", { method: "POST", body: JSON.stringify({ filters: { byunithrcompile: "1" } }), signal })
-      : request<CompanyDto[]>("/company/all", { signal });
+      ? companyApi.getCompaniesByManager({ filters: { byunithrcompile: "1" } }, signal)
+      : companyApi.getAll(signal);
   },
   getDepartments(companyId: string, level: ReviewRole, signal?: AbortSignal) {
-    const query = new URLSearchParams();
-    if (companyId) query.set("Filters[companyid]", companyId);
-    if (level === UserRoleSystem.HR) query.set("byscope", "true");
-    return request<DepartmentDto[]>("/department/get-all-department?" + query, { signal });
+    return departmentApi.getAll(companyId, { byScope: level === UserRoleSystem.HR, signal });
   },
   getPeriods(signal?: AbortSignal) {
     return request<EvaluationPeriodDto[]>("/kpi-evaluation-periods/get-all", {

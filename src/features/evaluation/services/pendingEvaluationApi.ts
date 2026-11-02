@@ -1,4 +1,5 @@
-import type { PagedResult, PendingEvaluationDto, PendingEvaluationFilters, ReviewRole } from "@/types/evaluation";
+import type { PagedResult } from "@/lib/api/types";
+import type { PendingEvaluationDto, PendingEvaluationFilters, ReviewRole } from "@/features/evaluation/types";
 import { request } from "@/lib/api/request";
 
 type PendingQuery = {

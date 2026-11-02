@@ -1,5 +1,5 @@
 import { proxyApiRequest } from "@/lib/api/proxy";
-import { UserRoleSystem } from "@/types/evaluation";
+import { UserRoleSystem } from "@/features/auth/types";
 
 export async function GET(request: Request) {
   const query = new URL(request.url).searchParams;

@@ -1,7 +1,10 @@
 import type {
   GeneralHrEvaluationDto, GeneralHrEvaluationRequest, GeneralHrStatusChange,
-  ApprovalHistoryEntry, EvaluationApprover, PagedResult,
-} from "@/types/evaluation";
+  ApprovalHistoryEntry, EvaluationApprover,
+} from "@/features/evaluation/types";
+import type {
+  PagedResult,
+} from "@/lib/api/types";
 import { request } from "@/lib/api/request";
 
 export const generalHrEvaluationApi = {

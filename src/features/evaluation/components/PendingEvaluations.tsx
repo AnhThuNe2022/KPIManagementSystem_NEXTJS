@@ -20,21 +20,24 @@ import {
 import { pendingEvaluationApi } from "../services/pendingEvaluationApi";
 import {
   UserRoleSystem,
+} from "@/features/auth/types";
+import {
   type EvaluationFilterOption,
   type EvaluationTypeOption,
-  type PagedResult,
   type PendingEvaluationDto,
   type PendingEvaluationFilters,
-} from "@/types/evaluation";
-import styles from "../evaluation-common.module.css";
-import pending from "../pending-evaluations.module.css";
-import { Pagination } from "@/components/ui/pagination";
-import { SearchableSelect } from "@/components/ui/searchable-select";
-import { notify } from "@/components/ui/toast";
+} from "@/features/evaluation/types";
+import {
+  type PagedResult,
+} from "@/lib/api/types";
+import "../evaluation-common.css";
+import "./PendingEvaluations.css";
+import { Pagination } from "@/components/ui/Pagination";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { notify } from "@/components/ui/Toaster";
 import { evaluationLookupApi } from "../services/evaluationLookupApi";
 import { formatEvaluationDate, requestMessage, companyOptions, periodOptions, evaluationTypeOptions } from "../evaluationDisplay";
-
-const companyLogos: Record<string, string> = { BGLS: "/brand/bgls.png", TLMT: "/brand/tlmt.png" };
+import { companyLogos } from "@/features/company/companyLogos";
 
 const emptyFilters: PendingEvaluationFilters = {
   keyword: "",
@@ -258,48 +261,48 @@ export function PendingEvaluations({
   }
 
   return (
-    <section className={styles.page + " " + pending.page} aria-labelledby="pending-title">
-      <header className={pending.heading}>
-        <div className={pending.titleLine}>
+    <section className={"evaluation-common__page" + " " + "pending-evaluations__page"} aria-labelledby="pending-title">
+      <header className="pending-evaluations__heading">
+        <div className="pending-evaluations__titleLine">
           <h1 id="pending-title">{title}</h1>
-          <span className={pending.total}><strong>{data?.total.toLocaleString("vi-VN") ?? "—"}</strong>{hr ? "bản chờ nhận xét" : "bản chờ đánh giá"}</span>
+          <span className="pending-evaluations__total"><strong>{data?.total.toLocaleString("vi-VN") ?? "—"}</strong>{hr ? "bản chờ nhận xét" : "bản chờ đánh giá"}</span>
         </div>
-        <p className={pending.description}>{hr ? "Theo dõi các bản đánh giá đang chờ ý kiến nhân sự." : "Theo dõi các bản đánh giá của nhân sự đang chờ bạn xử lý."}</p>
+        <p className="pending-evaluations__description">{hr ? "Theo dõi các bản đánh giá đang chờ ý kiến nhân sự." : "Theo dõi các bản đánh giá của nhân sự đang chờ bạn xử lý."}</p>
       </header>
 
-      <form className={styles.filters + " " + pending.filters} onSubmit={applyFilters} aria-label="Lọc danh sách chờ duyệt">
-        <div className={pending.primaryFilters}>
-          <label><span className={styles.srOnly}>Nhân viên</span><div className={styles.control + " " + pending.searchControl}>
+      <form className={"evaluation-common__filters" + " " + "pending-evaluations__filters"} onSubmit={applyFilters} aria-label="Lọc danh sách chờ duyệt">
+        <div className="pending-evaluations__primaryFilters">
+          <label><span className="evaluation-common__srOnly">Nhân viên</span><div className={"evaluation-common__control" + " " + "pending-evaluations__searchControl"}>
             <MagnifyingGlassIcon aria-hidden="true" />
             <input type="search" value={filters.keyword} maxLength={200} placeholder="Tìm theo tên / mã NV" onChange={(event) => setFilters((value) => ({ ...value, keyword: event.target.value }))} />
           </div></label>
-          <div className={pending.selectField}>
+          <div className="pending-evaluations__selectField">
             <SearchableSelect id="pending-company-filter" label="Công ty" value={filters.companyId} options={companies} placeholder={lookupsBusy ? "Đang tải…" : "Tất cả công ty"} disabled={lookupsBusy || !companies.length} onChange={(companyId) => setFilters((value) => ({ ...value, companyId, departmentId: "" }))} />
           </div>
-          <div className={pending.selectField}>
+          <div className="pending-evaluations__selectField">
             <SearchableSelect id="pending-department-filter" label="Phòng ban" value={filters.departmentId} options={departments} placeholder={departmentBusy ? "Đang tải…" : !filters.companyId ? "Chọn công ty trước" : "Tất cả phòng ban"} disabled={!filters.companyId || departmentBusy || !departments.length} onChange={(departmentId) => setFilters((value) => ({ ...value, departmentId }))} />
           </div>
-          <div className={pending.filterButtons}>
-            <button className={styles.button + " " + pending.moreFilters} type="button" aria-expanded={advancedOpen} aria-controls="pending-extra-filters" onClick={() => setAdvancedOpen((value) => !value)}>
+          <div className="pending-evaluations__filterButtons">
+            <button className={"evaluation-common__button" + " " + "pending-evaluations__moreFilters"} type="button" aria-expanded={advancedOpen} aria-controls="pending-extra-filters" onClick={() => setAdvancedOpen((value) => !value)}>
               <MixerHorizontalIcon aria-hidden="true" />Lọc thêm{advancedCount > 0 && <b>{advancedCount}</b>}<ChevronDownIcon aria-hidden="true" />
             </button>
-            <button className={styles.button + " " + pending.clearButton} type="button" onClick={clearFilters} aria-label="Xóa bộ lọc" title="Xóa bộ lọc"><ResetIcon aria-hidden="true" /></button>
-            <button className={styles.button + " " + pending.applyButton} type="submit" disabled={loading || Boolean(hr && typeId && !availablePeriods.length)}><MagnifyingGlassIcon aria-hidden="true" />{loading ? "Đang tải…" : "Áp dụng"}</button>
+            <button className={"evaluation-common__button" + " " + "pending-evaluations__clearButton"} type="button" onClick={clearFilters} aria-label="Xóa bộ lọc" title="Xóa bộ lọc"><ResetIcon aria-hidden="true" /></button>
+            <button className={"evaluation-common__button" + " " + "pending-evaluations__applyButton"} type="submit" disabled={loading || Boolean(hr && typeId && !availablePeriods.length)}><MagnifyingGlassIcon aria-hidden="true" />{loading ? "Đang tải…" : "Áp dụng"}</button>
           </div>
         </div>
-        <div id="pending-extra-filters" className={pending.advancedFilters} hidden={!advancedOpen}>
-          {hr && <div className={pending.selectField}>
+        <div id="pending-extra-filters" className="pending-evaluations__advancedFilters" hidden={!advancedOpen}>
+          {hr && <div className="pending-evaluations__selectField">
             <span>Loại đánh giá</span>
             <SearchableSelect id="pending-type-filter" label="Loại đánh giá" value={typeId} options={evaluationTypes} placeholder={lookupsBusy ? "Đang tải…" : "Tất cả loại đánh giá"} disabled={lookupsBusy || !evaluationTypes.length} onChange={(value) => { setTypeId(value); setFilters((current) => ({ ...current, periodId: "" })); }} />
           </div>}
-          <div className={pending.selectField}>
+          <div className="pending-evaluations__selectField">
             <span>Kỳ đánh giá{hr && typeId && " (bắt buộc)"}</span>
             <SearchableSelect id="pending-period-filter" label="Kỳ đánh giá" value={filters.periodId} options={availablePeriods} placeholder={lookupsBusy ? "Đang tải…" : hr && typeId ? availablePeriods.length ? "Chọn kỳ đánh giá" : "Loại này chưa có kỳ phù hợp" : "Tất cả kỳ đánh giá"} disabled={lookupsBusy || !availablePeriods.length} required={hr && Boolean(typeId)} onChange={(periodId) => setFilters((value) => ({ ...value, periodId }))} />
           </div>
-          {hr && typeId && !filters.periodId && <p className={pending.filterHint} role="status">Chọn kỳ đánh giá để áp dụng loại đánh giá này.</p>}
+          {hr && typeId && !filters.periodId && <p className="pending-evaluations__filterHint" role="status">Chọn kỳ đánh giá để áp dụng loại đánh giá này.</p>}
         </div>
-        {(lookupError || departmentError) && <div className={styles.error} role="alert"><InfoCircledIcon aria-hidden="true" /><span>{lookupError || departmentError}</span><button type="button" onClick={() => setLookupRevision((value) => value + 1)}>Thử lại</button></div>}
-        {activeFilters > 0 && <div className={pending.appliedFilters}>
+        {(lookupError || departmentError) && <div className="evaluation-common__error" role="alert"><InfoCircledIcon aria-hidden="true" /><span>{lookupError || departmentError}</span><button type="button" onClick={() => setLookupRevision((value) => value + 1)}>Thử lại</button></div>}
+        {activeFilters > 0 && <div className="pending-evaluations__appliedFilters">
           <span>Đang lọc</span>
           {applied.keyword && <span>{applied.keyword}</span>}
           {applied.companyId && <span>{companies.find((option) => option.id === applied.companyId)?.name || applied.companyId}</span>}
@@ -308,32 +311,32 @@ export function PendingEvaluations({
         </div>}
       </form>
 
-      <div className={styles.inbox} aria-busy={loading}>
-        <div className={styles.listHeading + " " + pending.listHeading}>
+      <div className="evaluation-common__inbox" aria-busy={loading}>
+        <div className={"evaluation-common__listHeading" + " " + "pending-evaluations__listHeading"}>
           <div>
-            <span className={styles.listIcon + " " + pending.listIcon}><FileTextIcon aria-hidden="true" /></span>
-            <h2>Bản đánh giá</h2><span className={styles.count}>{data?.total ?? "—"}</span>
-            {selected.length > 0 && <span className={pending.selectionCount} role="status">Đã chọn {selected.length}</span>}
+            <span className={"evaluation-common__listIcon" + " " + "pending-evaluations__listIcon"}><FileTextIcon aria-hidden="true" /></span>
+            <h2>Bản đánh giá</h2><span className="evaluation-common__count">{data?.total ?? "—"}</span>
+            {selected.length > 0 && <span className="pending-evaluations__selectionCount" role="status">Đã chọn {selected.length}</span>}
           </div>
-          <div className={pending.listTools} data-hr={hr}>
-            <label><span className={styles.srOnly}>Sắp xếp</span><div className={styles.control}>
+          <div className="pending-evaluations__listTools" data-hr={hr}>
+            <label><span className="evaluation-common__srOnly">Sắp xếp</span><div className="evaluation-common__control">
               <select value={appliedSortBy} disabled={loading} onChange={(event) => { setSortBy(event.target.value); setAppliedSortBy(event.target.value); setPage(1); }}>
                 <option value="submittedDate_desc">Mới gửi gần đây</option><option value="submittedDate_asc">Gửi lâu trước</option><option value="employee_asc">Tên A→Z</option><option value="employee_desc">Tên Z→A</option>
               </select><ChevronDownIcon aria-hidden="true" />
             </div></label>
-            {!hr && <button className={styles.button + " " + pending.rejectButton + " " + pending.bulkReject} type="button" disabled={loading || !data || Boolean(error) || !selected.length} aria-haspopup="dialog" onClick={() => openReject(data?.items.filter((item) => selected.includes(`${item.id}:${item.stepId}`)) ?? [])}><Cross2Icon aria-hidden="true" />Từ chối ({selected.length})</button>}
-            <button className={styles.refresh} type="button" title="Tải lại danh sách" aria-label="Tải lại danh sách" disabled={loading} onClick={() => setRevision((value) => value + 1)}><ReloadIcon aria-hidden="true" /></button>
+            {!hr && <button className={"evaluation-common__button" + " " + "pending-evaluations__rejectButton" + " " + "pending-evaluations__bulkReject"} type="button" disabled={loading || !data || Boolean(error) || !selected.length} aria-haspopup="dialog" onClick={() => openReject(data?.items.filter((item) => selected.includes(`${item.id}:${item.stepId}`)) ?? [])}><Cross2Icon aria-hidden="true" />Từ chối ({selected.length})</button>}
+            <button className="evaluation-common__refresh" type="button" title="Tải lại danh sách" aria-label="Tải lại danh sách" disabled={loading} onClick={() => setRevision((value) => value + 1)}><ReloadIcon aria-hidden="true" /></button>
           </div>
         </div>
         {error ? (
-          <div className={styles.empty} role="alert">
-            <span className={styles.emptyIcon}>
+          <div className="evaluation-common__empty" role="alert">
+            <span className="evaluation-common__emptyIcon">
               <InfoCircledIcon aria-hidden="true" />
             </span>
             <h3>Chưa tải được danh sách</h3>
             <p>{error}</p>
             <button
-              className={styles.button}
+              className="evaluation-common__button"
               type="button"
               onClick={() => setRevision((value) => value + 1)}
             >
@@ -341,7 +344,7 @@ export function PendingEvaluations({
             </button>
             {error.includes("đăng nhập") && (
               <Link
-                className={styles.loginLink}
+                className="evaluation-common__loginLink"
                 href={`/login?next=${hr ? "/hr/pending" : "/manager/pending"}`}
               >
                 Đăng nhập lại
@@ -349,10 +352,10 @@ export function PendingEvaluations({
             )}
           </div>
         ) : loading || !ready ? (
-          <div className={styles.loading} role="status">
-            <span className={styles.srOnly}>Đang tải danh sách</span>
+          <div className="evaluation-common__loading" role="status">
+            <span className="evaluation-common__srOnly">Đang tải danh sách</span>
             {[0, 1, 2].map((row) => (
-              <div key={row} className={styles.skeleton} aria-hidden="true">
+              <div key={row} className="evaluation-common__skeleton" aria-hidden="true">
                 <i />
                 <div>
                   <i />
@@ -363,8 +366,8 @@ export function PendingEvaluations({
             ))}
           </div>
         ) : !data?.items.length ? (
-          <div className={styles.empty}>
-            <span className={styles.emptyIcon}>
+          <div className="evaluation-common__empty">
+            <span className="evaluation-common__emptyIcon">
               <FileTextIcon aria-hidden="true" />
             </span>
             <h3>{activeFilters ? "Chưa có kết quả phù hợp" : "Chưa có bản đánh giá chờ xử lý"}</h3>
@@ -374,19 +377,19 @@ export function PendingEvaluations({
                 : "Các bản đánh giá cần bạn xử lý sẽ xuất hiện tại đây."}
             </p>
             {activeFilters > 0 && (
-              <button className={styles.button} type="button" onClick={clearFilters}>
+              <button className="evaluation-common__button" type="button" onClick={clearFilters}>
                 Xóa bộ lọc
               </button>
             )}
           </div>
         ) : (
-          <div className={styles.tableWrap}>
-            <table className={`${styles.table} ${pending.table}`}>
-              <caption className={styles.srOnly}>{title}</caption>
+          <div className="evaluation-common__tableWrap">
+            <table className={`evaluation-common__table pending-evaluations__table`}>
+              <caption className="evaluation-common__srOnly">{title}</caption>
               <thead>
                 <tr>
-                  <th scope="col" className={pending.selectionCell}>
-                    <label className={pending.checkboxControl}>
+                  <th scope="col" className="pending-evaluations__selectionCell">
+                    <label className="pending-evaluations__checkboxControl">
                       <input
                         type="checkbox"
                         aria-label="Chọn tất cả bản đánh giá trên trang"
@@ -402,25 +405,25 @@ export function PendingEvaluations({
                           )
                         }
                       />
-                      <span className={pending.selectionLabel}>Chọn tất cả trên trang</span>
+                      <span className="pending-evaluations__selectionLabel">Chọn tất cả trên trang</span>
                     </label>
                   </th>
-                  <th scope="col" className={pending.employeeColumn}>
+                  <th scope="col" className="pending-evaluations__employeeColumn">
                     Nhân viên
                   </th>
-                  <th scope="col" className={pending.companyColumn}>
+                  <th scope="col" className="pending-evaluations__companyColumn">
                     Đơn vị
                   </th>
-                  <th scope="col" className={pending.periodColumn}>
+                  <th scope="col" className="pending-evaluations__periodColumn">
                     Kỳ đánh giá
                   </th>
-                  <th scope="col" className={pending.dateColumn}>
+                  <th scope="col" className="pending-evaluations__dateColumn">
                     Ngày gửi / duyệt cuối
                   </th>
-                  <th scope="col" className={pending.statusColumn}>
+                  <th scope="col" className="pending-evaluations__statusColumn">
                     Trạng thái
                   </th>
-                  <th scope="col" className={pending.actionsColumn}>
+                  <th scope="col" className="pending-evaluations__actionsColumn">
                     Thao tác
                   </th>
                 </tr>
@@ -431,8 +434,8 @@ export function PendingEvaluations({
                     key={`${item.id}:${item.stepId}`}
                     data-selected={selected.includes(`${item.id}:${item.stepId}`)}
                   >
-                    <td className={pending.selectionCell}>
-                      <label className={pending.checkboxControl}>
+                    <td className="pending-evaluations__selectionCell">
+                      <label className="pending-evaluations__checkboxControl">
                         <input
                           type="checkbox"
                           aria-label={`Chọn bản đánh giá của ${item.userName || item.sysTemCode || "nhân viên"}`}
@@ -445,12 +448,12 @@ export function PendingEvaluations({
                             )
                           }
                         />
-                        <span className={pending.selectionLabel}>Chọn bản đánh giá</span>
+                        <span className="pending-evaluations__selectionLabel">Chọn bản đánh giá</span>
                       </label>
                     </td>
-                    <td data-label="Nhân viên" className={pending.employeeCell}>
-                      <div className={styles.employee}>
-                        <span className={styles.avatar} aria-hidden="true">
+                    <td data-label="Nhân viên" className="pending-evaluations__employeeCell">
+                      <div className="evaluation-common__employee">
+                        <span className="evaluation-common__avatar" aria-hidden="true">
                           <PersonIcon aria-hidden="true" />
                         </span>
                         <div>
@@ -459,14 +462,14 @@ export function PendingEvaluations({
                         </div>
                       </div>
                     </td>
-                    <td data-label="Đơn vị" className={pending.organizationCell}>
-                      <span className={pending.companyIdentity}><Image className={pending.companyLogo} src={companyLogos[item.companyCode?.trim().toUpperCase() ?? ""] ?? "/brand/deoca-icon.png"} alt="" width={32} height={32} /><span className={pending.company}>{item.companyCode || "—"}</span></span><span className={pending.department}>{item.departmentName || "—"}</span>
+                    <td data-label="Đơn vị" className="pending-evaluations__organizationCell">
+                      <span className="pending-evaluations__companyIdentity"><Image className="pending-evaluations__companyLogo" src={companyLogos[item.companyCode?.trim().toUpperCase() ?? ""] ?? "/brand/deoca-icon.png"} alt="" width={32} height={32} /><span className="pending-evaluations__company">{item.companyCode || "—"}</span></span><span className="pending-evaluations__department">{item.departmentName || "—"}</span>
                     </td>
-                    <td data-label="Kỳ đánh giá" className={pending.periodCell}>
-                      <div className={pending.periodIdentity}><span className={pending.periodIcon} aria-hidden="true"><CalendarIcon /></span><span className={pending.period}>{item.periodLabel || "—"}</span></div>
+                    <td data-label="Kỳ đánh giá" className="pending-evaluations__periodCell">
+                      <div className="pending-evaluations__periodIdentity"><span className="pending-evaluations__periodIcon" aria-hidden="true"><CalendarIcon /></span><span className="pending-evaluations__period">{item.periodLabel || "—"}</span></div>
                     </td>
-                    <td data-label="Ngày gửi / duyệt cuối" className={pending.dateCell}>
-                      <span className={pending.date}><ClockIcon aria-hidden="true" /><time
+                    <td data-label="Ngày gửi / duyệt cuối" className="pending-evaluations__dateCell">
+                      <span className="pending-evaluations__date"><ClockIcon aria-hidden="true" /><time
                         dateTime={
                           formatEvaluationDate(item.submittedDate, "")
                             ? item.submittedDate!
@@ -476,19 +479,19 @@ export function PendingEvaluations({
                         {formatEvaluationDate(item.submittedDate, "") || "—"}
                       </time></span>
                     </td>
-                    <td data-label="Trạng thái" className={pending.statusCell}>
-                      <span className={styles.status + " " + pending.status} data-rejected={item.isRejected}>
+                    <td data-label="Trạng thái" className="pending-evaluations__statusCell">
+                      <span className={"evaluation-common__status" + " " + "pending-evaluations__status"} data-rejected={item.isRejected}>
                         <i aria-hidden="true" />
                         {item.isRejected ? "Bị từ chối" : pendingLabel}
                       </span>
                       {item.isRejected && item.reason && (
-                        <span className={pending.reason}>{item.reason}</span>
+                        <span className="pending-evaluations__reason">{item.reason}</span>
                       )}
                     </td>
-                    <td data-label="Thao tác" className={pending.actionsCell}>
-                      <div className={pending.rowActions}>
+                    <td data-label="Thao tác" className="pending-evaluations__actionsCell">
+                      <div className="pending-evaluations__rowActions">
                         <button
-                          className={`${styles.button} ${styles.viewButton}`}
+                          className={`evaluation-common__button evaluation-common__viewButton`}
                           type="button"
                           aria-label={`Xem thông tin bản đánh giá của ${item.userName || item.sysTemCode || "nhân viên"}`}
                           disabled
@@ -498,7 +501,7 @@ export function PendingEvaluations({
                         </button>
                         {!hr && (
                           <button
-                            className={`${styles.button} ${pending.rejectButton}`}
+                            className={`evaluation-common__button pending-evaluations__rejectButton`}
                             type="button"
                             aria-label={`Từ chối bản đánh giá của ${item.userName || item.sysTemCode || "nhân viên"}`}
                             aria-haspopup="dialog"
@@ -533,7 +536,7 @@ export function PendingEvaluations({
       {!hr && rejectTargets && (
         <dialog
           ref={rejectDialogRef}
-          className={pending.rejectDialog}
+          className="pending-evaluations__rejectDialog"
           aria-labelledby="reject-title"
           onCancel={(event) => {
             event.preventDefault();
@@ -544,10 +547,10 @@ export function PendingEvaluations({
           }}
         >
           <form onSubmit={submitReject} aria-busy={rejectBusy}>
-            <header className={pending.rejectHeader}>
+            <header className="pending-evaluations__rejectHeader">
               <h2 id="reject-title">Lý do từ chối</h2>
               <button
-                className={styles.refresh}
+                className="evaluation-common__refresh"
                 type="button"
                 aria-label="Đóng lý do từ chối"
                 disabled={rejectBusy}
@@ -556,7 +559,7 @@ export function PendingEvaluations({
                 <Cross2Icon aria-hidden="true" />
               </button>
             </header>
-            <div className={pending.rejectBody}>
+            <div className="pending-evaluations__rejectBody">
               <p>
                 {rejectTargets.length === 1
                   ? rejectTargets[0].userName || rejectTargets[0].sysTemCode || "Nhân viên"
@@ -574,14 +577,14 @@ export function PendingEvaluations({
                 onChange={(event) => setRejectReason(event.target.value)}
               />
               {rejectError && (
-                <div id="reject-error" className={styles.error} role="alert">
+                <div id="reject-error" className="evaluation-common__error" role="alert">
                   {rejectError}
                 </div>
               )}
             </div>
-            <footer className={pending.rejectFooter}>
+            <footer className="pending-evaluations__rejectFooter">
               <button
-                className={styles.button}
+                className="evaluation-common__button"
                 type="button"
                 disabled={rejectBusy}
                 onClick={closeReject}
@@ -589,7 +592,7 @@ export function PendingEvaluations({
                 Đóng
               </button>
               <button
-                className={`${styles.button} ${pending.rejectButton}`}
+                className={`evaluation-common__button pending-evaluations__rejectButton`}
                 type="submit"
                 disabled={rejectBusy}
               >

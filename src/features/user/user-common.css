@@ -1,0 +1,399 @@
+.user-common__dialog {
+  --profile-line: rgb(var(--color-border) / 0.8);
+  --profile-highlight: rgb(255 255 255 / 0.4);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  color: rgb(var(--color-text));
+  font-family: "DeocaUI", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-tap-highlight-color: transparent;
+}
+.user-common__dialog svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.user-common__dialog :is(button, a):focus-visible {
+  outline: 3px solid rgb(var(--color-brand) / 0.4);
+  outline-offset: 3px;
+}
+.user-common__dialog button {
+  touch-action: manipulation;
+}
+.user-common__dialog button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.user-common__pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 27px;
+}
+.user-common__pageHeader > div {
+  min-width: 0;
+}
+.user-common__pageHeader > .user-common__button {
+  flex-shrink: 0;
+}
+.user-common__pageHeader h1 {
+  margin-top: 7px;
+  font-size: clamp(26px, 3vw, 32px);
+  font-weight: 750;
+  line-height: 1.25;
+  letter-spacing: -0.045em;
+}
+.user-common__pageHeader p {
+  margin-top: 8px;
+  color: rgb(var(--color-muted));
+  font-size: 13px;
+}
+.user-common__button,
+.user-common__primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  border: 1px solid var(--profile-line);
+  border-radius: 12px;
+  padding: 10px 15px;
+  color: rgb(var(--color-text));
+  background: rgb(var(--color-surface) / 0.85);
+  box-shadow:
+    inset 0 1px 0 var(--profile-highlight),
+    0 3px 7px -5px rgb(var(--deoca-primary-rgb) / 0.35);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.4;
+  white-space: nowrap;
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+.user-common__primaryButton {
+  background: rgb(var(--deoca-primary-rgb));
+  color: white;
+  border-color: rgb(255 255 255 / 0.2);
+}
+.user-common__button:active:not(:disabled),
+.user-common__primaryButton:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.user-common__dialog button:focus-visible:active {
+  transform: none;
+}
+.user-common__panelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 24px 26px;
+}
+.user-common__panelHeader h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+.user-common__panelHeader h2 svg {
+  box-sizing: content-box;
+  width: 18px;
+  height: 18px;
+  padding: 10px;
+  border: 1px solid var(--profile-line);
+  border-radius: 12px;
+  background: rgb(var(--color-brand) / 0.045);
+  color: rgb(var(--color-brand));
+  box-shadow: inset 0 1px 0 var(--profile-highlight);
+}
+.user-common__panelHeader p {
+  margin-top: 5px;
+  color: rgb(var(--color-muted));
+  font-size: 12px;
+}
+.user-common__passwordForm {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+  padding: 28px;
+}
+.user-common__passwordForm label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 650;
+  color: rgb(var(--color-text));
+}
+.user-common__passwordForm label > svg {
+  width: 14px;
+  height: 14px;
+  color: rgb(var(--color-brand));
+}
+.user-common__passwordForm input:not([type="radio"]),
+.user-common__dialog input:not([type="radio"]),
+.user-common__dialog select,
+.user-common__dialog textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 13px;
+  border: 1px solid var(--profile-line);
+  border-radius: 11px;
+  color: rgb(var(--color-text));
+  background: rgb(var(--color-surface) / 0.85);
+  font-size: 13px;
+  box-shadow: inset 0 1px 3px rgb(var(--deoca-primary-rgb) / 0.025);
+  transition: border-color 160ms ease;
+}
+.user-common__passwordForm input:not([type="radio"]) {
+  padding-right: 42px;
+}
+.user-common__passwordForm input:focus,
+.user-common__dialog :is(input, select, textarea):focus {
+  border-color: rgb(var(--color-brand) / 0.65);
+  outline: 3px solid rgb(var(--color-brand) / 0.09);
+  outline-offset: 0;
+}
+.user-common__passwordForm > .user-common__primaryButton {
+  justify-self: end;
+}
+.user-common__passwordForm .user-common__methodOption {
+  position: relative;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 30px 16px 12px;
+  border: 1px solid var(--profile-line);
+  border-radius: 14px;
+  background: rgb(var(--color-surface) / 0.5);
+  box-shadow: inset 0 1px 0 var(--profile-highlight);
+}
+.user-common__methodOption:has(input:checked) {
+  border-color: rgb(var(--color-brand) / 0.42);
+  background: rgb(var(--color-brand) / 0.045);
+}
+.user-common__methodOption:has(input:focus-visible) {
+  outline: 3px solid rgb(var(--color-brand) / 0.25);
+  outline-offset: 3px;
+}
+.user-common__methodOption input {
+  position: absolute;
+  right: 10px;
+  top: 16px;
+  width: 13px;
+  height: 13px;
+  accent-color: rgb(var(--color-brand));
+}
+.user-common__methodOption > div > div:first-child {
+  font-size: 12px;
+  font-weight: 650;
+}
+.user-common__methodOption > div > div:last-child {
+  font-size: 10px;
+  font-weight: 400;
+}
+.user-common__dialog {
+  width: min(650px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid var(--profile-line);
+  border-radius: 22px;
+  background: rgb(var(--color-surface) / 0.96);
+  box-shadow:
+    inset 0 1px 0 var(--profile-highlight),
+    0 30px 90px -25px rgb(7 16 41 / 0.35);
+  backdrop-filter: blur(12px);
+  overscroll-behavior: contain;
+}
+.user-common__dialog[aria-labelledby="ComplaintDialog-title"] {
+  max-width: 475px;
+}
+.user-common__dialog[open] {
+  animation: user-common-dialog-enter 200ms var(--ease-out);
+}
+.user-common__dialog:has(:focus-visible) {
+  animation: none;
+}
+.user-common__dialog::backdrop {
+  background: rgb(7 16 41 / 0.35);
+  backdrop-filter: blur(4px);
+}
+.user-common__dialogSurface {
+  min-width: 0;
+}
+.user-common__dialogHeader {
+  padding: 24px 26px 20px;
+  border-bottom: 1px solid var(--profile-line);
+}
+.user-common__dialogHeader h2 {
+  margin: 0;
+  color: rgb(var(--color-text));
+  font-size: 17px;
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+.user-common__dialogBody {
+  padding: 24px 26px;
+}
+.user-common__formFields {
+  display: grid;
+  gap: 20px;
+}
+.user-common__formFields > div {
+  margin-top: 0;
+}
+.user-common__dialogBody label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 7px;
+  color: rgb(var(--color-text));
+  font-size: 12px;
+  font-weight: 650;
+}
+.user-common__dialogBody label > svg {
+  width: 14px;
+  height: 14px;
+  color: rgb(var(--color-brand));
+}
+.user-common__dialog select {
+  appearance: none;
+  padding-right: 28px;
+}
+.user-common__dialog select option {
+  background: rgb(var(--color-surface));
+  color: rgb(var(--color-text));
+}
+.user-common__dialog input:read-only {
+  background: rgb(var(--color-brand) / 0.035);
+  color: rgb(var(--color-muted));
+}
+.user-common__dialog textarea {
+  min-height: 140px;
+  resize: vertical;
+  line-height: 1.7;
+}
+.user-common__dialogFooter {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 17px 26px 21px;
+  border-top: 1px solid var(--profile-line);
+  background: rgb(var(--color-surface) / 0.97);
+}
+html.dark .user-common__dialog {
+  --profile-highlight: rgb(173 197 255 / 0.09);
+}
+@keyframes user-common-dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .user-common__button:hover:not(:disabled) {
+    background: rgb(var(--color-brand) / 0.07);
+    border-color: rgb(var(--color-brand) / 0.22);
+    color: rgb(var(--color-brand));
+  }
+  .user-common__primaryButton:hover:not(:disabled) {
+    background: rgb(var(--deoca-primary-light-rgb));
+  }
+}
+@container profile (max-width: 850px) {
+  .user-common__passwordForm {
+    padding: 23px;
+  }
+}
+@container profile (max-width: 700px) {
+  .user-common__pageHeader {
+    align-items: flex-start;
+    gap: 15px;
+  }
+  .user-common__pageHeader > .user-common__button {
+    width: 42px;
+    padding: 0;
+    gap: 0;
+    font-size: 0;
+  }
+  .user-common__pageHeader p {
+    font-size: 12px;
+  }
+  .user-common__panelHeader {
+    padding: 21px 20px;
+    gap: 10px;
+  }
+  .user-common__panelHeader h2 {
+    font-size: 16px;
+  }
+  .user-common__panelHeader h2 svg {
+    display: none;
+  }
+  .user-common__panelHeader p {
+    font-size: 11px;
+  }
+  .user-common__panelHeader .user-common__button {
+    padding: 10px;
+  }
+  .user-common__passwordForm input:not([type="radio"]),
+.user-common__dialog input:not([type="radio"]),
+.user-common__dialog select,
+.user-common__dialog textarea {
+    font-size: 16px;
+  }
+  .user-common__dialog {
+    max-height: calc(100dvh - 24px);
+    border-radius: 19px;
+    backdrop-filter: none;
+  }
+  .user-common__dialogHeader,
+.user-common__dialogBody {
+    padding: 21px 20px;
+  }
+  .user-common__dialogFooter {
+    padding: 17px 20px;
+  }
+}
+@media (max-width: 479px) {
+  .user-common__passwordForm {
+    padding: 22px 19px;
+  }
+  .user-common__passwordForm > .user-common__primaryButton {
+    width: 100%;
+  }
+}
+@media (pointer: coarse) {
+  .user-common__passwordForm input:not([type="radio"]),
+.user-common__dialog input:not([type="radio"]),
+.user-common__dialog select,
+.user-common__dialog textarea {
+    font-size: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .user-common__dialog[open] {
+    animation: none;
+  }
+  .user-common__dialog,
+.user-common__dialog *,
+.user-common__dialog::backdrop {
+    transition-duration: 0.01ms !important;
+  }
+  .user-common__button:active:not(:disabled),
+.user-common__primaryButton:active:not(:disabled) {
+    transform: none;
+  }
+}

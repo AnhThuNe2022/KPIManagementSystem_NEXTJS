@@ -1,0 +1,82 @@
+.pagination__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 22px;
+  border-top: 1px solid rgb(var(--color-border) / .7);
+  color: var(--panel-muted);
+  font-family: "DeocaUI", sans-serif;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.pagination__footer > p {
+  margin: 0;
+  line-height: 1.7;
+}
+.pagination__footer strong {
+  color: rgb(var(--color-text));
+  font-weight: 700;
+}
+.pagination__controls,
+.pagination__pageSize,
+.pagination__pages {
+  display: flex;
+  align-items: center;
+}
+.pagination__controls { flex-wrap: wrap; gap: 20px; }
+.pagination__pageSize { gap: 8px; white-space: nowrap; }
+.pagination__pageSize select {
+  min-height: 36px;
+  padding: 6px 9px;
+  border: 1px solid rgb(var(--color-border));
+  border-radius: 9px;
+  color: rgb(var(--color-text));
+  background: var(--panel-paper);
+  font: inherit;
+  cursor: pointer;
+}
+.pagination__pages { gap: 4px; }
+.pagination__controls .pagination__pages button {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: var(--panel-muted);
+  background: transparent;
+  font: inherit;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.pagination__pages svg { width: 15px; height: 15px; }
+.pagination__controls .pagination__pages button:not(:disabled):not([aria-current="page"]):hover {
+  color: rgb(var(--color-text));
+  background: var(--panel-well);
+}
+.pagination__controls .pagination__pages button[aria-current="page"] {
+  color: var(--panel-on-solid);
+  background: var(--panel-solid);
+  font-weight: 700;
+}
+.pagination__footer :is(button, select):focus-visible {
+  outline: 2px solid rgb(var(--color-brand));
+  outline-offset: 3px;
+}
+.pagination__footer :is(button, select):disabled { opacity: .4; cursor: not-allowed; }
+@media (max-width: 600px) {
+  .pagination__footer { gap: 12px; padding: 15px 16px; }
+  .pagination__controls { flex-wrap: wrap; justify-content: space-between; gap: 12px; width: 100%; }
+  .pagination__pageSize select { min-height: 40px; font-size: 16px; }
+  .pagination__controls .pagination__pages button { min-height: 40px; min-width: 38px; }
+  .pagination__controls .pagination__pages button[data-mobile-hidden="true"] { display: none; }
+}
+@media (pointer: coarse) {
+  .pagination__pageSize select { min-height: 44px; font-size: 16px; }
+  .pagination__controls .pagination__pages button { min-height: 44px; min-width: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pagination__controls .pagination__pages button { transition: none; }
+}
