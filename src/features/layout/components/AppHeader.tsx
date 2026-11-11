@@ -21,6 +21,7 @@ const headerPages: Record<string, readonly [string, string]> = {
   "/admin/evaluationList": ["HR tổng hợp", "Danh sách đánh giá"],
   "/admin/permission": ["Cấu hình", "Quản lý quyền"],
   "/admin/menu": ["Cấu hình", "Quản lý menu"],
+  "/departments": ["HR tổng hợp", "Quản lý phòng ban"],
 };
 
 export function AppHeader({ userName }: { userName: string }) {
