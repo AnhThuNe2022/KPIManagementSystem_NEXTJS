@@ -786,7 +786,7 @@ return (
               <div className="user-information__credentialScene" aria-hidden="true">
                 <div className="user-information__credentialCard">
                   <div className="user-information__credentialBrand">
-                    <Image src="/brand/deoca-icon.png" alt="" width={34} height={34} />
+                    <Image src="/brand/deoca-icon.svg" alt="" width={34} height={34} />
                     <span>ĐÈO CẢ GROUP<small>THẺ NHÂN SỰ · KPI</small></span>
                     <IdCardIcon />
                   </div>

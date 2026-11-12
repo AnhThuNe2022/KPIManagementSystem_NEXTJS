@@ -100,7 +100,7 @@ export default function EvaluationList() {
           </div>
         </div>
         <div className="evaluation-list__illustration" aria-hidden="true">
-          <Image src="/images/evaluation-mole.webp" alt="" width={640} height={533} sizes="(max-width: 520px) 112px, (max-width: 1024px) 152px, 176px" />
+          <Image src="/svg/evaluation-mole.svg" alt="" width={640} height={533} sizes="(max-width: 520px) 112px, (max-width: 1024px) 152px, 176px" />
         </div>
       </header>
 

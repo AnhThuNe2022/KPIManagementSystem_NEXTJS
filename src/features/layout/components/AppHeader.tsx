@@ -34,7 +34,7 @@ export function AppHeader({ userName }: { userName: string }) {
     <header className="app-header__header">
       <Link href="/dashboard" className="app-header__brand" aria-label="Đèo Cả KPI — Trang tổng quan">
         <span className="app-header__logo">
-          <Image src="/brand/deoca-icon.png" alt="" width={44} height={44} priority />
+          <Image src="/brand/deoca-icon.svg" alt="" width={44} height={44} priority />
         </span>
         <span className="app-header__brandText">
           <span className="app-header__title">Hệ thống KPI</span>

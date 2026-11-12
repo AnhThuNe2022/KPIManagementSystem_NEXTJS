@@ -463,7 +463,7 @@ export function PendingEvaluations({
                       </div>
                     </td>
                     <td data-label="Đơn vị" className="pending-evaluations__organizationCell">
-                      <span className="pending-evaluations__companyIdentity"><Image className="pending-evaluations__companyLogo" src={companyLogos[item.companyCode?.trim().toUpperCase() ?? ""] ?? "/brand/deoca-icon.png"} alt="" width={32} height={32} /><span className="pending-evaluations__company">{item.companyCode || "—"}</span></span><span className="pending-evaluations__department">{item.departmentName || "—"}</span>
+                      <span className="pending-evaluations__companyIdentity"><Image className="pending-evaluations__companyLogo" src={companyLogos[item.companyCode?.trim().toUpperCase() ?? ""] ?? "/brand/deoca-icon.svg"} alt="" width={32} height={32} /><span className="pending-evaluations__company">{item.companyCode || "—"}</span></span><span className="pending-evaluations__department">{item.departmentName || "—"}</span>
                     </td>
                     <td data-label="Kỳ đánh giá" className="pending-evaluations__periodCell">
                       <div className="pending-evaluations__periodIdentity"><span className="pending-evaluations__periodIcon" aria-hidden="true"><CalendarIcon /></span><span className="pending-evaluations__period">{item.periodLabel || "—"}</span></div>
