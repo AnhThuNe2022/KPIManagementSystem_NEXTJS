@@ -22,6 +22,10 @@ const headerPages: Record<string, readonly [string, string]> = {
   "/admin/permission": ["Cấu hình", "Quản lý quyền"],
   "/admin/menu": ["Cấu hình", "Quản lý menu"],
   "/departments": ["HR tổng hợp", "Quản lý phòng ban"],
+  "/summary/summary-list/HrSummary": ["HR tổng hợp", "Danh sách tổng hợp"],
+  "/summary/summary-list-detail/HrSummary": ["HR tổng hợp", "Chi tiết tổng hợp"],
+  "/summary/summary-list/SummaryDirector": ["Tổng hợp cấp cao", "Danh sách tổng hợp"],
+  "/summary/summary-list-detail/SummaryDirector": ["Tổng hợp cấp cao", "Chi tiết tổng hợp"],
 };
 
 export function AppHeader({ userName }: { userName: string }) {
