@@ -21,6 +21,16 @@ function errorMessage(error: unknown, fallback: string) {
   return error.message;
 }
 
+function DepartmentBackground() {
+  return (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 800 320" preserveAspectRatio="none" className="department-hero-background">
+      <path d="M0 320 C118 312 129 118 276 65 C406 18 499 100 625 51 C666 35 696 15 716 0 H800 V320 Z" fill="#141E35" style={layerShadow} />
+      <path d="M185 320 C289 312 306 190 416 150 C535 106 601 190 705 132 C755 104 773 50 800 24 V320 Z" fill="#192544" style={layerShadow} />
+      <path d="M421 320 C502 303 517 237 591 217 C671 196 725 260 800 191 V320 Z" fill="#1D2B4F" style={layerShadow} />
+    </svg>
+  );
+}
+
 export function DepartmentManagement() {
   const [companies, setCompanies] = useState<CompanyDto[]>([]);
   const [companyError, setCompanyError] = useState("");
@@ -166,7 +176,6 @@ export function DepartmentManagement() {
   }
 
   const hasFilters = !!(applied.name || applied.companyId || status !== "all");
-  const companyCount = new Set(items.map(item => item.companyId)).size;
   const activeRate = items.length ? Math.round(activeCount / items.length * 100) : 0;
   const showSkeleton = loading && !items.length;
   const inactiveCount = items.length - activeCount;
@@ -180,14 +189,9 @@ export function DepartmentManagement() {
 
   return <div className="department-page" data-intro={introPhase} onPointerDown={() => setIntroPhase("done")} onKeyDownCapture={() => setIntroPhase("done")}>
     <header className="department-hero">
-      <svg aria-hidden="true" focusable="false" viewBox="0 0 800 320" preserveAspectRatio="none" className="department-hero-background">
-        <path d="M0 320 C118 312 129 118 276 65 C406 18 499 100 625 51 C666 35 696 15 716 0 H800 V320 Z" fill="#141E35" style={layerShadow} />
-        <path d="M185 320 C289 312 306 190 416 150 C535 106 601 190 705 132 C755 104 773 50 800 24 V320 Z" fill="#192544" style={layerShadow} />
-        <path d="M421 320 C502 303 517 237 591 217 C671 196 725 260 800 191 V320 Z" fill="#1D2B4F" style={layerShadow} />
-      </svg>
+      <DepartmentBackground />
       <div className="department-hero-top">
         <div>
-          <span className="department-eyebrow"><Icon name="layers" />Cấu trúc tổ chức</span>
           <h1>Quản lý phòng ban</h1>
           <p>Theo dõi, tìm kiếm và cập nhật các phòng ban thuộc phạm vi HR của bạn tại một nơi.</p>
         </div>
@@ -262,8 +266,8 @@ export function DepartmentManagement() {
           <thead><tr><th scope="col"><button className="department-sort" onClick={() => setDescending(value => !value)} aria-label={descending ? "Sắp xếp tên A đến Z" : "Sắp xếp tên Z đến A"}>Tên phòng ban<Icon name="down" style={{ transform: descending ? "rotate(180deg)" : undefined }} /></button></th><th scope="col">Công ty trực thuộc</th><th scope="col">Trạng thái</th><th scope="col"><span className="department-sr-only">Thao tác</span></th></tr></thead>
           <tbody>
             {showSkeleton ? Array.from({ length: 6 }, (_, index) => <tr key={index} aria-hidden="true"><td><div className="department-skeleton department-skeleton-name" /><div className="department-skeleton department-skeleton-description" /></td><td><div className="department-skeleton" /></td><td><div className="department-skeleton department-skeleton-status" /></td><td /></tr>) : visible.map((item, index) => <tr key={item.id} style={{ "--item-index": Math.min(index, 7) } as CSSProperties}>
-              <td><div className="department-name-cell"><span className="department-folder"><Icon name={resolveDepartmentIcon(item.name)} /></span><div><button className="department-name" onClick={() => setEditor(item)}>{item.name}</button><p>{item.description || "Chưa có mô tả"}</p></div></div></td>
-              <td><div className="department-company"><span>{companies.find(company => company.id === item.companyId)?.companyCode || "ĐV"}</span><p>{companyName(item)}</p></div></td>
+              <td><div className="department-name-cell"><span className="department-folder"><Icon name={resolveDepartmentIcon(item.name)} /></span><div><button className="department-name" title={item.name} onClick={() => setEditor(item)}>{item.name}</button><p title={item.description ?? undefined}>{item.description || "Chưa có mô tả"}</p></div></div></td>
+              <td><div className="department-company"><span>{companies.find(company => company.id === item.companyId)?.companyCode || "ĐV"}</span><p title={companyName(item)}>{companyName(item)}</p></div></td>
               <td><span className={"department-status " + (item.isActive ? "active" : "inactive")}><span className="department-dot" />{item.isActive ? "Hoạt động" : "Tạm ngưng"}</span></td>
               <td><div className="department-row-actions"><button className="department-icon-button" aria-label={"Sao chép tên " + item.name} title="Sao chép tên" onClick={() => copyName(item.name)}><Icon name="copy" /></button><button className="department-icon-button" aria-label={"Chỉnh sửa " + item.name} title="Chỉnh sửa" onClick={() => setEditor(item)}><Icon name="edit" /></button><button className="department-icon-button department-delete-button" aria-label={"Xóa " + item.name} title="Xóa phòng ban" onClick={() => setDeleting(item)}><Icon name="trash" /></button></div></td>
             </tr>)}
@@ -271,9 +275,9 @@ export function DepartmentManagement() {
         </table> : <ul className={loading && items.length ? "department-grid department-loading" : "department-grid"}>
           {showSkeleton ? Array.from({ length: 6 }, (_, index) => <li key={index} aria-hidden="true" className="department-card"><div className="department-skeleton department-skeleton-name" /><div className="department-skeleton department-skeleton-description" /><div className="department-skeleton" style={{ marginTop: 28 }} /></li>) : visible.map((item, index) => <li key={item.id} style={{ "--item-index": Math.min(index, 7) } as CSSProperties} className={"department-card" + (item.isActive ? "" : " is-inactive")}>
             <div className="department-card-top"><span className="department-folder"><Icon name={resolveDepartmentIcon(item.name)} /></span><span className={"department-status " + (item.isActive ? "active" : "inactive")}><span className="department-dot" />{item.isActive ? "Hoạt động" : "Tạm ngưng"}</span></div>
-            <button className="department-name" onClick={() => setEditor(item)}>{item.name}</button>
+            <button className="department-name" title={item.name} onClick={() => setEditor(item)}>{item.name}</button>
             <p className="department-card-desc">{item.description || "Chưa có mô tả"}</p>
-            <div className="department-card-foot"><div className="department-company"><span>{companies.find(company => company.id === item.companyId)?.companyCode || "ĐV"}</span><p>{companyName(item)}</p></div>
+            <div className="department-card-foot"><div className="department-company"><span>{companies.find(company => company.id === item.companyId)?.companyCode || "ĐV"}</span><p title={companyName(item)}>{companyName(item)}</p></div>
               <div className="department-row-actions"><button className="department-icon-button" aria-label={"Sao chép tên " + item.name} title="Sao chép tên" onClick={() => copyName(item.name)}><Icon name="copy" /></button><button className="department-icon-button" aria-label={"Chỉnh sửa " + item.name} title="Chỉnh sửa" onClick={() => setEditor(item)}><Icon name="edit" /></button><button className="department-icon-button department-delete-button" aria-label={"Xóa " + item.name} title="Xóa phòng ban" onClick={() => setDeleting(item)}><Icon name="trash" /></button></div></div>
           </li>)}
         </ul>}
@@ -309,21 +313,22 @@ function DepartmentEditor({ item, companyOptions, initialCompanyId, onClose, onS
   const initial: DepartmentDraft = { name: item?.name ?? "", description: item?.description ?? "", companyId: item?.companyId ?? initialCompanyId, isActive: item?.isActive ?? true };
   const [draft, setDraft] = useState(initial);
   const [busy, setBusy] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [error, setError] = useState("");
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial);
   const options = item && !companyOptions.some(option => option.id === String(item.companyId)) ? [...companyOptions, { id: String(item.companyId), name: item.companyName || "Công ty #" + item.companyId }] : companyOptions;
 
-  useEffect(() => { dialog.current?.showModal(); }, []);
+  useEffect(() => { dialog.current?.showModal(); dialog.current?.querySelector("input")?.focus(); }, []);
 
   function close() {
-    if (busy) return;
+    if (busy || closing) return;
     if (dirty && !window.confirm("Bạn muốn bỏ các thay đổi chưa lưu?")) return;
-    onClose();
+    setClosing(true);
   }
 
   async function save(event: FormEvent) {
     event.preventDefault();
-    if (busy) return;
+    if (busy || closing) return;
     if (!draft.companyId) { setError("Vui lòng chọn công ty trực thuộc."); return; }
     if (!draft.name.trim()) { setError("Vui lòng nhập tên phòng ban."); return; }
     setBusy(true);
@@ -331,7 +336,7 @@ function DepartmentEditor({ item, companyOptions, initialCompanyId, onClose, onS
     try {
       await departmentApi.save(draft, item?.id);
       onSaved(item ? `Đã cập nhật ${draft.name.trim()}.` : `Đã thêm ${draft.name.trim()}.`);
-      onClose();
+      setClosing(true);
     } catch (error) {
       const message = errorMessage(error, "Không thể lưu phòng ban. Vui lòng thử lại.");
       setError(message);
@@ -339,9 +344,9 @@ function DepartmentEditor({ item, companyOptions, initialCompanyId, onClose, onS
     } finally { setBusy(false); }
   }
 
-  return <dialog ref={dialog} className="department-editor" aria-labelledby="department-editor-title" onCancel={event => { event.preventDefault(); close(); }}>
-    <form onSubmit={save} className="department-editor-form">
-      <header className="department-editor-header"><span className="department-editor-symbol"><Icon name="building" /></span><div><h2 id="department-editor-title">{item ? "Chỉnh sửa phòng ban" : "Thêm phòng ban"}</h2><p>{item ? item.name : "Thông tin đơn vị trong hệ thống KPI"}</p></div><button type="button" className="department-icon-button" disabled={busy} aria-label="Đóng khung chỉnh sửa" onClick={close}><Icon name="close" /></button></header>
+  return <dialog ref={dialog} className="department-editor" data-closing={closing} onAnimationEnd={event => { if (event.target === event.currentTarget && closing) { dialog.current?.close(); onClose(); } }} aria-labelledby="department-editor-title" onCancel={event => { event.preventDefault(); close(); }}>
+    <form onSubmit={save} className="department-editor-form" inert={closing}>
+      <header className="department-editor-header"><DepartmentBackground /><span className="department-editor-symbol"><Icon name="building" /></span><div><h2 id="department-editor-title">{item ? "Chỉnh sửa phòng ban" : "Thêm phòng ban"}</h2><p>{item ? item.name : "Thông tin đơn vị trong hệ thống KPI"}</p></div><button type="button" className="department-icon-button" disabled={busy} aria-label="Đóng khung chỉnh sửa" onClick={close}><Icon name="close" /></button></header>
       <div className="department-editor-body">
         <label className="department-field"><span>Tên phòng ban <b aria-hidden="true">*</b></span><input autoFocus required value={draft.name} placeholder="Ví dụ, Ban Nhân sự" onChange={event => setDraft(value => ({ ...value, name: event.target.value }))} disabled={busy} /></label>
         <div className="department-select-field"><span>Công ty trực thuộc <b aria-hidden="true">*</b></span><SearchableSelect id="department-editor-company" label="Công ty trực thuộc" placeholder="Chọn công ty" required value={draft.companyId ? String(draft.companyId) : ""} options={options} onChange={value => setDraft(draft => ({ ...draft, companyId: Number(value) }))} disabled={busy} /></div>
