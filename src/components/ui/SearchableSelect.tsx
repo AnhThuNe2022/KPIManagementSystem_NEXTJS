@@ -52,6 +52,7 @@ export function SearchableSelect(props: Props) {
   const [active, setActive] = useState(0);
   const trigger = useRef<HTMLButtonElement>(null);
   const popup = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLDivElement>(null);
   const search = useRef<HTMLInputElement>(null);
   const selected = props.multiple ? props.value : [props.value];
   const visible = onSearchChange ? choices : choices.filter((option) => searchableText(option.name).includes(searchableText(query)));
@@ -75,17 +76,29 @@ export function SearchableSelect(props: Props) {
     trigger.current?.focus();
   }
 
+  function scrollOptionIntoView(index: number) {
+    const container = list.current;
+    const option = container?.children[index] as HTMLElement | undefined;
+    if (!container || !option) return;
+    const top = option.offsetTop;
+    const bottom = top + option.offsetHeight;
+    if (top < container.scrollTop) {
+      container.scrollTop = top;
+    } else if (bottom > container.scrollTop + container.clientHeight) {
+      container.scrollTop = bottom - container.clientHeight;
+    }
+  }
+
   useEffect(() => {
     if (disabled && open) popup.current?.hidePopover();
   }, [disabled, open]);
 
   useEffect(() => {
-    if (open) search.current?.focus();
+    if (open) {
+      search.current?.focus();
+      requestAnimationFrame(() => scrollOptionIntoView(activeIndex));
+    }
   }, [open]);
-
-  useEffect(() => {
-    if (open) popup.current?.querySelector<HTMLElement>('[data-active="true"]')?.scrollIntoView({ block: "nearest" });
-  }, [activeIndex, open, query]);
 
   return (
     <div className="searchable-select__root" data-variant={variant} data-disabled={disabled} data-invalid={invalid}>
@@ -121,8 +134,8 @@ export function SearchableSelect(props: Props) {
           if (shown) {
             setQuery("");
             setActive(Math.max(0, choices.findIndex((option) => selected.includes(option.id))));
+            onSearchChange?.("");
           }
-          onSearchChange?.("");
         }}
       >
         <div className="searchable-select__search">
@@ -142,10 +155,16 @@ export function SearchableSelect(props: Props) {
             onKeyDown={(event) => {
               if (event.key === "ArrowDown" || event.key === "ArrowUp") {
                 event.preventDefault();
-                if (visible.length) setActive((index) => (Math.min(index, visible.length - 1) + (event.key === "ArrowDown" ? 1 : visible.length - 1)) % visible.length);
+                if (visible.length) {
+                  const next = (Math.min(activeIndex, visible.length - 1) + (event.key === "ArrowDown" ? 1 : visible.length - 1)) % visible.length;
+                  setActive(next);
+                  scrollOptionIntoView(next);
+                }
               } else if (event.key === "Home" || event.key === "End") {
                 event.preventDefault();
-                setActive(event.key === "Home" ? 0 : visible.length - 1);
+                const next = event.key === "Home" ? 0 : visible.length - 1;
+                setActive(next);
+                scrollOptionIntoView(next);
               } else if (event.key === "Enter") {
                 event.preventDefault();
                 if (!loading && visible[activeIndex]) choose(visible[activeIndex].id);
@@ -159,7 +178,7 @@ export function SearchableSelect(props: Props) {
             }}
           />
         </div>
-        <div id={listId} role="listbox" aria-label={label} aria-multiselectable={props.multiple || undefined} aria-busy={loading} className="searchable-select__list">
+        <div ref={list} id={listId} role="listbox" aria-label={label} aria-multiselectable={props.multiple || undefined} aria-busy={loading} className="searchable-select__list">
           {!loading && visible.map((option, index) => (
             <button
               key={option.id || "__all__"}
@@ -170,7 +189,9 @@ export function SearchableSelect(props: Props) {
               aria-selected={option.id ? selected.includes(option.id) : props.multiple ? !selected.length : props.value === ""}
               data-active={index === activeIndex}
               className="searchable-select__option"
-              onPointerMove={() => setActive(index)}
+              onPointerMove={() => {
+                if (active !== index) setActive(index);
+              }}
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => choose(option.id)}
             >
