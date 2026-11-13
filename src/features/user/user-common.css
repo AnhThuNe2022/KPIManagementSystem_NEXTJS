@@ -197,38 +197,45 @@
   font-weight: 400;
 }
 .user-common__dialog {
-  width: min(650px, calc(100% - 32px));
+  width: min(660px, calc(100% - 32px));
   max-height: calc(100dvh - 32px);
   margin: auto;
   padding: 0;
-  overflow-y: auto;
+  overflow: hidden;
   border: 1px solid var(--profile-line);
-  border-radius: 22px;
-  background: rgb(var(--color-surface) / 0.96);
+  border-radius: 20px;
+  background: rgb(var(--color-surface) / 0.98);
   box-shadow:
     inset 0 1px 0 var(--profile-highlight),
-    0 30px 90px -25px rgb(7 16 41 / 0.35);
-  backdrop-filter: blur(12px);
+    0 24px 70px -20px rgb(7 16 41 / 0.32),
+    0 4px 16px -4px rgb(7 16 41 / 0.08);
   overscroll-behavior: contain;
 }
 .user-common__dialog[aria-labelledby="ComplaintDialog-title"] {
   max-width: 475px;
 }
 .user-common__dialog[open] {
-  animation: user-common-dialog-enter 200ms var(--ease-out);
-}
-.user-common__dialog:has(:focus-visible) {
-  animation: none;
+  display: flex;
+  flex-direction: column;
+  animation: user-common-dialog-enter 240ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .user-common__dialog::backdrop {
-  background: rgb(7 16 41 / 0.35);
-  backdrop-filter: blur(4px);
+  background: rgb(7 16 41 / 0.42);
+  backdrop-filter: blur(5px);
+}
+.user-common__dialog[open]::backdrop {
+  animation: user-common-backdrop-enter 200ms ease-out;
 }
 .user-common__dialogSurface {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  max-height: calc(100dvh - 32px);
 }
 .user-common__dialogHeader {
-  padding: 24px 26px 20px;
+  flex-shrink: 0;
+  padding: 20px 24px 16px;
   border-bottom: 1px solid var(--profile-line);
 }
 .user-common__dialogHeader h2 {
@@ -236,14 +243,20 @@
   color: rgb(var(--color-text));
   font-size: 17px;
   font-weight: 750;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.03em;
 }
 .user-common__dialogBody {
-  padding: 24px 26px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 24px;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--color-border)) transparent;
 }
 .user-common__formFields {
   display: grid;
-  gap: 20px;
+  gap: 16px;
 }
 .user-common__formFields > div {
   margin-top: 0;
@@ -280,15 +293,13 @@
   line-height: 1.7;
 }
 .user-common__dialogFooter {
-  position: sticky;
-  bottom: 0;
-  z-index: 1;
+  flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  padding: 17px 26px 21px;
+  padding: 14px 24px 16px;
   border-top: 1px solid var(--profile-line);
-  background: rgb(var(--color-surface) / 0.97);
+  background: rgb(var(--color-surface) / 0.98);
 }
 html.dark .user-common__dialog {
   --profile-highlight: rgb(173 197 255 / 0.09);
@@ -296,11 +307,19 @@ html.dark .user-common__dialog {
 @keyframes user-common-dialog-enter {
   from {
     opacity: 0;
-    transform: translateY(6px) scale(0.98);
+    transform: translateY(10px) scale(0.97);
   }
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+@keyframes user-common-backdrop-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 @media (hover: hover) and (pointer: fine) {
@@ -384,7 +403,8 @@ html.dark .user-common__dialog {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .user-common__dialog[open] {
+  .user-common__dialog[open],
+  .user-common__dialog[open]::backdrop {
     animation: none;
   }
   .user-common__dialog,

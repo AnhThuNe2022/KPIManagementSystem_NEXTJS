@@ -1,26 +1,31 @@
 .sidebar__sidebar {
-  --panel: #fff;
-  --ink: #5e6d87;
-  --strong: #243454;
-  --muted: #8591a8;
-  --line: #e9edf5;
-  --edge: #dfe8f4;
-  --submenu-surface: rgb(19 31 107 / 0.035);
+  --brand-width: clamp(264px, 19.5vw, 292px);
+  --brand-slant: 54px;
+  --stripe-width: 26px;
+  --panel: radial-gradient(140% 190px at 0% 0%, rgb(24 41 112 / 0.09) 0%, rgb(230 70 88 / 0.035) 52%, transparent 100%), linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+  --panel-bg: #ffffff;
+  --ink: #52627e;
+  --strong: #182970;
+  --muted: #6e7d99;
+  --line: #e4eaf5;
+  --edge: rgb(27 51 124 / 0.14);
+  --submenu-surface: rgb(24 41 112 / 0.045);
   --selection: rgb(var(--color-page));
   --selection-ink: rgb(var(--color-brand));
-  --bevel-light: rgb(255 255 255 / 0.65);
-  --bevel-shadow: rgb(33 52 84 / 0.16);
+  --bevel-light: rgb(255 255 255 / 0.7);
+  --bevel-shadow: rgb(24 41 112 / 0.16);
+  --header-wash: linear-gradient(140deg, #182970 0%, #1b337c 68%, #17347e 100%);
   --motion: cubic-bezier(0.22, 0.8, 0.25, 1);
   --travel-duration: 220ms;
   --frame-width: 244px;
   position: sticky;
-  top: calc(var(--app-header-height) + 16px);
+  top: calc(var(--app-header-height) + 28px);
   z-index: 20;
   flex: 0 0 auto;
   width: var(--frame-width);
-  height: calc(100dvh - var(--app-header-height) - 40px);
+  height: calc(100dvh - var(--app-header-height) - 44px);
   min-height: 420px;
-  margin: 16px 6px 24px 16px;
+  margin: 16px 6px 16px 16px;
   pointer-events: none;
   transition: width var(--travel-duration) var(--motion);
 }
@@ -30,14 +35,48 @@
   isolation: isolate;
   width: 100%;
   height: 100%;
+  overflow: hidden;
   border-radius: 24px;
-  clip-path: inset(0 round 24px);
+  background-color: var(--panel-bg);
+  background-image: radial-gradient(140% 190px at 0% 0%, rgb(24 41 112 / 0.08) 0%, rgb(230 70 88 / 0.03) 52%, transparent 100%);
+  box-shadow:
+    0 14px 36px -14px rgb(24 41 112 / 0.18),
+    0 4px 12px -4px rgb(24 41 112 / 0.08);
   pointer-events: auto;
+  transition: background-color 460ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 460ms ease;
+}
+.sidebar__frame::before,
+.sidebar__frame::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: calc(-1 * var(--app-header-height) - 16px);
+  height: 440px;
+  transform-origin: top right;
+  transform: skewX(atan2(calc(-1 * var(--brand-slant)), var(--app-header-height))) translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 560ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 380ms ease;
+}
+.sidebar__frame::before {
+  left: -420px;
+  width: calc(var(--brand-width) + 420px);
+  background: var(--header-wash);
+}
+.sidebar__frame::after {
+  left: calc(var(--brand-width) - var(--stripe-width));
+  width: var(--stripe-width);
+  background: linear-gradient(90deg, #1b3e90 0%, #21489c 58%, #142c65 64%, #112655 calc(100% - 2px), #e64658 calc(100% - 2px), #ff6a78 100%);
+  transition:
+    transform 600ms cubic-bezier(0.22, 1, 0.36, 1) 35ms,
+    opacity 400ms ease 35ms;
 }
 
 .sidebar__surface {
   position: relative;
-  z-index: 0;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -45,11 +84,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: none;
-  border-radius: 24px;
-  background: var(--panel);
-  box-shadow: inset 0 0 0 1px var(--edge);
-  /* Trim the fractional edge that can leave a seam across the notch at browser zoom. */
-  mask-image: linear-gradient(to right, #000 calc(100% - 1px), transparent calc(100% - 1px));
+  background: transparent;
   transition: background-color 180ms ease;
 }
 .sidebar__surface::-webkit-scrollbar {
@@ -63,8 +98,18 @@
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  min-height: 96px;
+  min-height: 88px;
   padding: 0 22px;
+}
+.sidebar__header::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, #182970 0%, #21489c 65%, #e64658 88%, #ff6a78 100%);
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 320ms ease;
 }
 .sidebar__identity {
   display: flex;
@@ -82,38 +127,59 @@
   font-size: 12px;
   font-weight: 650;
   letter-spacing: -0.2px;
+  transition: color 360ms ease;
 }
 .sidebar__identity > div > span {
   color: var(--muted);
   font-size: 8px;
   font-weight: 600;
   letter-spacing: 1.5px;
+  transition: color 360ms ease;
 }
 .sidebar__mark {
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: flex-end;
+  justify-content: center;
   gap: 3px;
-  width: 21px;
-  height: 25px;
+  width: 38px;
+  height: 38px;
+  padding: 7px 8px;
+  border-radius: 11px;
+}
+.sidebar__mark::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #182970 0%, #21489c 100%);
+  box-shadow:
+    0 6px 14px -4px rgb(24 41 112 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.22);
+  transition:
+    opacity 440ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 440ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .sidebar__mark i {
   display: block;
   width: 4px;
-  height: 12px;
+  height: 11px;
   border-radius: 1px;
-  background: var(--strong);
+  background: #fff;
   transform: skewY(-22deg);
 }
 .sidebar__mark i:nth-child(2) {
-  height: 18px;
+  height: 16px;
 }
 .sidebar__mark i:nth-child(3) {
-  height: 24px;
-  background: #df4b61;
+  height: 22px;
+  background: #ff6a78;
 }
 .sidebar__collapse {
   position: absolute;
-  top: 26px;
+  top: 22px;
   right: 8px;
   display: grid;
   place-items: center;
@@ -131,7 +197,7 @@
 }
 .sidebar__collapse:hover {
   color: var(--strong);
-  background: var(--line);
+  background: rgb(var(--color-brand) / 0.1);
 }
 .sidebar__collapse svg {
   width: 20px;
@@ -152,7 +218,7 @@
   align-items: center;
   gap: 12px;
   height: 38px;
-  margin: 0 24px 14px;
+  margin: 12px 24px 10px;
   color: var(--muted);
   font-size: 9px;
   font-weight: 600;
@@ -620,15 +686,29 @@
 }
 
 html.dark .sidebar__sidebar {
-  --panel: #172438;
-  --ink: #a5b4ce;
-  --strong: #e4ebf8;
-  --muted: #7283a2;
+  --panel: linear-gradient(180deg, #172744 0%, #131e33 42%, #111b2d 100%);
+  --panel-bg: #131e33;
+  --ink: #b2c1db;
+  --strong: #f1f5ff;
+  --muted: #8ea1c4;
   --line: #233149;
-  --edge: #293b57;
-  --submenu-surface: rgb(255 255 255 / 0.025);
+  --edge: rgb(148 163 184 / 0.12);
+  --submenu-surface: rgb(255 255 255 / 0.03);
   --bevel-light: rgb(159 186 232 / 0.07);
   --bevel-shadow: rgb(0 0 0 / 0.45);
+  --header-wash: linear-gradient(140deg, #182970 0%, #1b337c 68%, #17347e 100%);
+}
+html.dark .sidebar__frame::before,
+html.dark .sidebar__frame::after {
+  transform: skewX(atan2(calc(-1 * var(--brand-slant)), var(--app-header-height))) translateY(0%);
+  opacity: 1;
+}
+html.dark .sidebar__header::before {
+  opacity: 0;
+}
+html.dark .sidebar__mark::before {
+  opacity: 0.18;
+  transform: scale(0.92);
 }
 
 html.dark .sidebar__footerArt {
@@ -638,8 +718,8 @@ html.dark .sidebar__footerArt {
 .sidebar__mobileToggle {
   display: none;
   position: fixed;
-  top: calc((var(--app-header-height) - 44px) / 2);
-  left: 12px;
+  top: calc(10px + (var(--app-header-height) - 44px) / 2);
+  left: 24px;
   z-index: 40;
   place-items: center;
   width: 44px;
@@ -737,6 +817,7 @@ html.dark .sidebar__footerArt {
   .sidebar__sidebar *::before,
   .sidebar__sidebar *::after {
     transition: none !important;
+    animation: none !important;
   }
   .sidebar__flyout,
   .sidebar__flyout[data-open="true"] {

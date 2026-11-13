@@ -8,7 +8,7 @@ export default async function MainLayout({ children }: Readonly<{ children: Reac
   const userName = (await cookies()).get(appConfig.userNameCookieName)?.value ?? "Người dùng";
 
   return (
-    <div className="min-h-screen bg-[rgb(var(--color-page))] text-[rgb(var(--color-text))]">
+    <div className="min-h-screen flow-root bg-[rgb(var(--color-page))] text-[rgb(var(--color-text))]">
       <AppHeader userName={userName} />
       <div className="flex">
         <Sidebar />

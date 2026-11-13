@@ -1,9 +1,9 @@
   .app-header__header {
-  --brand-width: clamp(320px, 24vw, 400px);
-  --brand-slant: 44px;
-  --stripe-width: 30px;
+  --brand-width: clamp(264px, 19.5vw, 292px);
+  --brand-slant: 54px;
+  --stripe-width: 26px;
   position: sticky;
-  top: 0;
+  top: 12px;
   z-index: 30;
   isolation: isolate;
   display: flex;
@@ -11,12 +11,16 @@
   justify-content: space-between;
   gap: 24px;
   height: var(--app-header-height);
+  margin: 12px 16px 0;
   padding-inline: 24px;
+  overflow: hidden;
+  border-radius: 22px;
   background: var(--panel-paper);
   color: rgb(var(--color-text));
   box-shadow:
-    0 8px 24px -12px rgb(var(--panel-shadow) / .28),
-    inset 0 -1px 0 rgb(var(--color-border) / .45),
+    0 14px 36px -14px rgb(var(--panel-shadow) / .24),
+    0 4px 12px -4px rgb(var(--panel-shadow) / .08),
+    inset 0 0 0 1px rgb(var(--color-border) / .55),
     inset 0 1px 0 rgb(var(--panel-light) / .65);
   font-family: "DeocaUI", Arial, sans-serif;
 }
@@ -150,8 +154,10 @@
 @media (max-width: 1023px) {
   .app-header__header {
     --brand-width: 328px;
+    margin: 10px 12px 0;
+    border-radius: 18px;
     padding-left: 68px;
-    padding-right: 20px;
+    padding-right: 16px;
     gap: 16px;
   }
   .app-header__brand {
