@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { BackpackIcon, CalendarIcon, CheckIcon, DownloadIcon, EyeOpenIcon, FileTextIcon, PersonIcon, ReloadIcon, ResetIcon, StarIcon } from "@radix-ui/react-icons";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
@@ -206,7 +207,7 @@ export function SummaryList({ mode }: { mode: SummaryMode }) {
                   <td data-label="Nhóm chức danh"><span className="hr-summary__role" data-position={row.jobPosition}>{jobPositions.find(position => position.name === row.jobPosition)?.icon}{row.jobPosition}</span></td>
                   <td data-label="Công ty"><span className="hr-summary__company"><Image src={companyLogos[row.companyName] ?? "/brand/deoca-icon.svg"} alt="" width={23} height={23} /><strong>{row.companyName}</strong></span></td>
                   <td data-label="Tổng cộng" className="hr-summary__number"><div className="hr-summary__total"><span className="hr-summary__totalTrack" role="meter" aria-label="Số bản đánh giá so với nhóm lớn nhất trên trang" aria-valuemin={0} aria-valuemax={maxTotal} aria-valuenow={row.totalEval} title="So với nhóm có nhiều bản đánh giá nhất trên trang"><span style={{ width: (row.totalEval / maxTotal * 100) + "%", animationDelay: Math.min(index * 40, 240) + 80 + "ms" }} /></span><strong>{row.totalEval.toLocaleString("vi-VN")}</strong></div></td>
-                  <td><button type="button" className="hr-summary__view" disabled title="Chức năng xem chi tiết sẽ được bổ sung sau"><EyeOpenIcon aria-hidden="true" />Xem</button></td>
+                  <td><Link className="hr-summary__view" href={`/summary/summary-list-detail/${mode}/${row.periodId}/${row.companyId}`} aria-label={"Xem chi tiết " + row.period + " — " + row.companyName}><EyeOpenIcon aria-hidden="true" />Xem</Link></td>
                 </tr>
               ))}
             </tbody>

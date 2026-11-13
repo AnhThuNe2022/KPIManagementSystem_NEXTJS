@@ -29,7 +29,8 @@ const headerPages: Record<string, readonly [string, string]> = {
 };
 
 export function AppHeader({ userName }: { userName: string }) {
-  const page = headerPages[usePathname()];
+  const pathname = usePathname();
+  const page = headerPages[pathname] ?? Object.entries(headerPages).find(([path]) => pathname.startsWith(path + "/"))?.[1];
   return (
     <header className="app-header__header">
       <Link href="/dashboard" className="app-header__brand" aria-label="Đèo Cả KPI — Trang tổng quan">

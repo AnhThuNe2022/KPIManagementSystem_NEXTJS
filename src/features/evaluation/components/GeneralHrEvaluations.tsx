@@ -256,7 +256,7 @@ function RecordIdentity({ row }: { row: GeneralHrEvaluationDto }) {
   return <div className="general-hr-evaluations__dialogIdentity"><span className="general-hr-evaluations__identityAvatar"><PersonIcon aria-hidden="true" /></span><div><strong>{row.name}</strong><span>{row.systemCode || row.userId} · {row.companyCode || "Chưa có đơn vị"}</span></div></div>;
 }
 
-function GeneralHrEvaluationDialog({ mode, row, onClose, onModeChange, onMutated }: DialogProps) {
+export function GeneralHrEvaluationDialog({ mode, row, onClose, onModeChange, onMutated }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const busyRef = useRef(false);
@@ -322,7 +322,7 @@ function GeneralHrEvaluationDialog({ mode, row, onClose, onModeChange, onMutated
       <header className="general-hr-evaluations__historyHeader"><div className="general-hr-evaluations__dialogTitleGroup"><span className="general-hr-evaluations__dialogTitleIcon"><ActivityLogIcon aria-hidden="true" /></span><div><h2 id="hr-dialog-title">Quá trình phê duyệt</h2><p>Toàn bộ dấu mốc của hồ sơ #{row.id}</p></div></div>{closeButton}</header>
       <div className="general-hr-evaluations__historyRecord">
         <div className="general-hr-evaluations__historyRecordTop"><RecordIdentity row={row} /><div className="general-hr-evaluations__historyCurrent"><span>Trạng thái hiện tại</span><HrStatus value={row.status} /></div></div>
-        <dl className="general-hr-evaluations__historyFacts"><div><dt>Kỳ đánh giá</dt><dd>{row.period || "Chưa có kỳ đánh giá"}</dd></div><div><dt>Phòng ban</dt><dd>{row.departmentName || "Chưa có phòng ban"}</dd></div><div><dt>Ngày nộp</dt><dd>{formatEvaluationDate(row.submitDate ?? null, "Chưa nộp")}</dd></div></dl>
+        <dl className="general-hr-evaluations__historyFacts"><div><dt>Kỳ đánh giá</dt><dd>{row.period || "Chưa có kỳ đánh giá"}</dd></div><div><dt>Phòng ban</dt><dd>{row.departmentName || "Chưa có phòng ban"}</dd></div><div><dt>Ngày nộp</dt><dd>{formatEvaluationDate(row.submitDate ?? null, row.submitDate === undefined ? "Chưa có thông tin" : "Chưa nộp")}</dd></div></dl>
       </div>
       <section className="general-hr-evaluations__historyContent" aria-label="Nhật ký xử lý">
         <div className="general-hr-evaluations__sectionTitle"><h3><ActivityLogIcon aria-hidden="true" />Nhật ký xử lý</h3>{!loading && !error && <span>{history.length} dấu mốc · Mới nhất trước</span>}</div>

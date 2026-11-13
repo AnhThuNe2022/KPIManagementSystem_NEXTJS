@@ -93,7 +93,7 @@ html.dark .hr-summary__company { border-color: rgb(142 179 255 / .25); backgroun
 .hr-summary__totalTrack[aria-valuenow="0"] > span { min-width: 0; }
 html.dark .hr-summary__totalTrack { background: rgb(7 16 34 / .6); box-shadow: inset 0 2px 4px rgb(0 0 0 / .4), 0 1px 0 rgb(142 179 255 / .16); }
 html.dark .hr-summary__totalTrack > span { background: linear-gradient(180deg, #b5d3ff 0%, #719ee2 45%, #3d71b8 100%); box-shadow: inset 0 1px 0 rgb(255 255 255 / .45), inset 0 -1px 0 rgb(15 37 74 / .3), 1px 0 4px rgb(91 146 232 / .3); }
-.hr-summary__view { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 9px; border: 1px solid var(--summary-line); border-radius: 7px; background: transparent; color: var(--summary-muted); font-size: 11px !important; white-space: nowrap; }
+.hr-summary__view { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 9px; border: 1px solid var(--summary-line); border-radius: 7px; background: transparent; color: var(--summary-muted); font-size: 11px !important; white-space: nowrap; }
 .hr-summary__view svg { width: 14px; height: 14px; }
 .hr-summary__state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 240px; padding: 38px 20px; text-align: center; }
 .hr-summary__state > svg { width: 24px; height: 24px; color: var(--summary-blue); }
@@ -140,3 +140,6 @@ html.dark .hr-summary__totalTrack > span { background: linear-gradient(180deg, #
 @media (prefers-reduced-motion: reduce) {
   .hr-summary__page *, .hr-summary__page *::before, .hr-summary__page *::after { animation: none !important; transition: none !important; }
 }
+
+.hr-summary__view:hover { color: var(--summary-blue); background: var(--summary-wash); }
+.hr-summary__view:focus-visible { outline: 2px solid var(--summary-blue); outline-offset: 3px; }
