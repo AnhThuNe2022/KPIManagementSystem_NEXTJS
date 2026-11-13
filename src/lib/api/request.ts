@@ -1,4 +1,4 @@
-export async function request<T = unknown>(endpoint: string, options: RequestInit = {}): Promise<T> {
+export async function request<T = unknown>(endpoint: string, options: RequestInit = {}, responseType?: "response"): Promise<T> {
   const headers = new Headers(options.headers);
   if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
 
@@ -7,6 +7,7 @@ export async function request<T = unknown>(endpoint: string, options: RequestIni
   });
   if (response.status === 401) throw new Error("UNAUTHORIZED");
   if (response.status === 403) throw new Error("FORBIDDEN");
+  if (response.ok && responseType === "response") return response as T;
   const data = response.status === 204 ? undefined
     : response.headers.get("content-type")?.includes("json") ? await response.json() : await response.text();
   if (!response.ok || data?.success === false) {

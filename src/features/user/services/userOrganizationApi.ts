@@ -9,7 +9,16 @@ interface PagedResponse<T> {
 }
 
 
+export type AvailableManager = { id: string | number; userName: string; departmentName?: string; companyName?: string };
+
 export const userOrganizationApi = {
+  getAvailableManagers(signal?: AbortSignal) {
+    return request<PagedResponse<AvailableManager>>("/userorganizations/get-page", {
+      method: "POST",
+      body: JSON.stringify({ Page: 1, Take: 5000, Filters: { AvailableManager: "1" } }),
+      signal,
+    });
+  },
   /**
    * Load các đơn vị công tác của user
    */

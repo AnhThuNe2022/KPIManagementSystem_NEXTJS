@@ -1,8 +1,46 @@
 import { request } from "@/lib/api/request";
 import type { PagedResult } from "@/lib/api/types";
-import type { SummaryDetail, SummaryFilters, SummaryMode, SummaryRequest, SummaryRow } from "../types";
+import type { SummaryDetail, SummaryDetailFilters, SummaryFilters, SummaryMode, SummaryRequest, SummaryRow } from "../types";
 
 export const summaryApi = {
+  getEvaluationsForExport(listIds: number[], signal?: AbortSignal) {
+    return request<Response>("/summary/evaluations-for-export", {
+      method: "POST",
+      body: JSON.stringify(listIds),
+      signal,
+    }, "response");
+  },
+  getDetails(mode: SummaryMode, periodId: number, page: number, pageSize: number, filters: SummaryDetailFilters, signal?: AbortSignal) {
+    return request<PagedResult<SummaryDetail>>("/summary/detail", {
+      method: "POST",
+      body: JSON.stringify({
+        Page: page,
+        PageSize: pageSize,
+        Filters: {
+          periodId: String(periodId),
+          status: filters.status,
+          typeScreenRole: mode === "HrSummary" ? "HrSummary" : "Director",
+          typeScreen: "Summary",
+          keyword: filters.keyword.trim(),
+          departmentId: filters.departmentId === "-1" ? "" : filters.departmentId,
+          companyid: filters.companyId === "-1" ? "" : filters.companyId,
+        },
+      }),
+      signal,
+    });
+  },
+  approve(ids: number[], level: number, managerIds: (string | number)[]) {
+    return request("/evaluation/review-action-many", {
+      method: "POST",
+      body: JSON.stringify({ Ids: ids, ReviewRequest: { Action: 1, Level: level, ListUserCustom: managerIds } }),
+    });
+  },
+  reject(id: number, level: number, comment: string) {
+    return request("/evaluation/review-action/" + id, {
+      method: "POST",
+      body: JSON.stringify({ Comment: comment, Action: 2, Level: level }),
+    });
+  },
   detail(mode: SummaryMode, periodIds: number[], companyIds: string[], signal?: AbortSignal) {
     return request<PagedResult<SummaryDetail>>("/summary/detail", {
       method: "POST",
