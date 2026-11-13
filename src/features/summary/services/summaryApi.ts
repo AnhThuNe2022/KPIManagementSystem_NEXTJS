@@ -1,14 +1,15 @@
 import { request } from "@/lib/api/request";
 import type { PagedResult } from "@/lib/api/types";
+import type { EvaluationExport } from "../evaluationExport";
 import type { SummaryDetail, SummaryDetailFilters, SummaryFilters, SummaryMode, SummaryRequest, SummaryRow } from "../types";
 
 export const summaryApi = {
   getEvaluationsForExport(listIds: number[], signal?: AbortSignal) {
-    return request<Response>("/summary/evaluations-for-export", {
+    return request<EvaluationExport[]>("/summary/evaluations-for-export", {
       method: "POST",
       body: JSON.stringify(listIds),
       signal,
-    }, "response");
+    });
   },
   getDetails(mode: SummaryMode, periodId: number, page: number, pageSize: number, filters: SummaryDetailFilters, signal?: AbortSignal) {
     return request<PagedResult<SummaryDetail>>("/summary/detail", {

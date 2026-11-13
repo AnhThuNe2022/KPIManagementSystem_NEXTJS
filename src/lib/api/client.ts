@@ -8,8 +8,7 @@ const API_URL = process.env.AUTH_API_URL?.replace(/\/$/, "");
 
 export async function apiClient<T>(
   endpoint: string,
-  options: RequestInit = {},
-  responseType?: "response"
+  options: RequestInit = {}
 ): Promise<T> {
   if (!API_URL) {
     throw new Error("API_URL_NOT_CONFIGURED");
@@ -48,8 +47,6 @@ if (!response.ok) {
 
   throw new ApiError(response.status, errorText, response.headers.get("content-type"));
 }
-
-if (responseType === "response") return response as T;
 
 if (response.status === 204) return undefined as T;
 
