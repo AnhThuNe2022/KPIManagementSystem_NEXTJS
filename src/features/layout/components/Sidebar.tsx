@@ -255,17 +255,10 @@ export function Sidebar() {
       <div className="sidebar__frame">
         <div className="sidebar__surface">
           <div className="sidebar__header">
-            <div className="sidebar__identity">
-              <span className="sidebar__mark" aria-hidden="true">
-                <i />
-                <i />
-                <i />
-              </span>
-              <div>
-                <strong>Hệ thống KPI</strong>
-                <span>ĐÈO CẢ GROUP</span>
-              </div>
-            </div>
+            <p className="sidebar__sectionLabel">
+              <span>Công việc</span>
+              <i aria-hidden="true" />
+            </p>
             <button
               type="button"
               className="sidebar__collapse"
@@ -312,10 +305,6 @@ export function Sidebar() {
             </button>
           </div>
 
-          <p className="sidebar__sectionLabel">
-            <span>Công việc</span>
-            <i aria-hidden="true" />
-          </p>
           <nav
             ref={navRef}
             id="workspace-navigation"

@@ -10,6 +10,13 @@
 }
 
 :root {
+  --font-ui: "DeocaUI", Arial, sans-serif;
+  --text-body: 0.875rem;
+  --text-label: 0.8125rem;
+  --text-meta: 0.75rem;
+  --icon-inline: 1rem;
+  --icon-control: 1.125rem;
+  --icon-nav: 1.25rem;
   --app-header-height: 76px;
   /* Deoca palette from QLTS.Web; RGB channels support Tailwind opacity. */
   --deoca-primary-rgb: 19 31 107; /* #131F6B */
@@ -87,17 +94,27 @@ body {
   min-height: 100vh;
   background: rgb(var(--color-page));
   color: rgb(var(--color-text));
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  line-height: 1.6;
   transition:
     background-color 180ms ease,
     color 180ms ease;
 }
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 button {
   cursor: pointer;
+}
+
+svg[width="15"][height="15"] {
+  width: var(--icon-inline);
+  height: var(--icon-inline);
+  flex-shrink: 0;
 }
 
 @media (max-width: 1023px) {

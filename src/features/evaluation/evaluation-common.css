@@ -3,7 +3,7 @@
   min-width: 0;
   padding: 6px 0 28px;
   color: rgb(var(--color-text));
-  font-family: "DeocaUI", Arial, sans-serif;
+  font-family: var(--font-ui);
   container: evaluationReview / inline-size;
 }
 .evaluation-common__listIcon {
@@ -40,7 +40,7 @@
   border-radius: 6px;
   color: rgb(var(--color-brand));
   background: rgb(var(--color-brand) / 0.075);
-  font-size: 10px;
+  font-size: var(--text-meta);
   font-weight: 650;
   text-align: center;
 }
@@ -66,12 +66,12 @@
   background: transparent;
   color: rgb(var(--color-text));
   font: inherit;
-  font-size: 11px;
+  font-size: var(--text-body);
   text-overflow: ellipsis;
 }
 .evaluation-common__control input {
   padding-left: 39px;
-  font-size: 12px;
+  font-size: var(--text-body);
 }
 .evaluation-common__control input::placeholder {
   color: var(--panel-muted);
@@ -89,8 +89,8 @@
   position: absolute;
   left: 13px;
   top: 50%;
-  width: 15px;
-  height: 15px;
+  width: var(--icon-control);
+  height: var(--icon-control);
   transform: translateY(-50%);
   color: var(--panel-muted);
   pointer-events: none;
@@ -117,7 +117,7 @@
   background: var(--panel-paper);
   color: rgb(var(--color-text));
   font: inherit;
-  font-size: 11px;
+  font-size: var(--text-body);
   font-weight: 650;
   text-decoration: none;
   white-space: nowrap;
@@ -126,8 +126,8 @@
     inset 0 1px 0 rgb(var(--panel-light) / 0.5);
 }
 .evaluation-common__button svg {
-  width: 15px;
-  height: 15px;
+  width: var(--icon-control);
+  height: var(--icon-control);
 }
 .evaluation-common__primary {
   border-color: transparent;
@@ -156,7 +156,7 @@
 }
 .evaluation-common__listHeading h2 {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 750;
   letter-spacing: -0.02em;
 }
@@ -182,8 +182,8 @@
   color: var(--panel-muted);
 }
 .evaluation-common__refresh svg {
-  width: 17px;
-  height: 17px;
+  width: var(--icon-control);
+  height: var(--icon-control);
 }
 .evaluation-common__tableWrap {
   overflow-x: auto;
@@ -196,7 +196,7 @@
   min-width: 0;
   border-collapse: collapse;
   table-layout: fixed;
-  font-size: 11px;
+  font-size: var(--text-body);
   text-align: left;
 }
 .evaluation-common__table th {
@@ -204,14 +204,14 @@
   padding: 12px 14px;
   color: var(--panel-muted);
   background: rgb(var(--color-page) / 0.45);
-  font-size: 10px;
+  font-size: var(--text-label);
   font-weight: 650;
   line-height: 1.7;
 }
 .evaluation-common__table th svg {
   display: inline-block;
-  width: 13px;
-  height: 13px;
+  width: var(--icon-inline);
+  height: var(--icon-inline);
   margin-right: 5px;
   vertical-align: -2px;
 }
@@ -243,7 +243,7 @@
   color: rgb(var(--color-brand));
   background: var(--panel-well);
   box-shadow: var(--panel-recess);
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 750;
 }
 .evaluation-common__employee > div {
@@ -251,18 +251,18 @@
 }
 .evaluation-common__employee strong {
   display: block;
-  font-size: 12px;
+  font-size: var(--text-body);
   font-weight: 750;
 }
 .evaluation-common__employee > div > span {
   display: block;
   margin-top: 3px;
   color: var(--panel-muted);
-  font-size: 10px;
+  font-size: var(--text-body);
 }
 .evaluation-common__table time {
   color: var(--panel-muted);
-  font-size: 10px;
+  font-size: var(--text-meta);
   font-variant-numeric: tabular-nums;
 }
 .evaluation-common__status {
@@ -274,7 +274,7 @@
   border-radius: 7px;
   color: rgb(var(--color-brand));
   background: rgb(var(--color-brand) / 0.075);
-  font-size: 10px;
+  font-size: var(--text-meta);
   font-weight: 600;
   white-space: nowrap;
   max-width: 100%;
@@ -331,12 +331,12 @@
   border-radius: 10px;
   color: rgb(var(--color-accent));
   background: rgb(var(--color-accent) / 0.04);
-  font-size: 11px;
+  font-size: var(--text-meta);
   line-height: 1.7;
 }
 .evaluation-common__error > svg {
-  width: 16px;
-  height: 16px;
+  width: var(--icon-inline);
+  height: var(--icon-inline);
   flex-shrink: 0;
 }
 .evaluation-common__error > span {
@@ -385,7 +385,7 @@
   max-width: 42ch;
   margin: 11px 0 0;
   color: var(--panel-muted);
-  font-size: 12px;
+  font-size: var(--text-meta);
   line-height: 1.85;
 }
 .evaluation-common__empty .evaluation-common__button {
@@ -394,7 +394,7 @@
 .evaluation-common__loginLink {
   margin-top: 14px;
   color: rgb(var(--color-brand));
-  font-size: 12px;
+  font-size: var(--text-body);
 }
 .evaluation-common__loading {
   padding: 4px 22px;
@@ -498,7 +498,7 @@
     display: block;
     margin-bottom: 6px;
     color: var(--panel-muted);
-    font-size: 10px;
+    font-size: var(--text-label);
     font-weight: 500;
   }
   .evaluation-common__employee {

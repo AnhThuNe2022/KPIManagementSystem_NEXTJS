@@ -98,18 +98,8 @@
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  min-height: 88px;
-  padding: 0 22px;
-}
-.sidebar__header::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 3px;
-  background: linear-gradient(90deg, #182970 0%, #21489c 65%, #e64658 88%, #ff6a78 100%);
-  opacity: 1;
-  pointer-events: none;
-  transition: opacity 320ms ease;
+  min-height: 54px;
+  padding: 6px 12px 2px 20px;
 }
 .sidebar__identity {
   display: flex;
@@ -124,16 +114,16 @@
 }
 .sidebar__identity strong {
   color: var(--strong);
-  font-size: 12px;
+  font-size: var(--text-body);
   font-weight: 650;
   letter-spacing: -0.2px;
   transition: color 360ms ease;
 }
 .sidebar__identity > div > span {
   color: var(--muted);
-  font-size: 8px;
+  font-size: var(--text-meta);
   font-weight: 600;
-  letter-spacing: 1.5px;
+  letter-spacing: 0.02em;
   transition: color 360ms ease;
 }
 .sidebar__mark {
@@ -179,7 +169,7 @@
 }
 .sidebar__collapse {
   position: absolute;
-  top: 22px;
+  top: 6px;
   right: 8px;
   display: grid;
   place-items: center;
@@ -214,13 +204,15 @@
 
 .sidebar__sectionLabel {
   display: flex;
+  flex: 1;
   flex-shrink: 0;
   align-items: center;
-  gap: 12px;
-  height: 38px;
-  margin: 12px 24px 10px;
+  gap: 10px;
+  height: 34px;
+  margin: 0;
+  padding-right: 42px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--text-label);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.6px;
@@ -244,13 +236,13 @@
 .sidebar__group {
   min-width: 0;
 }
-.sidebar__menuStatus { padding: 14px 22px; color: var(--ink); font-size: 13px; line-height: 1.6; }
+.sidebar__menuStatus { padding: 14px 22px; color: var(--ink); font-size: var(--text-body); line-height: 1.6; }
 .sidebar__menuStatus p { margin: 0; }
 .sidebar__menuStatus button { margin-top: 10px; min-height: 40px; padding: 7px 12px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--selection-ink); font: inherit; }
 .sidebar__menuStatus button:focus-visible { outline: 2px solid var(--selection-ink); outline-offset: 2px; }
 .sidebar__item:disabled,.sidebar__subitem:disabled { opacity: .5; cursor: default; }
 .sidebar__nestedMenu { margin-left: 13px; padding-left: 8px; border-left: 1px solid var(--line); }
-.sidebar__subitem .sidebar__nestedChevron { width: 14px; height: 14px; flex: 0 0 14px; margin-left: auto; transition: transform 180ms; }
+.sidebar__subitem .sidebar__nestedChevron { width: var(--icon-inline); height: var(--icon-inline); flex: 0 0 14px; margin-left: auto; transition: transform 180ms; }
 .sidebar__subitem .sidebar__nestedChevron[data-open="true"] { transform: rotate(180deg); }
 
 /* The cutout stays mounted so fast hovering only retargets its motion. */
@@ -337,26 +329,26 @@
   transition: color 180ms ease;
 }
 .sidebar__icon {
-  flex: 0 0 21px;
-  width: 21px;
-  height: 21px;
+  flex: 0 0 var(--icon-nav);
+  width: var(--icon-nav);
+  height: var(--icon-nav);
   transform: translateX(0);
   transition: transform var(--travel-duration) var(--motion);
 }
 .sidebar__label {
   overflow: hidden;
   min-width: 0;
-  max-height: 36px;
-  font-size: 13px;
-  line-height: 18px;
+  max-height: 40px;
+  font-size: var(--text-body);
+  line-height: 20px;
   font-weight: 500;
   transition: transform var(--travel-duration) var(--motion);
 }
 .sidebar__itemArrow {
   position: absolute;
   right: 16px;
-  width: 16px;
-  height: 16px;
+  width: var(--icon-inline);
+  height: var(--icon-inline);
   opacity: 0;
   transform: translateX(-4px);
   transition: transform var(--travel-duration) var(--motion);
@@ -364,8 +356,8 @@
 .sidebar__groupChevron {
   position: absolute;
   right: 16px;
-  width: 16px;
-  height: 16px;
+  width: var(--icon-inline);
+  height: var(--icon-inline);
   opacity: 0.65;
   transition: transform var(--travel-duration) var(--motion);
 }
@@ -449,12 +441,12 @@
 }
 .sidebar__subitem svg {
   flex: 0 0 18px;
-  width: 18px;
-  height: 18px;
+  width: var(--icon-control);
+  height: var(--icon-control);
 }
 .sidebar__subitem span {
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--text-body);
+  line-height: 20px;
 }
 .sidebar__subitem:hover,
 .sidebar__subitem:focus-visible {
@@ -501,7 +493,7 @@
   bottom: 45px;
   margin: 0;
   color: var(--ink);
-  font-size: 10px;
+  font-size: var(--text-meta);
   line-height: 1.8;
   white-space: nowrap;
 }
@@ -514,7 +506,7 @@
   left: 24px;
   bottom: 59px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--text-meta);
   font-weight: 600;
   letter-spacing: 1px;
   opacity: 0;
@@ -536,12 +528,8 @@
   transform: translateX(-8px);
 }
 .sidebar__sidebar[data-collapsed="true"] .sidebar__sectionLabel {
-  position: relative;
-}
-.sidebar__sidebar[data-collapsed="true"] .sidebar__sectionLabel i {
-  position: absolute;
-  left: 0;
-  right: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 .sidebar__sidebar[data-collapsed="true"] .sidebar__collapse {
   transform: translateX(-13px);
@@ -638,14 +626,14 @@
   pointer-events: none;
 }
 .sidebar__flyoutArrow svg {
-  width: 18px;
-  height: 18px;
+  width: var(--icon-control);
+  height: var(--icon-control);
 }
 .sidebar__flyoutHint {
   display: block;
   padding: 8px 12px;
   color: var(--strong);
-  font-size: 12px;
+  font-size: var(--text-meta);
   font-weight: 650;
   line-height: 20px;
 }

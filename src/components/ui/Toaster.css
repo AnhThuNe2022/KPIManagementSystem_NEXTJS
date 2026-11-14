@@ -15,7 +15,7 @@
   --normal-bg: var(--panel-paper);
   --normal-text: rgb(var(--color-text));
   --normal-border: rgb(var(--color-border));
-  font-family: DeocaUI, Arial, sans-serif;
+  font-family: var(--font-ui);
 }
 
 .toaster__toast {
@@ -85,8 +85,8 @@ html.dark .toaster__toast {
   background: #f4f6ff;
 }
 .toaster__toast[data-sonner-toast][data-styled="true"] [data-icon] img { width: 32px; height: 32px; margin: 0; object-fit: contain; }
-.toaster__toast[data-sonner-toast][data-styled="true"] [data-title] { color: var(--toast-tone); font-size: 14px; font-weight: 750; }
-.toaster__toast[data-sonner-toast][data-styled="true"] [data-description] { margin-top: 3px; color: var(--panel-muted); font-size: 13px; line-height: 1.6; white-space: pre-line; }
+.toaster__toast[data-sonner-toast][data-styled="true"] [data-title] { color: var(--toast-tone); font-size: var(--text-body); font-weight: 750; }
+.toaster__toast[data-sonner-toast][data-styled="true"] [data-description] { margin-top: 3px; color: var(--panel-muted); font-size: var(--text-body); line-height: 1.6; white-space: pre-line; }
 .toaster__toast[data-sonner-toast][data-styled="true"] [data-close-button] {
   inset: 10px 8px auto auto;
   width: 32px;

@@ -7,8 +7,8 @@
   padding: 16px 22px;
   border-top: 1px solid rgb(var(--color-border) / .7);
   color: var(--panel-muted);
-  font-family: "DeocaUI", sans-serif;
-  font-size: 12px;
+  font-family: var(--font-ui);
+  font-size: var(--text-meta);
   font-variant-numeric: tabular-nums;
 }
 .pagination__footer > p {
@@ -51,7 +51,7 @@
   font: inherit;
   transition: background-color 150ms ease, color 150ms ease;
 }
-.pagination__pages svg { width: 15px; height: 15px; }
+.pagination__pages svg { width: var(--icon-inline); height: var(--icon-inline); }
 .pagination__controls .pagination__pages button:not(:disabled):not([aria-current="page"]):hover {
   color: rgb(var(--color-text));
   background: var(--panel-well);

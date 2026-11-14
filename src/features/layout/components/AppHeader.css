@@ -13,7 +13,7 @@
   height: var(--app-header-height);
   margin: 12px 16px 0;
   padding-inline: 24px;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 22px;
   background: var(--panel-paper);
   color: rgb(var(--color-text));
@@ -22,7 +22,7 @@
     0 4px 12px -4px rgb(var(--panel-shadow) / .08),
     inset 0 0 0 1px rgb(var(--color-border) / .55),
     inset 0 1px 0 rgb(var(--panel-light) / .65);
-  font-family: "DeocaUI", Arial, sans-serif;
+  font-family: var(--font-ui);
 }
 .app-header__header::before {
   content: "";
@@ -30,6 +30,8 @@
   z-index: -1;
   inset: 0 auto 0 0;
   width: var(--brand-width);
+  border-top-left-radius: inherit;
+  border-bottom-left-radius: inherit;
   background: linear-gradient(115deg, #182970, #1b337c 72%, #17347e);
   clip-path: polygon(0 0, 100% 0, calc(100% - var(--brand-slant)) 100%, 0 100%);
   pointer-events: none;
@@ -85,7 +87,7 @@
 }
 .app-header__company {
   color: #c3d1ff;
-  font-size: 11px;
+  font-size: var(--text-meta);
   font-weight: 650;
   line-height: 16px;
   letter-spacing: .12em;
@@ -96,11 +98,11 @@
   line-height: 26px;
   letter-spacing: -.03em;
 }
-.app-header__breadcrumbs { flex: 1; min-width: 0; color: var(--panel-muted); font-size: 12px; }
+.app-header__breadcrumbs { flex: 1; min-width: 0; color: var(--panel-muted); font-size: var(--text-label); }
 .app-header__breadcrumbs ol { display: flex; align-items: center; gap: 11px; margin: 0; padding: 0; list-style: none; }
 .app-header__breadcrumbs li { display: inline-flex; align-items: center; gap: 11px; min-width: 0; }
 .app-header__breadcrumbs li:not(:last-child) { flex-shrink: 0; }
-.app-header__breadcrumbs svg { width: 13px; height: 13px; flex-shrink: 0; }
+.app-header__breadcrumbs svg { width: var(--icon-inline); height: var(--icon-inline); flex-shrink: 0; }
 .app-header__breadcrumbs a { display: inline-grid; place-items: center; min-width: 28px; min-height: 36px; border-radius: 6px; color: inherit; }
 .app-header__breadcrumbs a:focus-visible { outline: 2px solid rgb(var(--color-brand)); outline-offset: 2px; }
 .app-header__breadcrumbs li[aria-current="page"] { color: rgb(var(--color-text)); font-weight: 650; }
@@ -134,8 +136,8 @@
 }
 .app-header__tools > button > svg,
 .app-header__tools > div > button > svg {
-  width: 18px;
-  height: 18px;
+  width: var(--icon-control);
+  height: var(--icon-control);
 }
 .app-header__account {
   padding-left: 20px;

@@ -30,7 +30,7 @@
   border-radius: 8px;
   background: rgb(var(--color-brand) / 0.09);
   color: rgb(var(--color-brand));
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 750;
   text-transform: uppercase;
 }
@@ -42,7 +42,7 @@
 }
 .user-menu__name {
   overflow: hidden;
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 700;
   line-height: 20px;
   text-overflow: ellipsis;
@@ -50,13 +50,13 @@
 }
 .user-menu__caption {
   color: var(--panel-muted);
-  font-size: 13px;
+  font-size: var(--text-meta);
   line-height: 18px;
 }
 .user-menu__chevron {
   flex-shrink: 0;
-  width: 14px;
-  height: 14px;
+  width: var(--icon-inline);
+  height: var(--icon-inline);
   color: rgb(var(--color-muted));
   transition: transform 160ms ease;
 }
@@ -83,7 +83,7 @@
   border-radius: 4px;
   background: transparent;
   color: rgb(var(--color-text));
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 600;
   text-align: left;
   transition: background-color 160ms ease;
