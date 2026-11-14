@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Image from "next/image";
-import { ActivityLogIcon, CalendarIcon, FileTextIcon, LayersIcon, MixIcon, PlusIcon } from "@radix-ui/react-icons";
+import { ActivityLogIcon, CalendarIcon, FileTextIcon, LayersIcon, MagnifyingGlassIcon, MixIcon, PlusIcon, ReloadIcon } from "@radix-ui/react-icons";
 import { Pagination } from "@/components/ui/Pagination";
 import "./EvaluationList.css";
 import { useRouter } from "next/navigation";
@@ -11,6 +10,16 @@ import { notify } from "@/components/ui/Toaster";
 import { evaluationApi } from "@/features/evaluation/services/evaluationApi";
 import { requestMessage } from "../evaluationDisplay";
 import type { EvaluationDto } from "@/features/evaluation/types";
+
+type StatusGroup = "all" | "waiting" | "done" | "other";
+
+function statusTone(status: string): "danger" | "success" | "waiting" | "neutral" {
+  const key = (status || "").toLowerCase();
+  if (key === "rejected") return "danger";
+  if (key === "over" || key === "compilehrlist" || key === "senthr") return "success";
+  if (key.includes("review")) return "waiting";
+  return "neutral";
+}
 
 export default function EvaluationList() {
   const router = useRouter();
@@ -21,6 +30,9 @@ export default function EvaluationList() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
+  const [statusFilter, setStatusFilter] = useState<StatusGroup>("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [revision, setRevision] = useState(0);
 
   const loadData = useCallback(async (signal: AbortSignal) => {
     setLoading(true);
@@ -55,7 +67,24 @@ export default function EvaluationList() {
     const controller = new AbortController();
     void loadData(controller.signal);
     return () => controller.abort();
-  }, [loadData]);
+  }, [loadData, revision]);
+
+  const normalizedQuery = searchTerm.trim().toLowerCase();
+  const waitingCount = items.filter(item => statusTone(item.status) === "waiting").length;
+  const doneCount = items.filter(item => statusTone(item.status) === "success").length;
+  const otherCount = items.length - waitingCount - doneCount;
+  const visibleItems = items.filter(item => {
+    const tone = statusTone(item.status);
+    if (statusFilter === "waiting" && tone !== "waiting") return false;
+    if (statusFilter === "done" && tone !== "success") return false;
+    if (statusFilter === "other" && (tone === "waiting" || tone === "success")) return false;
+    if (!normalizedQuery) return true;
+    return (
+      (item.templateName || "").toLowerCase().includes(normalizedQuery) ||
+      (item.period || "").toLowerCase().includes(normalizedQuery) ||
+      convertStatusToDisplay(item.status).toLowerCase().includes(normalizedQuery)
+    );
+  });
 
   const createNew = () => {
     router.push("/kpievaluation");
@@ -99,8 +128,12 @@ export default function EvaluationList() {
             </button>
           </div>
         </div>
-        <div className="evaluation-list__illustration" aria-hidden="true">
-          <Image src="/svg/evaluation-mole.svg" alt="" width={640} height={533} sizes="(max-width: 520px) 112px, (max-width: 1024px) 152px, 176px" />
+        <div className="evaluation-list__glassCard" aria-hidden="true">
+          <span className="evaluation-list__glassRing" />
+          <div className="evaluation-list__glassBars">
+            <span className="is-accent" />
+            <span />
+          </div>
         </div>
       </header>
 
@@ -108,6 +141,52 @@ export default function EvaluationList() {
       <div
         className="evaluation-list__list"
       >
+        <div className="evaluation-list__toolbar">
+          <div className="evaluation-list__filterPills" role="tablist" aria-label="Lọc nhanh theo trạng thái">
+            {(
+              [
+                ["all", "Tất cả", items.length],
+                ["waiting", "Đang duyệt", waitingCount],
+                ["done", "Hoàn tất", doneCount],
+                ["other", "Khác", otherCount],
+              ] as const
+            ).map(([key, label, count]) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={statusFilter === key}
+                className="evaluation-list__filterPill"
+                onClick={() => setStatusFilter(key)}
+              >
+                <span>{label}</span>
+                <span className="evaluation-list__filterCount">{count}</span>
+              </button>
+            ))}
+          </div>
+          <div className="evaluation-list__toolbarRight">
+            <div className="evaluation-list__searchBox">
+              <MagnifyingGlassIcon aria-hidden="true" />
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                placeholder="Tìm tên bản đánh giá hoặc kỳ…"
+                aria-label="Tìm tên bản đánh giá hoặc kỳ"
+              />
+            </div>
+            <button
+              type="button"
+              className="evaluation-list__refreshBtn"
+              onClick={() => setRevision(v => v + 1)}
+              title="Làm mới danh sách"
+              aria-label="Làm mới danh sách"
+            >
+              <ReloadIcon aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+
         <div className="evaluation-list__tableWrap">
           <table className="evaluation-list__table" aria-label="Danh sách bản đánh giá">
             {/* HEADER */}
@@ -125,7 +204,7 @@ export default function EvaluationList() {
                     px-3
                     py-3
                     text-left
-                    text-[13px]
+                    text-sm
                     font-semibold
                   "
                 >
@@ -139,7 +218,7 @@ export default function EvaluationList() {
                     px-3
                     py-3
                     text-left
-                    text-[13px]
+                    text-sm
                     font-semibold
                   "
                 >
@@ -153,7 +232,7 @@ export default function EvaluationList() {
                     px-3
                     py-3
                     text-left
-                    text-[13px]
+                    text-sm
                     font-semibold
                     whitespace-nowrap
                   "
@@ -168,7 +247,7 @@ export default function EvaluationList() {
                     px-3
                     py-3
                     text-left
-                    text-[13px]
+                    text-sm
                     font-semibold
                   "
                 >
@@ -183,7 +262,7 @@ export default function EvaluationList() {
                     px-3
                     py-3
                     text-left
-                    text-[13px]
+                    text-sm
                     font-semibold
                   "
                 >
@@ -194,7 +273,7 @@ export default function EvaluationList() {
 
             {/* BODY */}
             <tbody>
-              {items.length === 0 ? (
+              {visibleItems.length === 0 ? (
                 <tr>
                   <td
                     colSpan={5}
@@ -202,23 +281,23 @@ export default function EvaluationList() {
                       px-3
                       py-8
                       text-center
-                      text-[13px]
+                      text-sm
                       text-[rgb(var(--color-muted))]
                     "
                   >
                     <div className="evaluation-list__empty">
                       <FileTextIcon aria-hidden="true" />
-                      <strong>Chưa có bản đánh giá</strong>
-                      <p>Chọn “Tạo bản đánh giá” để bắt đầu.</p>
+                      <strong>{items.length === 0 ? "Chưa có bản đánh giá" : "Không có bản đánh giá phù hợp"}</strong>
+                      <p>{items.length === 0 ? "Chọn “Tạo bản đánh giá” để bắt đầu." : "Thử bỏ từ khóa hoặc chọn lại bộ lọc trạng thái."}</p>
                     </div>
                   </td>
                 </tr>
               ) : (
-                items.map((item, index) => (
+                visibleItems.map((item, index) => (
                   <tr
                     key={item.id}
                     className={`
-                      text-[13px]
+                      text-sm
                       transition-colors
                       ${
                         index % 2 === 1
@@ -277,7 +356,11 @@ export default function EvaluationList() {
                         align-middle
                       "
                     >
-                      <span className="evaluation-list__status" data-status={item.status?.toLowerCase()}>
+                      <span
+                        className="evaluation-list__status"
+                        data-status={item.status?.toLowerCase()}
+                        data-tone={statusTone(item.status)}
+                      >
                         {convertStatusToDisplay(item.status)}
                       </span>
                     </td>
