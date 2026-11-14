@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { BackpackIcon, CalendarIcon, CheckIcon, DownloadIcon, EyeOpenIcon, FileTextIcon, PersonIcon, ReloadIcon, ResetIcon, StarIcon } from "@radix-ui/react-icons";
+import { BackpackIcon, BarChartIcon, CalendarIcon, CheckIcon, Component1Icon, DownloadIcon, EyeOpenIcon, FileTextIcon, MixerHorizontalIcon, PersonIcon, ReloadIcon, ResetIcon, StarIcon } from "@radix-ui/react-icons";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { notify } from "@/components/ui/Toaster";
 import { Pagination } from "@/components/ui/Pagination";
@@ -23,6 +23,20 @@ const jobPositions = [
   { id: "2", name: "Quản lý cấp trung", icon: <BackpackIcon aria-hidden="true" /> },
   { id: "3", name: "Quản lý cấp cao", icon: <StarIcon aria-hidden="true" /> },
 ];
+
+const ROLE_PALETTE_COUNT = 5;
+
+function roleTone(jobPosition: string): number {
+  let hash = 0;
+  for (let i = 0; i < jobPosition.length; i += 1) {
+    hash = (hash * 31 + jobPosition.charCodeAt(i)) >>> 0;
+  }
+  return hash % ROLE_PALETTE_COUNT;
+}
+
+function roleIcon(jobPosition: string) {
+  return jobPositions.find((position) => position.name === jobPosition)?.icon ?? <BackpackIcon aria-hidden="true" />;
+}
 
 export function SummaryList({ mode }: { mode: SummaryMode }) {
   const scopeName = mode === "HrSummary" ? "HR" : "Director";
@@ -44,6 +58,10 @@ export function SummaryList({ mode }: { mode: SummaryMode }) {
   const requestKey = JSON.stringify({ mode, page, pageSize, filters });
   const data = snapshot?.key === requestKey ? snapshot.data : null;
   const maxTotal = Math.max(1, ...(data?.items.map(row => row.totalEval) ?? []));
+  const pageTotalEval = data?.items.reduce((sum, row) => sum + row.totalEval, 0) ?? 0;
+  const uniqueCompanies = new Set(data?.items.map(row => row.companyName) ?? []).size;
+  const latestPeriod = data?.items[0]?.period ?? "";
+  const canExport = Boolean(filters.typeId && filters.periodId);
   const periods = types.find(type => type.id === filters.typeId)?.periods ?? [];
   const filtered = filters.companyIds.length > 0 || !!(filters.typeId || filters.periodId || filters.jobPositionId);
 
@@ -148,12 +166,22 @@ export function SummaryList({ mode }: { mode: SummaryMode }) {
   return (
     <div className="hr-summary__page">
       <header className="hr-summary__heading">
-        <div>
+        <div className="hr-summary__glassCard" aria-hidden="true">
+          <div className="hr-summary__glassChart">
+            <span style={{ height: "42%" }} />
+            <span style={{ height: "68%" }} />
+            <span style={{ height: "54%" }} />
+            <span style={{ height: "88%" }} className="is-accent" />
+            <span style={{ height: "72%" }} />
+          </div>
+        </div>
+        <div className="hr-summary__headingCopy">
           <h1>Danh sách tổng hợp</h1>
           <p>Tổng hợp bản đánh giá theo kỳ, biểu mẫu và công ty.</p>
         </div>
         <div className="hr-summary__headingActions">
-          <button type="button" className="hr-summary__button hr-summary__export" data-state={exportState} onClick={exportExcel} disabled={loading || !!error || !data?.total || exporting || !filters.typeId || !filters.periodId} aria-busy={exporting} title={filters.typeId && filters.periodId ? "Xuất Excel theo bộ lọc hiện tại" : "Chọn loại đánh giá và kỳ đánh giá để xuất Excel"}>
+          {!canExport && <span className="hr-summary__exportHint">Chọn loại & kỳ để xuất Excel</span>}
+          <button type="button" className="hr-summary__button hr-summary__export" data-ready={canExport || undefined} data-state={exportState} onClick={exportExcel} disabled={loading || !!error || !data?.total || exporting || !canExport} aria-busy={exporting} title={canExport ? "Xuất Excel theo bộ lọc hiện tại" : "Chọn loại đánh giá và kỳ đánh giá để xuất Excel"}>
             <span className="hr-summary__exportGlyph" aria-hidden="true"><DownloadIcon /><CheckIcon /></span>
             <span role="status">{exporting ? "Đang xuất…" : exportState === "complete" ? "Đã xuất Excel" : "Xuất Excel"}</span>
           </button>
@@ -196,20 +224,33 @@ export function SummaryList({ mode }: { mode: SummaryMode }) {
           <h2 id="summary-results-heading"><FileTextIcon aria-hidden="true" />Kết quả tổng hợp <span>{data?.total.toLocaleString("vi-VN") ?? "—"}</span></h2>
           {filtered && <span className="hr-summary__filtered">Đã áp dụng bộ lọc</span>}
         </header>
+        {data && data.items.length > 0 && (
+          <div className="hr-summary__kpiStrip" aria-label="Tóm tắt nhanh">
+            <div className="hr-summary__kpiItem"><span>Nhóm tổng hợp</span><strong>{data.total.toLocaleString("vi-VN")}</strong></div>
+            <div className="hr-summary__kpiItem"><span>Hồ sơ trên trang</span><strong>{pageTotalEval.toLocaleString("vi-VN")}</strong></div>
+            <div className="hr-summary__kpiItem"><span>Đơn vị tham gia</span><strong>{uniqueCompanies.toLocaleString("vi-VN")} công ty</strong></div>
+            <div className="hr-summary__kpiItem"><span>Kỳ mới nhất</span><strong>{latestPeriod || "—"}</strong></div>
+          </div>
+        )}
         <div className="hr-summary__tableWrap" aria-busy={loading}>
           <table className="hr-summary__table" aria-label="Danh sách tổng hợp đánh giá">
-            <thead><tr><th scope="col">Kỳ đánh giá</th><th scope="col">Biểu mẫu</th><th scope="col">Nhóm chức danh</th><th scope="col">Công ty</th><th scope="col" className="hr-summary__number">Tổng cộng</th><th scope="col"><span className="hr-summary__srOnly">Thao tác</span></th></tr></thead>
+            <thead><tr><th scope="col"><span className="hr-summary__columnLabel"><CalendarIcon aria-hidden="true" />Kỳ đánh giá</span></th><th scope="col"><span className="hr-summary__columnLabel"><FileTextIcon aria-hidden="true" />Biểu mẫu</span></th><th scope="col"><span className="hr-summary__columnLabel"><BackpackIcon aria-hidden="true" />Nhóm chức danh</span></th><th scope="col"><span className="hr-summary__columnLabel"><Component1Icon aria-hidden="true" />Công ty</span></th><th scope="col" className="hr-summary__number"><span className="hr-summary__columnLabel"><BarChartIcon aria-hidden="true" />Tổng cộng</span></th><th scope="col" className="hr-summary__actionHeader"><span className="hr-summary__columnLabel"><MixerHorizontalIcon aria-hidden="true" />Thao tác</span></th></tr></thead>
             <tbody>
-              {data?.items.map((row, index) => (
+              {data?.items.map((row, index) => {
+                const sharePercent = pageTotalEval > 0 ? Math.round((row.totalEval / pageTotalEval) * 100) : 0;
+                const templateLabel = row.periodName && row.periodName !== row.period ? row.periodName : "Đánh giá định kỳ · " + row.period;
+                const tone = roleTone(row.jobPosition);
+                return (
                 <tr key={row.periodId + "-" + row.companyId + "-" + row.jobPosition} style={{ animationDelay: Math.min(index * 40, 240) + "ms" }}>
-                  <td data-label="Kỳ đánh giá"><div className="hr-summary__period"><span className="hr-summary__periodIcon"><CalendarIcon aria-hidden="true" /></span><strong>{row.period}</strong></div></td>
-                  <td data-label="Biểu mẫu"><span className="hr-summary__template">{row.periodName}</span></td>
-                  <td data-label="Nhóm chức danh"><span className="hr-summary__role" data-position={row.jobPosition}>{jobPositions.find(position => position.name === row.jobPosition)?.icon}{row.jobPosition}</span></td>
+                  <td data-label="Kỳ đánh giá"><div className="hr-summary__period"><span className="hr-summary__periodIcon"><CalendarIcon aria-hidden="true" /></span><div className="hr-summary__periodText"><strong>{row.period}</strong>{row.period === latestPeriod && <span className="hr-summary__latestTag">Mới nhất</span>}</div></div></td>
+                  <td data-label="Biểu mẫu"><span className="hr-summary__template">{templateLabel}</span></td>
+                  <td data-label="Nhóm chức danh"><span className="hr-summary__role" data-position={row.jobPosition} data-tone={tone}>{roleIcon(row.jobPosition)}{row.jobPosition}</span></td>
                   <td data-label="Công ty"><span className="hr-summary__company"><Image src={companyLogos[row.companyName] ?? "/brand/deoca-icon.svg"} alt="" width={23} height={23} /><strong>{row.companyName}</strong></span></td>
-                  <td data-label="Tổng cộng" className="hr-summary__number"><div className="hr-summary__total"><span className="hr-summary__totalTrack" role="meter" aria-label="Số bản đánh giá so với nhóm lớn nhất trên trang" aria-valuemin={0} aria-valuemax={maxTotal} aria-valuenow={row.totalEval} title="So với nhóm có nhiều bản đánh giá nhất trên trang"><span style={{ width: (row.totalEval / maxTotal * 100) + "%", animationDelay: Math.min(index * 40, 240) + 80 + "ms" }} /></span><strong>{row.totalEval.toLocaleString("vi-VN")}</strong></div></td>
+                  <td data-label="Tổng cộng" className="hr-summary__number"><div className="hr-summary__total"><span className="hr-summary__totalTrack" role="meter" aria-label="Số bản đánh giá so với nhóm lớn nhất trên trang" aria-valuemin={0} aria-valuemax={maxTotal} aria-valuenow={row.totalEval} title="So với nhóm có nhiều bản đánh giá nhất trên trang"><span style={{ width: (row.totalEval / maxTotal * 100) + "%", animationDelay: Math.min(index * 40, 240) + 80 + "ms" }} /></span><strong>{row.totalEval.toLocaleString("vi-VN")}</strong><span className="hr-summary__share">{sharePercent}%</span></div></td>
                   <td><Link className="hr-summary__view" href={`/summary/summary-list-detail/${mode}/${row.periodId}/${row.companyId}`} aria-label={"Xem chi tiết " + row.period + " — " + row.companyName}><EyeOpenIcon aria-hidden="true" />Xem</Link></td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
           {(loading || error || !data?.items.length) && <div className="hr-summary__state" role={error ? "alert" : "status"}>
