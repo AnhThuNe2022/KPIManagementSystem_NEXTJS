@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
+  ActivityLogIcon,
+  BarChartIcon,
   CalendarIcon,
   CheckCircledIcon,
   CheckIcon,
@@ -51,6 +53,33 @@ const emptyFilters: ReviewedEvaluationFilters = {
 };
 const scoreFormatter = new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 });
 
+function reviewedStatusMeta(status: string) {
+  switch (status) {
+    case "Approved":
+      return { label: "Đã duyệt", tone: "approved" as const };
+    case "Over":
+      return { label: "Hoàn tất", tone: "approved" as const };
+    case "SentHR":
+      return { label: "QLCC đã duyệt", tone: "approved" as const };
+    case "CompileHRList":
+      return { label: "Tổng hợp HR", tone: "compile" as const };
+    case "DirectorReviewCompileHRList":
+      return { label: "Giám đốc duyệt", tone: "compile" as const };
+    case "Rejected":
+      return { label: "Bị từ chối", tone: "rejected" as const };
+    default:
+      return { label: status || "—", tone: "neutral" as const };
+  }
+}
+
+function reviewedBandTone(band: string | null | undefined) {
+  if (!band) return undefined;
+  const upper = band.trim().toUpperCase();
+  if (upper.startsWith("A")) return "high";
+  if (upper.startsWith("B")) return "mid";
+  return "low";
+}
+
 export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
   const hr = level === UserRoleSystem.HR;
   const title = "Danh sách đã duyệt / từ chối";
@@ -75,6 +104,20 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
   const [departmentBusy, setDepartmentBusy] = useState(false);
   const [departmentError, setDepartmentError] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [previewTarget, setPreviewTarget] = useState<ReviewedEvaluationDto | null>(null);
+  const previewDialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = previewDialogRef.current;
+    if (!previewTarget || !dialog) return;
+    dialog.showModal();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [previewTarget]);
   const requestKey = JSON.stringify({ level, page, pageSize, ...applied });
   const ready = snapshot?.key === requestKey;
   const data = ready ? snapshot.data : null;
@@ -196,8 +239,21 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
   return (
     <section className={"evaluation-common__page" + " " + "reviewed-evaluations__page"} aria-labelledby="reviewed-title">
       <header className="reviewed-evaluations__heading">
-        <div><div className="reviewed-evaluations__titleLine"><h1 id="reviewed-title">{title}</h1><span className="reviewed-evaluations__total"><strong>{data?.total.toLocaleString("vi-VN") ?? "—"}</strong> bản đánh giá</span></div><p className="reviewed-evaluations__description">Tra cứu kết quả, người duyệt và lý do từ chối.</p></div>
-        <div className="reviewed-evaluations__statusTabs" role="group" aria-label="Lọc theo trạng thái">
+        <div className="reviewed-evaluations__headingBody">
+          <div className="reviewed-evaluations__titleLine"><h1 id="reviewed-title">{title}</h1><span className="reviewed-evaluations__total"><strong>{data?.total.toLocaleString("vi-VN") ?? "—"}</strong> bản đánh giá</span></div>
+          <div className="reviewed-evaluations__descriptionRow">
+            <p className="reviewed-evaluations__description">Tra cứu kết quả, người duyệt và lý do từ chối.</p>
+            <div className="reviewed-evaluations__glassCard" aria-hidden="true">
+              <span className="reviewed-evaluations__glassIcon"><CheckCircledIcon /></span>
+              <div className="reviewed-evaluations__glassBars">
+                <span className="is-accent" />
+                <span />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="reviewed-evaluations__statusTabs" role="group" aria-label="Lọc theo trạng thái" data-active={applied.status || "All"}>
+          <span className="reviewed-evaluations__statusGlider" aria-hidden="true" />
           <button type="button" aria-pressed={applied.status === ""} onClick={() => selectStatus("")}>
             <svg className="reviewed-evaluations__statusRoad" viewBox="0 0 160 80" fill="none" aria-hidden="true" focusable="false">
               <path d="M6 82C62 69 135 60 109 45S76 28 155 14M40 84C91 67 149 57 125 44S99 29 160 19" stroke="currentColor" strokeWidth="2" />
@@ -376,7 +432,7 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
               </Link>
             )}
           </div>
-        ) : loading || !ready ? (
+        ) : !ready || (loading && !data) ? (
           <div className="evaluation-common__loading" role="status">
             <span className="evaluation-common__srOnly">Đang tải danh sách</span>
             {[0, 1, 2].map((row) => (
@@ -412,23 +468,44 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
             <table className={`evaluation-common__table reviewed-evaluations__table`}>
               <caption className="evaluation-common__srOnly">{title}</caption>
               <thead><tr>
-                <th scope="col" className="reviewed-evaluations__employeeColumn">Nhân viên</th>
-                <th scope="col" className="reviewed-evaluations__periodColumn">Kỳ đánh giá</th>
-                <th scope="col" className="reviewed-evaluations__statusColumn">Trạng thái</th>
-                <th scope="col" className="reviewed-evaluations__reviewerColumn">Người duyệt</th>
-                <th scope="col" className="reviewed-evaluations__scoresColumn">Điểm đánh giá</th>
-                <th scope="col" className="reviewed-evaluations__resultColumn">Kết quả</th>
-                <th scope="col" className="reviewed-evaluations__actionsColumn"><span className="evaluation-common__srOnly">Thao tác</span></th>
+                <th scope="col" className="reviewed-evaluations__employeeColumn"><span className="reviewed-evaluations__columnLabel"><PersonIcon aria-hidden="true" />Nhân viên</span></th>
+                <th scope="col" className="reviewed-evaluations__periodColumn"><span className="reviewed-evaluations__columnLabel"><CalendarIcon aria-hidden="true" />Kỳ đánh giá</span></th>
+                <th scope="col" className="reviewed-evaluations__statusColumn"><span className="reviewed-evaluations__columnLabel"><ActivityLogIcon aria-hidden="true" />Trạng thái</span></th>
+                <th scope="col" className="reviewed-evaluations__reviewerColumn"><span className="reviewed-evaluations__columnLabel"><CheckCircledIcon aria-hidden="true" />Người duyệt</span></th>
+                <th scope="col" className="reviewed-evaluations__scoresColumn"><span className="reviewed-evaluations__columnLabel"><BarChartIcon aria-hidden="true" />Điểm đánh giá</span></th>
+                <th scope="col" className="reviewed-evaluations__resultColumn"><span className="reviewed-evaluations__columnLabel"><FileTextIcon aria-hidden="true" />Kết quả</span></th>
+                <th scope="col" className="reviewed-evaluations__actionsColumn"><span className="reviewed-evaluations__columnLabel"><MixerHorizontalIcon aria-hidden="true" />Thao tác</span></th>
               </tr></thead>
-              <tbody>{data.items.map((item) => <tr key={item.id + ":" + item.evalid} data-status={item.status}>
-                <td data-label="Nhân viên" className="reviewed-evaluations__employeeCell"><div className="evaluation-common__employee"><span className="evaluation-common__avatar" aria-hidden="true"><PersonIcon aria-hidden="true" /></span><div><strong>{item.employeeName || "Chưa có tên"}</strong><span>{item.employeeCode || "—"}</span><span className="reviewed-evaluations__department">{item.departmentName || "—"}</span></div></div></td>
-                <td data-label="Kỳ đánh giá" className="reviewed-evaluations__periodCell"><div className="reviewed-evaluations__periodIdentity"><span className="reviewed-evaluations__periodIcon"><CalendarIcon aria-hidden="true" /></span><span className="reviewed-evaluations__period">{item.periodLabel || "—"}</span></div></td>
-                <td data-label="Trạng thái" className="reviewed-evaluations__statusCell"><span className="reviewed-evaluations__status" data-status={item.status}><i aria-hidden="true" />{item.status === "Rejected" ? "Từ chối" : item.status === "Approved" ? "Đã duyệt" : item.status}</span>{item.rejectedReason && <p className="reviewed-evaluations__reason">{item.rejectedReason}</p>}</td>
-                <td data-label="Người duyệt" className="reviewed-evaluations__reviewerCell"><strong>{item.approverName || "—"}</strong><span className="reviewed-evaluations__reviewDate"><ClockIcon aria-hidden="true" /><time dateTime={formatEvaluationDate(item.approvedDate) !== "—" ? item.approvedDate! : undefined}>{formatEvaluationDate(item.approvedDate)}</time></span></td>
-                <td data-label="Điểm đánh giá" className="reviewed-evaluations__scoreCell"><dl className="reviewed-evaluations__scores"><div><dt>Tổng điểm</dt><dd>{item.totalScore == null ? "—" : scoreFormatter.format(item.totalScore)}</dd></div><div><dt>Quản lý</dt><dd>{item.managerSocre == null ? "—" : scoreFormatter.format(item.managerSocre)}</dd></div></dl></td>
-                <td data-label="Kết quả" className="reviewed-evaluations__resultCell"><span className="reviewed-evaluations__result" data-empty={!item.band}>{item.band || "—"}</span></td>
-                <td data-label="Thao tác" className="reviewed-evaluations__actionsCell"><button className={"evaluation-common__button" + " " + "evaluation-common__viewButton"} type="button" aria-label={"Xem bản đánh giá của " + (item.employeeName || item.employeeCode || "nhân viên")} disabled><EyeOpenIcon aria-hidden="true" />Xem</button></td>
-              </tr>)}</tbody>
+              <tbody>{data.items.map((item) => {
+                const statusMeta = reviewedStatusMeta(item.status);
+                const unitCode = item.employeeCode?.split("-")[0]?.trim();
+                return (
+                  <tr key={item.id + ":" + item.evalid} data-status={item.status}>
+                    <td data-label="Nhân viên" className="reviewed-evaluations__employeeCell">
+                      <div className="evaluation-common__employee">
+                        <span className="evaluation-common__avatar" aria-hidden="true"><PersonIcon aria-hidden="true" /></span>
+                        <div>
+                          <strong>{item.employeeName || "Chưa có tên"}</strong>
+                          <span className="reviewed-evaluations__codeRow">
+                            {unitCode && <span className="reviewed-evaluations__unitBadge">{unitCode}</span>}
+                            <span>{item.employeeCode || "—"}</span>
+                          </span>
+                          <span className="reviewed-evaluations__department">{item.departmentName || "—"}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td data-label="Kỳ đánh giá" className="reviewed-evaluations__periodCell"><div className="reviewed-evaluations__periodIdentity"><span className="reviewed-evaluations__periodIcon"><CalendarIcon aria-hidden="true" /></span><span className="reviewed-evaluations__period">{item.periodLabel || "—"}</span></div></td>
+                    <td data-label="Trạng thái" className="reviewed-evaluations__statusCell">
+                      <span className="reviewed-evaluations__status" data-status={item.status} data-tone={statusMeta.tone}><i aria-hidden="true" />{statusMeta.label}</span>
+                      {item.rejectedReason && <p className="reviewed-evaluations__reason">{item.rejectedReason}</p>}
+                    </td>
+                    <td data-label="Người duyệt" className="reviewed-evaluations__reviewerCell"><strong>{item.approverName || "—"}</strong><span className="reviewed-evaluations__reviewDate"><ClockIcon aria-hidden="true" /><time dateTime={formatEvaluationDate(item.approvedDate) !== "—" ? item.approvedDate! : undefined}>{formatEvaluationDate(item.approvedDate)}</time></span></td>
+                    <td data-label="Điểm đánh giá" className="reviewed-evaluations__scoreCell"><dl className="reviewed-evaluations__scores"><div><dt>Tổng điểm</dt><dd>{item.totalScore == null ? "—" : scoreFormatter.format(item.totalScore)}</dd></div><div><dt>Quản lý</dt><dd>{item.managerSocre == null ? "—" : scoreFormatter.format(item.managerSocre)}</dd></div></dl></td>
+                    <td data-label="Kết quả" className="reviewed-evaluations__resultCell"><span className="reviewed-evaluations__result" data-empty={!item.band} data-band={reviewedBandTone(item.band)}>{item.band || "—"}</span></td>
+                    <td data-label="Thao tác" className="reviewed-evaluations__actionsCell"><button className={"evaluation-common__button" + " " + "evaluation-common__viewButton"} type="button" aria-label={"Xem bản đánh giá của " + (item.employeeName || item.employeeCode || "nhân viên")} aria-haspopup="dialog" onClick={() => setPreviewTarget(item)}><EyeOpenIcon aria-hidden="true" />Xem</button></td>
+                  </tr>
+                );
+              })}</tbody>
             </table>
           </div>
         )}
@@ -446,6 +523,87 @@ export function ReviewedEvaluations({ level }: { level: ReviewRole }) {
           }}
         />
       </div>
+      {previewTarget && (
+        <dialog
+          ref={previewDialogRef}
+          className="reviewed-evaluations__previewDialog"
+          aria-labelledby="reviewed-preview-title"
+          onCancel={(event) => {
+            event.preventDefault();
+            setPreviewTarget(null);
+          }}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setPreviewTarget(null);
+          }}
+        >
+          <header className="reviewed-evaluations__previewHeader">
+            <h2 id="reviewed-preview-title">Chi tiết kết quả đánh giá</h2>
+            <button
+              className="evaluation-common__refresh"
+              type="button"
+              aria-label="Đóng chi tiết kết quả đánh giá"
+              onClick={() => setPreviewTarget(null)}
+            >
+              <Cross2Icon aria-hidden="true" />
+            </button>
+          </header>
+          <div className="reviewed-evaluations__previewBody">
+            <dl className="reviewed-evaluations__previewGrid">
+              <div>
+                <dt>Nhân viên</dt>
+                <dd>{previewTarget.employeeName || "—"} ({previewTarget.employeeCode || "—"})</dd>
+              </div>
+              <div>
+                <dt>Phòng ban</dt>
+                <dd>{previewTarget.departmentName || "—"}</dd>
+              </div>
+              <div>
+                <dt>Kỳ đánh giá</dt>
+                <dd>{previewTarget.periodLabel || "—"}</dd>
+              </div>
+              <div>
+                <dt>Trạng thái</dt>
+                <dd>{reviewedStatusMeta(previewTarget.status).label}</dd>
+              </div>
+              <div>
+                <dt>Người duyệt</dt>
+                <dd>{previewTarget.approverName || "—"}</dd>
+              </div>
+              <div>
+                <dt>Ngày duyệt</dt>
+                <dd>{formatEvaluationDate(previewTarget.approvedDate)}</dd>
+              </div>
+              <div>
+                <dt>Tổng điểm / Điểm quản lý</dt>
+                <dd>
+                  <strong>{previewTarget.totalScore == null ? "—" : scoreFormatter.format(previewTarget.totalScore)}</strong>
+                  {" / "}
+                  <strong>{previewTarget.managerSocre == null ? "—" : scoreFormatter.format(previewTarget.managerSocre)}</strong>
+                </dd>
+              </div>
+              <div>
+                <dt>Xếp loại</dt>
+                <dd><strong>{previewTarget.band || "—"}</strong></dd>
+              </div>
+              {previewTarget.rejectedReason && (
+                <div className="reviewed-evaluations__previewFull">
+                  <dt>Lý do từ chối</dt>
+                  <dd>{previewTarget.rejectedReason}</dd>
+                </div>
+              )}
+            </dl>
+          </div>
+          <footer className="reviewed-evaluations__previewFooter">
+            <button
+              className="evaluation-common__button"
+              type="button"
+              onClick={() => setPreviewTarget(null)}
+            >
+              Đóng
+            </button>
+          </footer>
+        </dialog>
+      )}
     </section>
   );
 }
