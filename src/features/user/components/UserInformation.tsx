@@ -45,6 +45,7 @@ import {
 } from "@/features/user/types";
 import { notify } from "@/components/ui/Toaster";
 import { companyApi } from "@/features/company/services/companyApi";
+import { companyLogos } from "@/features/company/companyLogos";
 import ComplaintDialog from "./ComplaintDialog";
 import { ConditionStatus } from "@/features/condition-assignments/types";
 import { EnumCodeNoti, NotificationDto } from "@/features/notifications/types";
@@ -92,6 +93,7 @@ export default function UserInformation() {
 
   const [isComplaintDialogOpen, setIsComplaintDialogOpen] = useState(false);
   const [complaintReason, setComplaintReason] = useState("");
+  const [hasPendingChanges, setHasPendingChanges] = useState(false);
 
   /**
    * =========================================================
@@ -119,6 +121,7 @@ export default function UserInformation() {
           await userOrganizationApi.getPaged(userId);
 
         setAssignments(result.items ?? []);
+        setHasPendingChanges(false);
       } catch (err) {
         console.error(err);
 
@@ -242,6 +245,7 @@ export default function UserInformation() {
     return next;
   });
 
+  setHasPendingChanges(true);
   closeAssignmentDialog();
   notify("info", "Đã cập nhật bản nháp đơn vị công tác. Nhấn Lưu thay đổi để lưu vào hệ thống.");
 };
@@ -554,6 +558,7 @@ const createComplaint = async (
       // Chưa tồn tại trên DB
       return prev.filter(assignment => assignment !== item);
     });
+    setHasPendingChanges(true);
     notify("info", "Đã gỡ đơn vị khỏi bản nháp. Nhấn Lưu thay đổi để lưu vào hệ thống.");
   };
 
@@ -814,6 +819,11 @@ return (
                   <h2 className="text-lg font-semibold text-[rgb(var(--color-text))]">
                     <LayersIcon aria-hidden="true" />
                     Đơn vị công tác
+                    {assignments.filter(a => !a.isDeleted).length > 0 && (
+                      <span className="user-information__panelCount">
+                        {assignments.filter(a => !a.isDeleted).length}
+                      </span>
+                    )}
                   </h2>
 
                   <p className="mt-1 text-xs text-[rgb(var(--color-accent))]">
@@ -998,34 +1008,40 @@ return (
 
                           {/* Loại */}
                           <td data-label="Loại" className="px-4 py-5">
-
-                            <div className="flex items-center gap-2">
-
-                              {assignment.assignmentType ===
-                                AssignmentType.Primary && (
+                            <span
+                              className="user-information__typeBadge"
+                              data-primary={assignment.assignmentType === AssignmentType.Primary}
+                            >
+                              {assignment.assignmentType === AssignmentType.Primary && (
                                 <DrawingPinFilledIcon className="user-information__primaryPin" aria-hidden="true" />
                               )}
-
-                              <span className="text-[rgb(var(--color-text))]">
-                                {getAssignmentTypeText(
-                                  assignment.assignmentType
-                                )}
-                              </span>
-
-                            </div>
-
+                              {getAssignmentTypeText(assignment.assignmentType)}
+                            </span>
                           </td>
 
 
                           {/* Mã NV */}
                           <td data-label="Mã NV" className="px-4 py-5 text-[rgb(var(--color-muted))]">
-                            {assignment.employeeCode ?? "-"}
+                            {assignment.employeeCode ? (
+                              <span className="user-information__empCode">{assignment.employeeCode}</span>
+                            ) : "-"}
                           </td>
 
 
                           {/* Công ty */}
                           <td data-label="Công ty" className="px-4 py-5 text-[rgb(var(--color-text))]">
-                            {assignment.companyName ?? "-"}
+                            {assignment.companyName ? (() => {
+                              const matchedCompany = companies.find(
+                                c => c.id === assignment.companyId || c.companyName === assignment.companyName
+                              );
+                              const logoSrc = (matchedCompany?.companyCode && companyLogos[matchedCompany.companyCode]) || "/brand/deoca-icon.svg";
+                              return (
+                                <span className="user-information__companyCell">
+                                  <Image src={logoSrc} alt="" width={20} height={20} />
+                                  <span>{assignment.companyName}</span>
+                                </span>
+                              );
+                            })() : "-"}
                           </td>
 
 
@@ -1037,13 +1053,22 @@ return (
 
                           {/* Chức danh */}
                           <td data-label="Chức danh" className="px-4 py-5 text-[rgb(var(--color-text))]">
-                            {assignment.jobTitle ?? "-"}
+                            {assignment.jobTitle ? (
+                              <span className="user-information__roleTag">{assignment.jobTitle}</span>
+                            ) : "-"}
                           </td>
 
 
                           {/* Quản lý */}
                           <td data-label="Quản lý" className="px-4 py-5 text-[rgb(var(--color-text))]">
-                            {assignment.managerName ?? "-"}
+                            {assignment.managerName ? (
+                              <span className="user-information__managerCell">
+                                <span className="user-information__managerAvatar" aria-hidden="true">
+                                  {assignment.managerName.trim().split(/\s+/).slice(-1)[0]?.[0]?.toUpperCase() || "?"}
+                                </span>
+                                <span>{assignment.managerName}</span>
+                              </span>
+                            ) : "-"}
                           </td>
 
 
@@ -1095,7 +1120,8 @@ return (
             <button
               type="button"
               onClick={saveAssignments}
-              disabled={isLoading || assignmentsLoading}
+              disabled={isLoading || assignmentsLoading || !hasPendingChanges}
+              data-dirty={hasPendingChanges || undefined}
               className="user-common__primaryButton user-information__saveButton"
             >
               {isLoading && (

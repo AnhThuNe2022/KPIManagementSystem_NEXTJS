@@ -3,8 +3,8 @@
   --profile-highlight: rgb(255 255 255 / 0.4);
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   color: rgb(var(--color-text));
-  font-family: "DeocaUI", Arial, sans-serif;
-  font-size: 14px;
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
   line-height: 1.6;
   -webkit-tap-highlight-color: transparent;
 }
@@ -18,8 +18,8 @@
   min-width: 0;
 }
 .user-information__page svg {
-  width: 18px;
-  height: 18px;
+  width: var(--icon-control);
+  height: var(--icon-control);
   flex-shrink: 0;
 }
 .user-information__page h1,
@@ -44,7 +44,7 @@
   align-items: center;
   gap: 9px;
   color: rgb(var(--color-brand));
-  font-size: 11px;
+  font-size: var(--text-meta);
   font-weight: 750;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -70,7 +70,7 @@
   box-shadow:
     inset 0 1px 0 var(--profile-highlight),
     0 3px 7px -5px rgb(var(--deoca-primary-rgb) / 0.35);
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 650;
   line-height: 1.4;
   white-space: nowrap;
@@ -80,9 +80,9 @@
     border-color 160ms ease;
 }
 .user-information__reportButton {
-  background: rgb(var(--deoca-accent-rgb));
-  color: white;
-  border-color: rgb(255 255 255 / 0.2);
+  background: rgb(var(--deoca-accent-rgb) / 0.08);
+  color: rgb(var(--deoca-accent-rgb));
+  border-color: rgb(var(--deoca-accent-rgb) / 0.25);
 }
 .user-information__page .user-information__reportButton:focus-visible {
   outline-color: rgb(var(--color-accent) / 0.45);
@@ -163,9 +163,9 @@
 }
 .user-information__identityCard {
   display: grid;
-  grid-template-columns: 88px minmax(0, 1.5fr) minmax(0, 1fr) 270px;
+  grid-template-columns: 88px minmax(0, 1.5fr) minmax(0, 1fr) 300px;
   grid-template-areas: "avatar name name credential" "email email code job";
-  grid-template-rows: minmax(216px, auto) auto;
+  grid-template-rows: minmax(260px, auto) auto;
   overflow: hidden;
   padding: 0 30px;
   background:
@@ -227,11 +227,11 @@
 }
 .user-information__infoRow > div:first-of-type {
   margin-bottom: 4px;
-  font-size: 11px;
+  font-size: var(--text-meta);
   color: rgb(var(--color-muted));
 }
 .user-information__infoRow > div:last-child {
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 650;
   overflow-wrap: anywhere;
 }
@@ -243,7 +243,7 @@
 }
 .user-information__infoRow:nth-child(2) > div:first-of-type {
   color: rgb(var(--color-brand));
-  font-size: 10px;
+  font-size: var(--text-meta);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -289,10 +289,36 @@
 .user-information__infoRow:nth-child(n + 4) .user-information__factIcon {
   left: 25px;
 }
+.user-information__infoRow:nth-child(4) .user-information__factIcon {
+  color: #0f766e;
+  border-color: rgb(15 118 110 / 0.16);
+  background: linear-gradient(140deg, rgb(var(--color-surface)), rgb(15 118 110 / 0.1));
+}
+.user-information__infoRow:nth-child(4) > div:last-child {
+  display: inline-block;
+  width: fit-content;
+  padding: 2px 9px;
+  border-radius: 6px;
+  background: rgb(15 118 110 / 0.08);
+  color: #0f766e;
+  font-variant-numeric: tabular-nums;
+}
+.user-information__infoRow:nth-child(5) .user-information__factIcon {
+  color: #b45309;
+  border-color: rgb(245 158 11 / 0.22);
+  background: linear-gradient(140deg, rgb(var(--color-surface)), rgb(245 158 11 / 0.12));
+}
+html.dark .user-information__infoRow:nth-child(4) .user-information__factIcon,
+html.dark .user-information__infoRow:nth-child(4) > div:last-child {
+  color: #5eead4;
+}
+html.dark .user-information__infoRow:nth-child(5) .user-information__factIcon {
+  color: #fbbf24;
+}
 .user-information__credentialScene {
   position: relative;
-  width: 254px;
-  height: 158px;
+  width: 280px;
+  height: 208px;
   justify-self: center;
   perspective: 800px;
 }
@@ -335,7 +361,7 @@
   content: "";
   position: absolute;
   right: 18px;
-  top: 72px;
+  top: 88px;
   width: 28px;
   height: 3px;
   background: rgb(var(--deoca-accent-rgb));
@@ -345,9 +371,9 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 10px;
+  font-size: var(--text-meta);
   font-weight: 750;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.02em;
 }
 .user-information__credentialBrand img {
   padding: 4px;
@@ -357,8 +383,8 @@
 .user-information__credentialBrand small {
   display: block;
   margin-top: 3px;
-  font-size: 7px;
-  letter-spacing: 0.14em;
+  font-size: var(--text-meta);
+  letter-spacing: 0.02em;
   font-weight: 500;
   opacity: 0.7;
 }
@@ -383,15 +409,16 @@
 }
 .user-information__credentialBottom {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 4px 12px;
   padding: 8px 29px 0 0;
-  font-size: 7px;
+  font-size: var(--text-meta);
   opacity: 0.75;
 }
 .user-information__credentialBottom > span:first-child {
-  font-size: 9px;
+  font-size: var(--text-meta);
   letter-spacing: 0.08em;
 }
 .user-information__credentialSeal {
@@ -455,7 +482,7 @@
   min-height: 43px;
   padding: 8px;
   border-radius: 11px;
-  font-size: 12px;
+  font-size: var(--text-label);
   font-weight: 650;
 }
 .user-information__tabTrack > button[aria-selected="true"] {
@@ -466,8 +493,8 @@
 }
 .user-information__tabTrack > button svg {
   box-sizing: content-box;
-  width: 16px;
-  height: 16px;
+  width: var(--icon-control);
+  height: var(--icon-control);
   padding: 5px;
   border-radius: 7px;
 }
@@ -486,7 +513,7 @@
   min-width: 840px;
   border-collapse: separate;
   border-spacing: 0 9px;
-  font-size: 12px;
+  font-size: var(--text-body);
 }
 .user-information__table thead tr {
   background: transparent;
@@ -495,14 +522,14 @@
 .user-information__table th {
   padding: 0 12px 8px;
   color: rgb(var(--color-muted));
-  font-size: 10px;
+  font-size: var(--text-label);
   font-weight: 650;
   white-space: nowrap;
 }
 .user-information__table th svg {
   display: inline-block;
-  width: 13px;
-  height: 13px;
+  width: var(--icon-inline);
+  height: var(--icon-inline);
   margin-right: 4px;
   vertical-align: -2px;
 }
@@ -523,7 +550,7 @@
   border-radius: 0 14px 14px 0;
 }
 .user-information__table td:nth-child(2) {
-  font-size: 11px;
+  font-size: var(--text-body);
   font-variant-numeric: tabular-nums;
 }
 .user-information__table td:nth-child(3) {
@@ -535,7 +562,91 @@
 .user-information__table .user-information__primaryPin {
   width: 13px;
   height: 13px;
+  color: currentColor;
+}
+.user-information__panelCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgb(var(--color-brand) / 0.1);
   color: rgb(var(--color-brand));
+  font-size: var(--text-meta);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.user-information__typeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 650;
+  background: rgb(245 158 11 / 0.12);
+  color: #b45309;
+  border: 1px solid rgb(245 158 11 / 0.22);
+  white-space: nowrap;
+}
+.user-information__typeBadge[data-primary="true"] {
+  background: rgb(var(--color-brand) / 0.1);
+  color: rgb(var(--color-brand));
+  border-color: rgb(var(--color-brand) / 0.22);
+}
+html.dark .user-information__typeBadge {
+  color: #fbbf24;
+}
+html.dark .user-information__typeBadge[data-primary="true"] {
+  color: #93c5fd;
+}
+.user-information__empCode {
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgb(var(--color-brand) / 0.06);
+  color: rgb(var(--color-text));
+  font-variant-numeric: tabular-nums;
+}
+.user-information__companyCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.user-information__companyCell img {
+  flex-shrink: 0;
+  object-fit: contain;
+}
+.user-information__roleTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: rgb(15 118 110 / 0.08);
+  color: #0f766e;
+  font-weight: 600;
+}
+html.dark .user-information__roleTag {
+  color: #5eead4;
+}
+.user-information__managerCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.user-information__managerAvatar {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  background: rgb(var(--color-brand) / 0.1);
+  color: rgb(var(--color-brand));
+  font-weight: 700;
+}
+.user-information__saveButton:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 .user-information__rowActions {
   display: flex;
@@ -543,8 +654,8 @@
   gap: 6px;
 }
 .user-information__rowActions svg {
-  width: 16px;
-  height: 16px;
+  width: var(--icon-inline);
+  height: var(--icon-inline);
 }
 .user-information__saveButton {
   display: flex;
@@ -604,7 +715,7 @@
 }
 .user-information__passwordAside p {
   margin-top: 12px;
-  font-size: 12px;
+  font-size: var(--text-meta);
   line-height: 1.8;
   color: rgb(var(--color-muted));
 }
@@ -617,12 +728,12 @@
   display: flex;
   gap: 8px;
   margin-top: 12px;
-  font-size: 11px;
+  font-size: var(--text-meta);
   color: rgb(var(--color-muted));
 }
 .user-information__passwordAside li svg {
-  width: 14px;
-  height: 14px;
+  width: var(--icon-inline);
+  height: var(--icon-inline);
   margin-top: 2px;
   color: rgb(var(--color-brand));
 }
@@ -646,9 +757,9 @@ html.dark .user-information__page {
     color: rgb(var(--color-brand));
   }
   .user-information__reportButton:hover:not(:disabled) {
-    background: rgb(var(--deoca-accent-hover-rgb));
+    background: rgb(var(--deoca-accent-rgb));
     color: white;
-    border-color: rgb(255 255 255 / 0.2);
+    border-color: rgb(var(--deoca-accent-rgb));
   }
   .user-information__deleteButton:hover:not(:disabled) {
     background: rgb(var(--color-accent) / 0.08);
@@ -666,7 +777,7 @@ html.dark .user-information__page {
 }
 @container profile (max-width: 850px) {
   .user-information__identityCard {
-    grid-template-columns: 70px minmax(0, 1.3fr) minmax(0, 1fr) 210px;
+    grid-template-columns: 70px minmax(0, 1.3fr) minmax(0, 1fr) 260px;
     padding: 0 22px;
   }
   .user-information__avatar {
@@ -676,7 +787,8 @@ html.dark .user-information__page {
     font-size: 25px;
   }
   .user-information__credentialScene {
-    transform: scale(0.8);
+    width: 245px;
+    height: 220px;
   }
   .user-information__infoRow:nth-child(n + 4) {
     padding-left: 52px;
@@ -734,7 +846,7 @@ html.dark .user-information__page {
   }
   .user-information__credentialScene {
     width: min(245px, calc(100% - 22px));
-    height: 155px;
+    height: 220px;
     margin: 2px 0 30px;
     transform: none;
   }
@@ -763,7 +875,7 @@ html.dark .user-information__page {
     left: 10px;
   }
   .user-information__infoRow > div:last-child {
-    font-size: 12px;
+    font-size: var(--text-body);
   }
   .user-information__tableWrap {
     overflow: visible;
@@ -811,7 +923,7 @@ html.dark .user-information__page {
     display: block;
     margin-bottom: 6px;
     color: rgb(var(--color-muted));
-    font-size: 10px;
+    font-size: var(--text-label);
     font-weight: 400;
   }
   .user-information__table td:nth-child(3) {

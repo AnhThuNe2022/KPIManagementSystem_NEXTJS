@@ -73,9 +73,36 @@ export default function PasswordChange({
       string
     > = {};
 
+    if (!isAdmin && changeMethod === "kpi" && !form.currentPassword?.trim()) {
+      nextErrors.currentPassword =
+        "Vui lòng nhập mật khẩu KPI hiện tại.";
+    }
+
+    if (!isAdmin && changeMethod === "cms") {
+      if (!form.cmsUsername?.trim()) {
+        nextErrors.cmsUsername =
+          "Vui lòng nhập tên người dùng CMS.";
+      }
+      if (!form.cmsPassword?.trim()) {
+        nextErrors.cmsPassword =
+          "Vui lòng nhập mật khẩu CMS.";
+      }
+    }
+
     if (!form.newPassword?.trim()) {
       nextErrors.newPassword =
         "Vui lòng nhập mật khẩu mới.";
+    } else if (form.newPassword.length < 6) {
+      nextErrors.newPassword =
+        "Mật khẩu mới cần ít nhất 6 ký tự.";
+    } else if (
+      !isAdmin &&
+      changeMethod === "kpi" &&
+      form.currentPassword &&
+      form.newPassword === form.currentPassword
+    ) {
+      nextErrors.newPassword =
+        "Mật khẩu mới không được trùng mật khẩu hiện tại.";
     }
 
     if (!form.confirmPassword?.trim()) {
@@ -97,6 +124,20 @@ export default function PasswordChange({
 
     return Object.keys(nextErrors).length === 0;
   };
+
+  const newPassword = form.newPassword ?? "";
+  const strengthChecks = [
+    { label: "Từ 8 ký tự", passed: newPassword.length >= 8 },
+    { label: "Chữ hoa", passed: /[A-Z]/.test(newPassword) },
+    { label: "Chữ số", passed: /\d/.test(newPassword) },
+    { label: "Ký tự đặc biệt", passed: /[^A-Za-z0-9]/.test(newPassword) },
+  ];
+  const strengthScore = strengthChecks.filter(item => item.passed).length;
+  const strengthTone = strengthScore <= 1 ? "weak" : strengthScore <= 2 ? "medium" : "strong";
+  const strengthLabel = strengthScore <= 1 ? "Yếu" : strengthScore <= 2 ? "Trung bình" : "Mạnh";
+  const passwordsMatch = Boolean(
+    newPassword && form.confirmPassword && newPassword === form.confirmPassword
+  );
 
   const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>
@@ -302,6 +343,12 @@ return (
               focus:border-[rgb(var(--color-brand))]
             "
           />
+
+          {errors.cmsUsername && (
+            <p className="mt-1 text-sm text-red-500">
+              {errors.cmsUsername}
+            </p>
+          )}
         </div>
 
         {/* CMS Password */}
@@ -427,6 +474,12 @@ return (
               )}
             </button>
           </div>
+
+          {errors.cmsPassword && (
+            <p className="mt-1 text-sm text-red-500">
+              {errors.cmsPassword}
+            </p>
+          )}
         </div>
       </div>
     )}
@@ -557,6 +610,12 @@ return (
             )}
           </button>
         </div>
+
+        {errors.currentPassword && (
+          <p className="mt-1 text-sm text-red-500">
+            {errors.currentPassword}
+          </p>
+        )}
       </div>
     )}
 
@@ -691,6 +750,27 @@ return (
           {errors.newPassword}
         </p>
       )}
+
+      {newPassword && (
+        <div className="password-change__strength" data-tone={strengthTone}>
+          <div className="password-change__strengthTop">
+            <div className="password-change__strengthBars" aria-hidden="true">
+              {[1, 2, 3, 4].map(step => (
+                <span key={step} data-active={strengthScore >= step} />
+              ))}
+            </div>
+            <span className="password-change__strengthLabel">Độ mạnh: {strengthLabel}</span>
+          </div>
+          <ul className="password-change__rules">
+            {strengthChecks.map(rule => (
+              <li key={rule.label} data-passed={rule.passed}>
+                <CheckIcon aria-hidden="true" />
+                {rule.label}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
 
     {/* =========================
@@ -819,9 +899,14 @@ return (
         </button>
       </div>
 
-      {errors.confirmPassword && (
+      {errors.confirmPassword ? (
         <p className="mt-1 text-sm text-red-500">
           {errors.confirmPassword}
+        </p>
+      ) : passwordsMatch && (
+        <p className="password-change__match">
+          <CheckIcon aria-hidden="true" />
+          Mật khẩu xác nhận khớp
         </p>
       )}
     </div>

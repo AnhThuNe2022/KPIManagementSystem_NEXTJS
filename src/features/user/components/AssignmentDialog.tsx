@@ -430,7 +430,7 @@ return (
                 className="
                   mb-1
                   block
-                  text-[12px]
+                  text-[13px]
                   font-medium
                   text-[rgb(var(--color-muted))]
                 "
@@ -566,7 +566,7 @@ return (
                 className="
                   mb-1
                   block
-                  text-[12px]
+                  text-[13px]
                   font-medium
                   text-[rgb(var(--color-muted))]
                 "
@@ -629,7 +629,7 @@ return (
                 className="
                   mb-1
                   block
-                  text-[12px]
+                  text-[13px]
                   font-medium
                   text-[rgb(var(--color-muted))]
                 "
@@ -690,7 +690,7 @@ return (
                 className="
                   mb-1
                   block
-                  text-[12px]
+                  text-[13px]
                   font-medium
                   text-[rgb(var(--color-muted))]
                 "
@@ -753,7 +753,7 @@ return (
               className="
                 mb-1
                 block
-                text-[12px]
+                text-[13px]
                 font-medium
                 text-[rgb(var(--color-muted))]
               "
@@ -854,7 +854,7 @@ return (
                   <label
                     htmlFor="managerId"
                     className="
-                      text-[12px]
+                      text-[13px]
                       font-medium
                       text-[rgb(var(--color-muted))]
                     "

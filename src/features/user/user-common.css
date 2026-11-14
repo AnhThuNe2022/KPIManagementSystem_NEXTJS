@@ -3,14 +3,14 @@
   --profile-highlight: rgb(255 255 255 / 0.4);
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   color: rgb(var(--color-text));
-  font-family: "DeocaUI", Arial, sans-serif;
-  font-size: 14px;
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
   line-height: 1.6;
   -webkit-tap-highlight-color: transparent;
 }
 .user-common__dialog svg {
-  width: 18px;
-  height: 18px;
+  width: var(--icon-control);
+  height: var(--icon-control);
   flex-shrink: 0;
 }
 .user-common__dialog :is(button, a):focus-visible {
@@ -25,17 +25,29 @@
   opacity: 0.5;
 }
 .user-common__pageHeader {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 24px;
-  margin-bottom: 27px;
+  margin: 12px 0 27px;
+  padding: 26px 28px;
+  overflow: hidden;
+  border: 1px solid rgb(var(--color-border) / .75);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgb(var(--color-surface)) 0%, rgb(var(--color-brand) / .04) 65%, rgb(var(--deoca-accent-rgb) / .035) 100%);
+  box-shadow: 0 8px 24px -18px rgb(var(--deoca-primary-rgb) / .28);
+}
+html.dark .user-common__pageHeader {
+  background: linear-gradient(135deg, rgb(var(--color-surface)) 0%, rgb(var(--color-brand) / .09) 65%, rgb(var(--deoca-accent-rgb) / .06) 100%);
+  box-shadow: 0 10px 28px -18px rgb(0 0 0 / .6);
 }
 .user-common__pageHeader > div {
   min-width: 0;
 }
 .user-common__pageHeader > .user-common__button {
   flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .08), 0 6px 16px -8px rgb(var(--panel-shadow) / .35);
 }
 .user-common__pageHeader h1 {
   margin-top: 7px;
@@ -47,7 +59,7 @@
 .user-common__pageHeader p {
   margin-top: 8px;
   color: rgb(var(--color-muted));
-  font-size: 13px;
+  font-size: var(--text-body);
 }
 .user-common__button,
 .user-common__primaryButton {
@@ -64,7 +76,7 @@
   box-shadow:
     inset 0 1px 0 var(--profile-highlight),
     0 3px 7px -5px rgb(var(--deoca-primary-rgb) / 0.35);
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 650;
   line-height: 1.4;
   white-space: nowrap;
@@ -102,8 +114,8 @@
 }
 .user-common__panelHeader h2 svg {
   box-sizing: content-box;
-  width: 18px;
-  height: 18px;
+  width: var(--icon-control);
+  height: var(--icon-control);
   padding: 10px;
   border: 1px solid var(--profile-line);
   border-radius: 12px;
@@ -114,7 +126,7 @@
 .user-common__panelHeader p {
   margin-top: 5px;
   color: rgb(var(--color-muted));
-  font-size: 12px;
+  font-size: var(--text-meta);
 }
 .user-common__passwordForm {
   display: grid;
@@ -126,13 +138,13 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--text-label);
   font-weight: 650;
   color: rgb(var(--color-text));
 }
 .user-common__passwordForm label > svg {
-  width: 14px;
-  height: 14px;
+  width: var(--icon-inline);
+  height: var(--icon-inline);
   color: rgb(var(--color-brand));
 }
 .user-common__passwordForm input:not([type="radio"]),
@@ -146,7 +158,7 @@
   border-radius: 11px;
   color: rgb(var(--color-text));
   background: rgb(var(--color-surface) / 0.85);
-  font-size: 13px;
+  font-size: var(--text-body);
   box-shadow: inset 0 1px 3px rgb(var(--deoca-primary-rgb) / 0.025);
   transition: border-color 160ms ease;
 }
@@ -189,11 +201,11 @@
   accent-color: rgb(var(--color-brand));
 }
 .user-common__methodOption > div > div:first-child {
-  font-size: 12px;
+  font-size: var(--text-meta);
   font-weight: 650;
 }
 .user-common__methodOption > div > div:last-child {
-  font-size: 10px;
+  font-size: var(--text-meta);
   font-weight: 400;
 }
 .user-common__dialog {
@@ -267,12 +279,12 @@
   gap: 6px;
   margin-bottom: 7px;
   color: rgb(var(--color-text));
-  font-size: 12px;
+  font-size: var(--text-label);
   font-weight: 650;
 }
 .user-common__dialogBody label > svg {
-  width: 14px;
-  height: 14px;
+  width: var(--icon-inline);
+  height: var(--icon-inline);
   color: rgb(var(--color-brand));
 }
 .user-common__dialog select {
@@ -349,7 +361,7 @@ html.dark .user-common__dialog {
     font-size: 0;
   }
   .user-common__pageHeader p {
-    font-size: 12px;
+    font-size: var(--text-meta);
   }
   .user-common__panelHeader {
     padding: 21px 20px;
@@ -362,7 +374,7 @@ html.dark .user-common__dialog {
     display: none;
   }
   .user-common__panelHeader p {
-    font-size: 11px;
+    font-size: var(--text-meta);
   }
   .user-common__panelHeader .user-common__button {
     padding: 10px;
