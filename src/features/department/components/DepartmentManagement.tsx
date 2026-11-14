@@ -211,7 +211,7 @@ export function DepartmentManagement() {
         <div className="dstat">
           <div className="dstat-head"><Icon name="pulse" />Đang hoạt động</div>
           <div className="dstat-body"><strong>{num(activeCount)}</strong>
-            <svg className="dstat-ring" viewBox="0 0 36 36" aria-hidden="true"><g className="dstat-ring-motion"><circle cx="18" cy="18" r="15" className="track" /><circle cx="18" cy="18" r="15" pathLength="100" className="bar" strokeDasharray="100" strokeDashoffset={100 - activeRate} transform="rotate(-90 18 18)" /></g><text x="18" y="21.5" textAnchor="middle">{activeRate}%</text></svg></div>
+            <svg className="dstat-ring" viewBox="0 0 48 48" aria-hidden="true"><g className="dstat-ring-motion"><circle cx="24" cy="24" r="20" className="track" /><circle cx="24" cy="24" r="20" pathLength="100" className="bar" strokeDasharray="100" strokeDashoffset={100 - activeRate} transform="rotate(-90 24 24)" /></g><text x="24" y="28" textAnchor="middle">{activeRate}%</text></svg></div>
         </div>
         <div className="dstat">
           <div className="dstat-head"><Icon name="pause" />Tạm ngưng</div>
@@ -263,7 +263,7 @@ export function DepartmentManagement() {
 
       <div key={status} id="department-results" role="tabpanel" aria-labelledby={"department-tab-" + status} aria-busy={loading} className="department-results">
         {view === "table" ? <table className={loading && items.length ? "department-table department-loading" : "department-table"}>
-          <thead><tr><th scope="col"><button className="department-sort" onClick={() => setDescending(value => !value)} aria-label={descending ? "Sắp xếp tên A đến Z" : "Sắp xếp tên Z đến A"}>Tên phòng ban<Icon name="down" style={{ transform: descending ? "rotate(180deg)" : undefined }} /></button></th><th scope="col">Công ty trực thuộc</th><th scope="col">Trạng thái</th><th scope="col"><span className="department-sr-only">Thao tác</span></th></tr></thead>
+          <thead><tr><th scope="col"><button className="department-sort" onClick={() => setDescending(value => !value)} aria-label={descending ? "Sắp xếp tên A đến Z" : "Sắp xếp tên Z đến A"}><Icon name="layers" />Tên phòng ban<Icon name="down" style={{ transform: descending ? "rotate(180deg)" : undefined }} /></button></th><th scope="col"><span className="department-columnLabel"><Icon name="building" />Công ty trực thuộc</span></th><th scope="col"><span className="department-columnLabel"><Icon name="check" />Trạng thái</span></th><th scope="col"><span className="department-sr-only">Thao tác</span></th></tr></thead>
           <tbody>
             {showSkeleton ? Array.from({ length: 6 }, (_, index) => <tr key={index} aria-hidden="true"><td><div className="department-skeleton department-skeleton-name" /><div className="department-skeleton department-skeleton-description" /></td><td><div className="department-skeleton" /></td><td><div className="department-skeleton department-skeleton-status" /></td><td /></tr>) : visible.map((item, index) => <tr key={item.id} style={{ "--item-index": Math.min(index, 7) } as CSSProperties}>
               <td><div className="department-name-cell"><span className="department-folder"><Icon name={resolveDepartmentIcon(item.name)} /></span><div><button className="department-name" title={item.name} onClick={() => setEditor(item)}>{item.name}</button><p title={item.description ?? undefined}>{item.description || "Chưa có mô tả"}</p></div></div></td>
