@@ -4,8 +4,11 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
+  ActivityLogIcon,
+  BarChartIcon,
   CalendarIcon,
   ChevronDownIcon,
+  Component1Icon,
   Cross2Icon,
   ClockIcon,
   EyeOpenIcon,
@@ -45,6 +48,26 @@ const emptyFilters: PendingEvaluationFilters = {
   departmentId: "",
   periodId: "",
 };
+
+function pendingStatusMeta(item: PendingEvaluationDto, fallbackLabel: string) {
+  if (item.isRejected || item.status === "Rejected") {
+    return { label: "Bị từ chối", tone: "rejected" as const };
+  }
+  switch (item.status) {
+    case "DirectManagerReviewing":
+      return { label: "QL trực tiếp duyệt", tone: "review" as const };
+    case "ManagerMidReviewing":
+      return { label: "QL cấp trung duyệt", tone: "review" as const };
+    case "HRReviewing":
+      return { label: "HR duyệt", tone: "hr" as const };
+    case "CompileHRList":
+      return { label: "Tổng hợp HR", tone: "hr" as const };
+    case "DirectorReviewCompileHRList":
+      return { label: "Giám đốc duyệt", tone: "review" as const };
+    default:
+      return { label: fallbackLabel, tone: "wait" as const };
+  }
+}
 export function PendingEvaluations({
   level,
 }: {
@@ -81,10 +104,12 @@ export function PendingEvaluations({
   const [rejectReason, setRejectReason] = useState("");
   const [rejectBusy, setRejectBusy] = useState(false);
   const [rejectError, setRejectError] = useState("");
+  const [previewTarget, setPreviewTarget] = useState<PendingEvaluationDto | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const advancedCount = Number(Boolean(typeId)) + Number(Boolean(filters.periodId));
   const rejectInFlight = useRef(false);
   const rejectDialogRef = useRef<HTMLDialogElement>(null);
+  const previewDialogRef = useRef<HTMLDialogElement>(null);
   const requestKey = JSON.stringify({ level, page, pageSize, sortBy: appliedSortBy, ...applied });
   const ready = snapshot?.key === requestKey;
   const data = ready ? snapshot.data : null;
@@ -191,6 +216,18 @@ export function PendingEvaluations({
     };
   }, [rejectTargets]);
 
+  useEffect(() => {
+    const dialog = previewDialogRef.current;
+    if (!previewTarget || !dialog) return;
+    dialog.showModal();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [previewTarget]);
+
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (hr && typeId && !filters.periodId) {
@@ -263,11 +300,25 @@ export function PendingEvaluations({
   return (
     <section className={"evaluation-common__page" + " " + "pending-evaluations__page"} aria-labelledby="pending-title">
       <header className="pending-evaluations__heading">
-        <div className="pending-evaluations__titleLine">
-          <h1 id="pending-title">{title}</h1>
-          <span className="pending-evaluations__total"><strong>{data?.total.toLocaleString("vi-VN") ?? "—"}</strong>{hr ? "bản chờ nhận xét" : "bản chờ đánh giá"}</span>
+        <div className="pending-evaluations__headingBody">
+          <span className="pending-evaluations__eyebrow">{hr ? "Nhân sự rà soát" : "Đánh giá nhân sự"}</span>
+          <div className="pending-evaluations__titleLine">
+            <h1 id="pending-title">{title}</h1>
+          </div>
+          <p className="pending-evaluations__description">{hr ? "Theo dõi các bản đánh giá đang chờ ý kiến nhân sự." : "Theo dõi các bản đánh giá của nhân sự đang chờ bạn xử lý."}</p>
         </div>
-        <p className="pending-evaluations__description">{hr ? "Theo dõi các bản đánh giá đang chờ ý kiến nhân sự." : "Theo dõi các bản đánh giá của nhân sự đang chờ bạn xử lý."}</p>
+        <div className="pending-evaluations__headingAside">
+          <div className="pending-evaluations__statPill">
+            <span className="pending-evaluations__statBadge"><strong>{data?.total.toLocaleString("vi-VN") ?? "—"}</strong></span>
+            <span>{hr ? "bản chờ nhận xét" : "bản chờ đánh giá"}</span>
+          </div>
+          {data?.items[0]?.periodLabel && (
+            <div className="pending-evaluations__statPill" data-variant="period">
+              <span className="pending-evaluations__statBadge" aria-hidden="true"><CalendarIcon /></span>
+              <span>{data.items[0].periodLabel}</span>
+            </div>
+          )}
+        </div>
       </header>
 
       <form className={"evaluation-common__filters" + " " + "pending-evaluations__filters"} onSubmit={applyFilters} aria-label="Lọc danh sách chờ duyệt">
@@ -324,7 +375,18 @@ export function PendingEvaluations({
                 <option value="submittedDate_desc">Mới gửi gần đây</option><option value="submittedDate_asc">Gửi lâu trước</option><option value="employee_asc">Tên A→Z</option><option value="employee_desc">Tên Z→A</option>
               </select><ChevronDownIcon aria-hidden="true" />
             </div></label>
-            {!hr && <button className={"evaluation-common__button" + " " + "pending-evaluations__rejectButton" + " " + "pending-evaluations__bulkReject"} type="button" disabled={loading || !data || Boolean(error) || !selected.length} aria-haspopup="dialog" onClick={() => openReject(data?.items.filter((item) => selected.includes(`${item.id}:${item.stepId}`)) ?? [])}><Cross2Icon aria-hidden="true" />Từ chối ({selected.length})</button>}
+            {!hr && selected.length > 0 && (
+              <button
+                className={"evaluation-common__button" + " " + "pending-evaluations__rejectButton" + " " + "pending-evaluations__bulkReject"}
+                type="button"
+                disabled={loading || !data || Boolean(error)}
+                aria-haspopup="dialog"
+                onClick={() => openReject(data?.items.filter((item) => selected.includes(`${item.id}:${item.stepId}`)) ?? [])}
+              >
+                <Cross2Icon aria-hidden="true" />
+                Từ chối ({selected.length})
+              </button>
+            )}
             <button className="evaluation-common__refresh" type="button" title="Tải lại danh sách" aria-label="Tải lại danh sách" disabled={loading} onClick={() => setRevision((value) => value + 1)}><ReloadIcon aria-hidden="true" /></button>
           </div>
         </div>
@@ -409,22 +471,25 @@ export function PendingEvaluations({
                     </label>
                   </th>
                   <th scope="col" className="pending-evaluations__employeeColumn">
-                    Nhân viên
+                    <span className="pending-evaluations__columnLabel"><PersonIcon aria-hidden="true" />Nhân viên</span>
                   </th>
                   <th scope="col" className="pending-evaluations__companyColumn">
-                    Đơn vị
+                    <span className="pending-evaluations__columnLabel"><Component1Icon aria-hidden="true" />Đơn vị</span>
                   </th>
                   <th scope="col" className="pending-evaluations__periodColumn">
-                    Kỳ đánh giá
+                    <span className="pending-evaluations__columnLabel"><CalendarIcon aria-hidden="true" />Kỳ đánh giá</span>
+                  </th>
+                  <th scope="col" className="pending-evaluations__scoreColumn">
+                    <span className="pending-evaluations__columnLabel"><BarChartIcon aria-hidden="true" />Điểm tự ĐG</span>
                   </th>
                   <th scope="col" className="pending-evaluations__dateColumn">
-                    Ngày gửi / duyệt cuối
+                    <span className="pending-evaluations__columnLabel"><ClockIcon aria-hidden="true" />Ngày gửi / duyệt cuối</span>
                   </th>
                   <th scope="col" className="pending-evaluations__statusColumn">
-                    Trạng thái
+                    <span className="pending-evaluations__columnLabel"><ActivityLogIcon aria-hidden="true" />Trạng thái</span>
                   </th>
                   <th scope="col" className="pending-evaluations__actionsColumn">
-                    Thao tác
+                    <span className="pending-evaluations__columnLabel"><MixerHorizontalIcon aria-hidden="true" />Thao tác</span>
                   </th>
                 </tr>
               </thead>
@@ -468,6 +533,11 @@ export function PendingEvaluations({
                     <td data-label="Kỳ đánh giá" className="pending-evaluations__periodCell">
                       <div className="pending-evaluations__periodIdentity"><span className="pending-evaluations__periodIcon" aria-hidden="true"><CalendarIcon /></span><span className="pending-evaluations__period">{item.periodLabel || "—"}</span></div>
                     </td>
+                    <td data-label="Điểm tự ĐG" className="pending-evaluations__scoreCell">
+                      <span className="pending-evaluations__scoreBadge">
+                        {item.selfScore != null ? Number(item.selfScore).toFixed(1) : "—"}
+                      </span>
+                    </td>
                     <td data-label="Ngày gửi / duyệt cuối" className="pending-evaluations__dateCell">
                       <span className="pending-evaluations__date"><ClockIcon aria-hidden="true" /><time
                         dateTime={
@@ -480,10 +550,19 @@ export function PendingEvaluations({
                       </time></span>
                     </td>
                     <td data-label="Trạng thái" className="pending-evaluations__statusCell">
-                      <span className={"evaluation-common__status" + " " + "pending-evaluations__status"} data-rejected={item.isRejected}>
-                        <i aria-hidden="true" />
-                        {item.isRejected ? "Bị từ chối" : pendingLabel}
-                      </span>
+                      {(() => {
+                        const statusMeta = pendingStatusMeta(item, pendingLabel);
+                        return (
+                          <span
+                            className={"evaluation-common__status" + " " + "pending-evaluations__status"}
+                            data-rejected={statusMeta.tone === "rejected"}
+                            data-tone={statusMeta.tone}
+                          >
+                            <i aria-hidden="true" />
+                            {statusMeta.label}
+                          </span>
+                        );
+                      })()}
                       {item.isRejected && item.reason && (
                         <span className="pending-evaluations__reason">{item.reason}</span>
                       )}
@@ -494,7 +573,8 @@ export function PendingEvaluations({
                           className={`evaluation-common__button evaluation-common__viewButton`}
                           type="button"
                           aria-label={`Xem thông tin bản đánh giá của ${item.userName || item.sysTemCode || "nhân viên"}`}
-                          disabled
+                          aria-haspopup="dialog"
+                          onClick={() => setPreviewTarget(item)}
                         >
                           <EyeOpenIcon aria-hidden="true" />
                           Xem
@@ -600,6 +680,89 @@ export function PendingEvaluations({
               </button>
             </footer>
           </form>
+        </dialog>
+      )}
+      {previewTarget && (
+        <dialog
+          ref={previewDialogRef}
+          className="pending-evaluations__rejectDialog"
+          aria-labelledby="preview-title"
+          onCancel={(event) => {
+            event.preventDefault();
+            setPreviewTarget(null);
+          }}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setPreviewTarget(null);
+          }}
+        >
+          <header className="pending-evaluations__rejectHeader">
+            <h2 id="preview-title">Chi tiết phiếu đánh giá</h2>
+            <button
+              className="evaluation-common__refresh"
+              type="button"
+              aria-label="Đóng chi tiết phiếu đánh giá"
+              onClick={() => setPreviewTarget(null)}
+            >
+              <Cross2Icon aria-hidden="true" />
+            </button>
+          </header>
+          <div className="pending-evaluations__previewBody">
+            <dl className="pending-evaluations__previewGrid">
+              <div>
+                <dt>Nhân viên</dt>
+                <dd>{previewTarget.userName || "—"} ({previewTarget.sysTemCode || previewTarget.userCode || "—"})</dd>
+              </div>
+              <div>
+                <dt>Đơn vị</dt>
+                <dd>{previewTarget.companyCode || "—"} — {previewTarget.departmentName || "—"}</dd>
+              </div>
+              <div>
+                <dt>Kỳ đánh giá</dt>
+                <dd>{previewTarget.periodLabel || "—"}</dd>
+              </div>
+              <div>
+                <dt>Điểm tự đánh giá</dt>
+                <dd><strong>{previewTarget.selfScore != null ? Number(previewTarget.selfScore).toFixed(1) : "—"}</strong></dd>
+              </div>
+              <div>
+                <dt>Ngày gửi</dt>
+                <dd>{formatEvaluationDate(previewTarget.submittedDate, "") || "—"}</dd>
+              </div>
+              <div>
+                <dt>Trạng thái</dt>
+                <dd>{pendingStatusMeta(previewTarget, pendingLabel).label}</dd>
+              </div>
+              {previewTarget.reason && (
+                <div className="pending-evaluations__previewFull">
+                  <dt>Ghi chú / Lý do</dt>
+                  <dd>{previewTarget.reason}</dd>
+                </div>
+              )}
+            </dl>
+          </div>
+          <footer className="pending-evaluations__rejectFooter">
+            <button
+              className="evaluation-common__button"
+              type="button"
+              onClick={() => setPreviewTarget(null)}
+            >
+              Đóng
+            </button>
+            {!hr && (
+              <button
+                className="evaluation-common__button pending-evaluations__rejectButton"
+                type="button"
+                onClick={() => {
+                  const target = previewTarget;
+                  setPreviewTarget(null);
+                  openReject([target]);
+                }}
+              >
+                <Cross2Icon aria-hidden="true" />
+                Từ chối
+              </button>
+            )}
+          </footer>
         </dialog>
       )}
     </section>
