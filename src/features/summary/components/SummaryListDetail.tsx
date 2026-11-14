@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { ActivityLogIcon, ArrowLeftIcon, ArrowRightIcon, CalendarIcon, CheckCircledIcon, CheckIcon, ClockIcon, CrossCircledIcon, DownloadIcon, EyeOpenIcon, FileTextIcon, LayersIcon, MagnifyingGlassIcon, PaperPlaneIcon, PersonIcon, ReloadIcon, ResetIcon } from "@radix-ui/react-icons";
+import { ActivityLogIcon, ArrowLeftIcon, ArrowRightIcon, BarChartIcon, CalendarIcon, CheckCircledIcon, CheckIcon, ClockIcon, Component1Icon, CrossCircledIcon, DownloadIcon, EyeOpenIcon, FileTextIcon, LayersIcon, MagnifyingGlassIcon, MixerHorizontalIcon, PaperPlaneIcon, PersonIcon, PieChartIcon, ReloadIcon, ResetIcon } from "@radix-ui/react-icons";
 import { Pagination } from "@/components/ui/Pagination";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { notify } from "@/components/ui/Toaster";
@@ -26,6 +26,20 @@ const number = new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 });
 const scoreLabel = (value: number | null) => value == null ? "—" : number.format(value);
 const dayLabel = (value: string) => value && !value.startsWith("0001") ? value.slice(0, 10).split("-").reverse().join("/") : "—";
 const statuses = Object.values(EvaluationStatus).map(id => ({ id, name: hrStatusLabel(id) }));
+
+function bandTone(band: string) {
+  const key = band.trim().toUpperCase();
+  if (key.startsWith("A")) return "success";
+  if (key.startsWith("B")) return "info";
+  if (key.startsWith("C")) return "warning";
+  if (key.startsWith("D")) return "danger";
+  return "neutral";
+}
+
+function completionPercent(value: number | null) {
+  if (value == null || Number.isNaN(value)) return 0;
+  return value > 1 ? Math.max(0, Math.min(100, value)) : Math.max(0, Math.min(100, value * 100));
+}
 
 type Task = "select-all" | "approve-all" | "export-selected" | "export-all" | "export-detail-selected" | "export-detail-all";
 type Inspector = { row: SummaryDetail; mode: "detail" | "history" | "approvers" };
@@ -279,13 +293,14 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
             <table className="summary-detail__table" aria-label="Chi tiết bản đánh giá tổng hợp">
               <thead><tr>
                 <th scope="col"><span className="summary-detail__srOnly">Chọn hồ sơ</span></th>
-                <th scope="col">STT</th><th scope="col">Nhân viên</th><th scope="col">Chức danh / Đơn vị</th>
-                <th scope="col">Tự đánh giá</th><th scope="col">Quản lý</th><th scope="col">Hệ số HTCV</th>
-                <th scope="col">Tỷ lệ chi</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th>
+                <th scope="col">STT</th><th scope="col"><span className="summary-detail__columnLabel"><PersonIcon aria-hidden="true" />Nhân viên</span></th><th scope="col"><span className="summary-detail__columnLabel"><Component1Icon aria-hidden="true" />Chức danh / Đơn vị</span></th>
+                <th scope="col"><span className="summary-detail__columnLabel"><FileTextIcon aria-hidden="true" />Tự đánh giá</span></th><th scope="col"><span className="summary-detail__columnLabel"><CheckCircledIcon aria-hidden="true" />Quản lý</span></th><th scope="col"><span className="summary-detail__columnLabel"><BarChartIcon aria-hidden="true" />Hệ số HTCV</span></th>
+                <th scope="col"><span className="summary-detail__columnLabel"><PieChartIcon aria-hidden="true" />Tỷ lệ chi</span></th><th scope="col"><span className="summary-detail__columnLabel"><ActivityLogIcon aria-hidden="true" />Trạng thái</span></th><th scope="col"><span className="summary-detail__columnLabel"><MixerHorizontalIcon aria-hidden="true" />Thao tác</span></th>
               </tr></thead>
               <tbody>{data?.items.map((row, index) => {
                 const rejected = row.isReject || row.status === "Rejected";
                 const complete = row.status === "Over" || row.status === "CompileHRList";
+                const waiting = /Reviewing$/.test(row.status);
                 return (
                   <tr key={row.evalId} data-selected={selectedIds.has(row.evalId)} style={{ animationDelay: Math.min(index * 25, 150) + "ms" }}>
                     <td className="summary-detail__choose"><label>
@@ -303,10 +318,10 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
                     <td className="summary-detail__score" data-label="Tự đánh giá"><strong>{scoreLabel(row.score)}</strong></td>
                     <td className="summary-detail__score summary-detail__managerScore" data-label="Quản lý"><strong>{scoreLabel(row.managerSocre)}</strong></td>
                     <td className="summary-detail__completion" data-label="Hệ số HTCV"><strong>{scoreLabel(row.rPercent)}</strong>
-                      <span className="summary-detail__track" aria-hidden="true"><span style={{ width: Math.max(0, Math.min(100, (row.rPercent ?? 0) * 100)) + "%" }} /></span>
+                      <span className="summary-detail__track" aria-hidden="true"><span style={{ width: completionPercent(row.rPercent) + "%" }} /></span>
                     </td>
-                    <td className="summary-detail__band" data-label="Tỷ lệ chi"><span>{row.band || "—"}</span>{row.note && <button type="button" title={row.note} onClick={() => setInspector({ row, mode: "detail" })} disabled={locked}>Xem ý kiến</button>}</td>
-                    <td className="summary-detail__process"><span className="summary-detail__status" data-tone={rejected ? "danger" : complete ? "success" : "progress"}>
+                    <td className="summary-detail__band" data-label="Tỷ lệ chi">{row.band ? <span className="summary-detail__bandBadge" data-tone={bandTone(row.band)}>{row.band}</span> : <span>—</span>}{row.note && <button type="button" title={row.note} onClick={() => setInspector({ row, mode: "detail" })} disabled={locked}>Xem ý kiến</button>}</td>
+                    <td className="summary-detail__process"><span className="summary-detail__status" data-tone={rejected ? "danger" : complete ? "success" : waiting ? "waiting" : "progress"}>
                       {rejected ? <CrossCircledIcon aria-hidden="true" /> : complete ? <CheckCircledIcon aria-hidden="true" /> : <ClockIcon aria-hidden="true" />}{row.statusDisplay}
                     </span>{row.userDoing && <span className="summary-detail__reviewer"><PersonIcon aria-hidden="true" />{row.userDoing}</span>}
                       {!row.isCanApprove && <span className="summary-detail__permissionNote">Không có quyền chuyển</span>}
@@ -333,7 +348,9 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
           <section className="summary-detail__reviewPanel">
             <div className="summary-detail__commandTitle"><PaperPlaneIcon aria-hidden="true" /><h2>Xử lý hồ sơ</h2></div>
             <div className="summary-detail__selectedCount"><strong key={selected.length}>{number.format(selected.length)}</strong><span>hồ sơ đã chọn</span>
-              {selected.length > 0 && <button type="button" onClick={() => setSelected([])} disabled={locked}>Bỏ chọn</button>}
+              {selected.length > 0
+                ? <button type="button" onClick={() => setSelected([])} disabled={locked}>Bỏ chọn</button>
+                : (data?.total ?? 0) > 0 && <button type="button" onClick={() => prepare("select-all")} disabled={unavailable}>Chọn tất cả ({data?.total})</button>}
             </div>
             <button type="button" className="summary-detail__button summary-detail__send" disabled={unavailable || !selected.length}
               onClick={() => setReview({ kind: "approve", rows: selected })} aria-haspopup="dialog"><PaperPlaneIcon aria-hidden="true" />Gửi duyệt đã chọn<ArrowRightIcon aria-hidden="true" /></button>
@@ -341,36 +358,38 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
               onClick={() => prepare("approve-all")} aria-haspopup="dialog">{task === "approve-all" ? <ReloadIcon className="summary-detail__spin" aria-hidden="true" /> : <LayersIcon aria-hidden="true" />}Gửi duyệt tất cả<span>{data?.total ?? "—"}</span></button>
             <button type="button" className="summary-detail__button summary-detail__return" disabled={unavailable || !selected.length}
               onClick={() => setReview({ kind: "reject", rows: selected })} aria-haspopup="dialog"><ResetIcon aria-hidden="true" />Trả về hồ sơ đã chọn</button>
-            <p>Chọn quản lý cấp cao ở bước xác nhận gửi duyệt.</p>
+            <p>{selected.length > 0 ? "Chọn quản lý cấp cao ở bước xác nhận gửi duyệt." : "Chọn hồ sơ ở bảng hoặc bấm “Chọn tất cả” để gửi duyệt / trả về theo nhóm."}</p>
           </section>
           <section className="summary-detail__exportPanel">
             <div className="summary-detail__commandTitle"><DownloadIcon aria-hidden="true" /><h2>Xuất Excel</h2></div>
             <p>Xuất theo mẫu Đèo Cả, giữ nguyên bộ lọc hiện tại.</p>
-            <div className="summary-detail__exportGroup" role="group" aria-labelledby="summary-excel-summary">
-            <h3 id="summary-excel-summary" className="summary-detail__exportGroupTitle">Excel tổng hợp</h3>
-            <button type="button" className="summary-detail__exportButton" data-busy={task === "export-selected"} data-complete={exportDone === "export-selected"}
-              disabled={unavailable || !selected.length} onClick={() => prepare("export-selected")}>
-              <span className="summary-detail__excelIcon">{exportDone === "export-selected" ? <CheckIcon aria-hidden="true" /> : <FileTextIcon aria-hidden="true" />}</span>
-              <span><strong>{task === "export-selected" ? "Đang tạo Excel…" : "Xuất đã chọn"}</strong><small>{selected.length} hồ sơ · 1 file Excel</small></span><DownloadIcon aria-hidden="true" />
-            </button>
-            <button type="button" className="summary-detail__exportButton" data-busy={task === "export-all"} data-complete={exportDone === "export-all"}
-              disabled={unavailable || !data?.total} onClick={() => prepare("export-all")}>
-              <span className="summary-detail__excelIcon">{exportDone === "export-all" ? <CheckIcon aria-hidden="true" /> : <LayersIcon aria-hidden="true" />}</span>
-              <span><strong>{task === "export-all" ? "Đang tạo Excel…" : "Xuất tất cả"}</strong><small>{data?.total ?? "—"} hồ sơ · 1 file Excel</small></span><DownloadIcon aria-hidden="true" />
-            </button>
-            </div>
-            <div className="summary-detail__exportGroup" role="group" aria-labelledby="summary-excel-detail">
-            <h3 id="summary-excel-detail" className="summary-detail__exportGroupTitle">Excel chi tiết</h3>
-            <button type="button" className="summary-detail__exportButton" data-busy={task === "export-detail-selected"} data-complete={exportDone === "export-detail-selected"}
-              disabled={unavailable || !selected.length} onClick={() => prepare("export-detail-selected")}>
-              <span className="summary-detail__excelIcon">{exportDone === "export-detail-selected" ? <CheckIcon aria-hidden="true" /> : <FileTextIcon aria-hidden="true" />}</span>
-              <span><strong>{task === "export-detail-selected" ? "Đang tải file…" : "Xuất đã chọn"}</strong><small>{selected.length} hồ sơ · mỗi hồ sơ một file</small></span><DownloadIcon aria-hidden="true" />
-            </button>
-            <button type="button" className="summary-detail__exportButton" data-busy={task === "export-detail-all"} data-complete={exportDone === "export-detail-all"}
-              disabled={unavailable || !data?.total} onClick={() => prepare("export-detail-all")}>
-              <span className="summary-detail__excelIcon">{exportDone === "export-detail-all" ? <CheckIcon aria-hidden="true" /> : <LayersIcon aria-hidden="true" />}</span>
-              <span><strong>{task === "export-detail-all" ? "Đang tải file…" : "Xuất tất cả"}</strong><small>{data?.total ?? "—"} hồ sơ theo bộ lọc · mỗi hồ sơ một file</small></span><DownloadIcon aria-hidden="true" />
-            </button>
+            <div className="summary-detail__exportColumns">
+              <div className="summary-detail__exportGroup" role="group" aria-labelledby="summary-excel-summary">
+                <h3 id="summary-excel-summary" className="summary-detail__exportGroupTitle">Tổng hợp <small>1 file</small></h3>
+                <button type="button" className="summary-detail__exportCard" data-busy={task === "export-all"} data-complete={exportDone === "export-all"}
+                  disabled={unavailable || !data?.total} onClick={() => prepare("export-all")}>
+                  <span className="summary-detail__excelIcon">{exportDone === "export-all" ? <CheckIcon aria-hidden="true" /> : <LayersIcon aria-hidden="true" />}</span>
+                  <span><strong>{task === "export-all" ? "Đang tạo…" : "Tất cả"}</strong><small>{data?.total ?? "—"} hồ sơ</small></span>
+                </button>
+                <button type="button" className="summary-detail__exportCard" data-busy={task === "export-selected"} data-complete={exportDone === "export-selected"}
+                  disabled={unavailable || !selected.length} onClick={() => prepare("export-selected")}>
+                  <span className="summary-detail__excelIcon">{exportDone === "export-selected" ? <CheckIcon aria-hidden="true" /> : <FileTextIcon aria-hidden="true" />}</span>
+                  <span><strong>{task === "export-selected" ? "Đang tạo…" : "Đã chọn"}</strong><small>{selected.length} hồ sơ</small></span>
+                </button>
+              </div>
+              <div className="summary-detail__exportGroup" role="group" aria-labelledby="summary-excel-detail">
+                <h3 id="summary-excel-detail" className="summary-detail__exportGroupTitle">Chi tiết <small>Từng file</small></h3>
+                <button type="button" className="summary-detail__exportCard" data-busy={task === "export-detail-all"} data-complete={exportDone === "export-detail-all"}
+                  disabled={unavailable || !data?.total} onClick={() => prepare("export-detail-all")}>
+                  <span className="summary-detail__excelIcon">{exportDone === "export-detail-all" ? <CheckIcon aria-hidden="true" /> : <LayersIcon aria-hidden="true" />}</span>
+                  <span><strong>{task === "export-detail-all" ? "Đang tải…" : "Tất cả"}</strong><small>{data?.total ?? "—"} hồ sơ</small></span>
+                </button>
+                <button type="button" className="summary-detail__exportCard" data-busy={task === "export-detail-selected"} data-complete={exportDone === "export-detail-selected"}
+                  disabled={unavailable || !selected.length} onClick={() => prepare("export-detail-selected")}>
+                  <span className="summary-detail__excelIcon">{exportDone === "export-detail-selected" ? <CheckIcon aria-hidden="true" /> : <FileTextIcon aria-hidden="true" />}</span>
+                  <span><strong>{task === "export-detail-selected" ? "Đang tải…" : "Đã chọn"}</strong><small>{selected.length} hồ sơ</small></span>
+                </button>
+              </div>
             </div>
           </section>
         </aside>

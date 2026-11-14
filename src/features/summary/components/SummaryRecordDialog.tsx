@@ -9,8 +9,20 @@ import type { SummaryDetail } from "../types";
 
 type Props = { row: SummaryDetail; onClose: () => void; onHistory: () => void };
 
+function bandTone(band: string) {
+  const key = band.trim().toUpperCase();
+  if (key.startsWith("A")) return "success";
+  if (key.startsWith("B")) return "info";
+  if (key.startsWith("C")) return "warning";
+  if (key.startsWith("D")) return "danger";
+  return "neutral";
+}
+
 export function SummaryRecordDialog({ row, onClose, onHistory }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const rejected = row.isReject || row.status === "Rejected";
+  const complete = row.status === "Over" || row.status === "CompileHRList";
+  const waiting = /Reviewing$/.test(row.status);
   useEffect(() => {
     const element = dialog.current;
     element?.showModal();
@@ -32,17 +44,17 @@ export function SummaryRecordDialog({ row, onClose, onHistory }: Props) {
         <div className="summary-detail__recordIdentity">
           <span className="summary-detail__avatar"><PersonIcon aria-hidden="true" /></span>
           <div><h3>{row.userName}</h3><p>{row.userId} · {row.jobName || "Chưa có chức danh"}</p></div>
-          <span className="summary-detail__status" data-tone={row.isReject ? "danger" : "progress"}>{row.statusDisplay}</span>
+          <span className="summary-detail__status" data-tone={rejected ? "danger" : complete ? "success" : waiting ? "waiting" : "progress"}>{row.statusDisplay}</span>
         </div>
         <dl className="summary-detail__recordScores">
           <div><dt>Điểm tự đánh giá</dt><dd>{row.score?.toLocaleString("vi-VN") ?? "—"}</dd></div>
           <div><dt>Điểm quản lý</dt><dd>{row.managerSocre?.toLocaleString("vi-VN") ?? "—"}</dd></div>
           <div><dt>Hệ số HTCV</dt><dd>{row.rPercent?.toLocaleString("vi-VN") ?? "—"}</dd></div>
-          <div><dt>Tỷ lệ chi</dt><dd>{row.band || "—"}</dd></div>
+          <div><dt>Tỷ lệ chi</dt><dd>{row.band ? <span className="summary-detail__bandBadge" data-tone={bandTone(row.band)}>{row.band}</span> : "—"}</dd></div>
         </dl>
         <dl className="summary-detail__recordFacts">
           <div><dt>Kỳ đánh giá</dt><dd>{row.periodName}</dd></div>
-          <div><dt>Công ty</dt><dd><span className="summary-detail__company"><Image src={companyLogos[row.companyCode] ?? "/brand/deoca-icon.svg"} alt="" width={20} height={20} />{row.companyCode}</span> {row.companyName}</dd></div>
+          <div><dt>Công ty</dt><dd className="summary-detail__recordCompany"><span className="summary-detail__company"><Image src={companyLogos[row.companyCode] ?? "/brand/deoca-icon.svg"} alt="" width={20} height={20} />{row.companyCode}</span><span>{row.companyName}</span></dd></div>
           <div><dt>Phòng ban</dt><dd>{row.departmentName || "—"}</dd></div>
           <div><dt>Thời gian đánh giá</dt><dd>{formatEvaluationDate(row.startDate)} — {formatEvaluationDate(row.endDate)}</dd></div>
           <div><dt>Người đang xử lý</dt><dd>{row.userDoing || "Chưa có thông tin người xử lý"}</dd></div>
