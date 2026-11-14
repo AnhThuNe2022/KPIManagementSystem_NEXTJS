@@ -1,13 +1,10 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Image from "next/image";
-import localFont from "next/font/local";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LoginForm } from "@/features/auth/components/LoginForm";
 import { LoginBackdrop } from "@/features/auth/components/LoginBackdrop";
 import "@/features/auth/login.css";
-
-const manrope = localFont({ src: "../../../../public/fonts/manrope.ttf", display: "swap", variable: "--font-login" });
 
 export const metadata: Metadata = {
   title: "Đăng nhập | Đèo Cả KPI",
@@ -17,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <main className={`${manrope.variable} login-page`}>
+    <main className="login-page">
       <LoginBackdrop />
       <a className="login-skip-link" href="#login-panel">Đến biểu mẫu đăng nhập</a>
       <header className="login-header">
