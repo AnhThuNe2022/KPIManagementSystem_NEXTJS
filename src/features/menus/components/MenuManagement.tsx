@@ -132,7 +132,14 @@ export function MenuManagement() {
 
   return <div className="menu-management__page">
     <header className="menu-management__pageHeader">
-      <div><h1>Quản lý menu<span>.</span></h1><p>Sắp xếp điều hướng. Kết nối từng màn hình.</p></div>
+      <div className="menu-management__glassStack" aria-hidden="true">
+        <div className="menu-management__glassBack" />
+        <div className="menu-management__glassFront">
+          <span />
+          <span className="is-short" />
+        </div>
+      </div>
+      <div className="menu-management__headerCopy"><h1>Quản lý menu<span>.</span></h1><p>Sắp xếp điều hướng. Kết nối từng màn hình.</p></div>
       <div className="menu-management__headerActions">
         <button type="button" className="menu-management__secondary" disabled={loading || busy} onClick={() => guard(() => void reload(draft ? { id: draft.id, code: draft.code } : undefined))}><ReloadIcon aria-hidden="true" className={loading ? "menu-management__spinning" : ""} /><span>Tải lại</span></button>
         <button type="button" className="menu-management__primary" disabled={loading || busy} onClick={() => guard(() => edit(blank(), true))}><PlusIcon aria-hidden="true" />Thêm menu</button>
