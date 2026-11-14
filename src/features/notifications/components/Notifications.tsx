@@ -158,49 +158,7 @@ export function Notifications() {
 
   return (
     <div className="notifications__page" data-ui>
-      <header className="notifications__heading">
-        <div className="notifications__headingIdentity">
-          <div>
-            <h1>
-              Thông báo<span className="notifications__headingCount">{data?.total ?? "—"}</span>
-            </h1>
-            <p className="notifications__description">
-              {data ? (
-                data.unreadCount ? (
-                  <>
-                    <strong>{data.unreadCount} chưa đọc</strong>
-                    <span aria-hidden="true"> · </span>Theo dõi các cập nhật của bạn.
-                  </>
-                ) : (
-                  "Bạn đã xem hết các cập nhật mới."
-                )
-              ) : (
-                "Cập nhật công việc và hoạt động của bạn."
-              )}
-            </p>
-          </div>
-          <div className="notifications__actions">
-            <button
-              type="button"
-              className={`notifications__button notifications__primary`}
-              disabled={disabled || !data?.unreadCount}
-              onClick={() => void mutate(() => notificationApi.markAllRead(), "Đã đánh dấu tất cả thông báo là đã đọc.")}
-            >
-              <CheckIcon aria-hidden="true" />
-              Đọc tất cả
-            </button>
-            <button
-              type="button"
-              className={`notifications__button notifications__danger`}
-              disabled={disabled || !data?.total}
-              onClick={() => confirmRef.current?.showModal()}
-            >
-              <TrashIcon aria-hidden="true" />
-              Xóa tất cả
-            </button>
-          </div>
-        </div>
-      </header>
+      <h1 className="notifications__srOnly">Thông báo</h1>
 
       <div className="notifications__workspace">
         <aside className="notifications__overview" aria-label="Tổng quan thông báo">
@@ -308,36 +266,58 @@ export function Notifications() {
                 </span>
               </div>
             </div>
-            <div className="notifications__search" role="search">
-              <MagnifyingGlassIcon aria-hidden="true" />
-              <label htmlFor="notifications-search" className="notifications__srOnly">
-                Tìm thông báo
-              </label>
-              <input
-                ref={searchRef}
-                id="notifications-search"
-                type="search"
-                value={query}
-                placeholder="Tìm nội dung thông báo…"
-                autoComplete="off"
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                  setPage(1);
-                }}
-              />
-              {query && (
+            <div className="notifications__toolbarControls">
+              <div className="notifications__actions">
                 <button
                   type="button"
-                  aria-label="Xóa từ khóa tìm kiếm"
-                  onClick={() => {
-                    setQuery("");
-                    setPage(1);
-                    searchRef.current?.focus();
-                  }}
+                  className={`notifications__button notifications__primary`}
+                  disabled={disabled || !data?.unreadCount}
+                  onClick={() => void mutate(() => notificationApi.markAllRead(), "Đã đánh dấu tất cả thông báo là đã đọc.")}
                 >
-                  <Cross2Icon aria-hidden="true" />
+                  <CheckIcon aria-hidden="true" />
+                  Đọc tất cả
                 </button>
-              )}
+                <button
+                  type="button"
+                  className={`notifications__button notifications__danger`}
+                  disabled={disabled || !data?.total}
+                  onClick={() => confirmRef.current?.showModal()}
+                >
+                  <TrashIcon aria-hidden="true" />
+                  Xóa tất cả
+                </button>
+              </div>
+              <div className="notifications__search" role="search">
+                <MagnifyingGlassIcon aria-hidden="true" />
+                <label htmlFor="notifications-search" className="notifications__srOnly">
+                  Tìm thông báo
+                </label>
+                <input
+                  ref={searchRef}
+                  id="notifications-search"
+                  type="search"
+                  value={query}
+                  placeholder="Tìm nội dung thông báo…"
+                  autoComplete="off"
+                  onChange={(event) => {
+                    setQuery(event.target.value);
+                    setPage(1);
+                  }}
+                />
+                {query && (
+                  <button
+                    type="button"
+                    aria-label="Xóa từ khóa tìm kiếm"
+                    onClick={() => {
+                      setQuery("");
+                      setPage(1);
+                      searchRef.current?.focus();
+                    }}
+                  >
+                    <Cross2Icon aria-hidden="true" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

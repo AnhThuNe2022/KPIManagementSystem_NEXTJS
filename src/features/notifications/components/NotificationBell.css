@@ -52,14 +52,14 @@
   right: -6px;
   display: grid;
   place-items: center;
-  min-width: 19px;
-  height: 19px;
+  min-width: 23px;
+  height: 23px;
   padding: 0 4px;
   border: 2px solid rgb(var(--color-surface));
   border-radius: 12px;
   background: var(--accent);
   color: #fff;
-  font-size: 9px;
+  font-size: var(--text-meta);
   font-weight: 700;
   line-height: 1;
 }
@@ -167,7 +167,7 @@
   gap: 6px;
   margin: 5px 0 0;
   color: rgb(var(--color-muted));
-  font-size: 11px;
+  font-size: var(--text-meta);
   line-height: 1.5;
 }
 .notification-bell__headingDot {
@@ -194,8 +194,8 @@
 }
 .notification-bell__iconButton svg,
 .notification-bell__textButton svg {
-  width: 15px;
-  height: 15px;
+  width: var(--icon-control);
+  height: var(--icon-control);
   flex-shrink: 0;
 }
 .notification-bell__iconButton:disabled,
@@ -237,8 +237,8 @@
 }
 .notification-bell__searchBox > svg {
   flex-shrink: 0;
-  width: 15px;
-  height: 15px;
+  width: var(--icon-control);
+  height: var(--icon-control);
 }
 .notification-bell__searchBox input {
   width: 100%;
@@ -249,7 +249,7 @@
   border: 0;
   background: transparent;
   color: rgb(var(--color-text));
-  font-size: 11px;
+  font-size: var(--text-body);
 }
 .notification-bell__searchBox input::placeholder {
   color: rgb(var(--color-muted));
@@ -272,8 +272,8 @@
   color: rgb(var(--color-muted));
 }
 .notification-bell__clearSearch svg {
-  width: 13px;
-  height: 13px;
+  width: var(--icon-inline);
+  height: var(--icon-inline);
 }
 .notification-bell__toolbar {
   display: flex;
@@ -325,7 +325,7 @@
   border-radius: 7px;
   background: transparent;
   color: rgb(var(--color-muted));
-  font-size: 11px;
+  font-size: var(--text-label);
   font-weight: 500;
   white-space: nowrap;
   transition: color 160ms;
@@ -337,12 +337,12 @@
 .notification-bell__filter > span {
   display: grid;
   place-items: center;
-  min-width: 15px;
-  height: 15px;
+  min-width: 21px;
+  height: 21px;
   padding: 0 3px;
   border-radius: 4px;
   background: rgb(var(--color-muted) / 0.09);
-  font-size: 9px;
+  font-size: var(--text-meta);
   font-weight: 600;
 }
 .notification-bell__filter[aria-pressed="true"] > span {
@@ -360,7 +360,7 @@
   border-radius: 8px;
   background: transparent;
   color: rgb(var(--color-brand));
-  font-size: 11px;
+  font-size: var(--text-body);
   font-weight: 600;
   white-space: nowrap;
   transition:
@@ -438,7 +438,7 @@
   overflow: hidden;
   white-space: normal;
   overflow-wrap: anywhere;
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 400;
   line-height: 1.65;
 }
@@ -452,12 +452,12 @@
   gap: 5px;
   margin-top: 9px;
   color: rgb(var(--color-muted));
-  font-size: 10px;
+  font-size: var(--text-meta);
   line-height: 1.5;
 }
 .notification-bell__messageMeta > svg {
-  width: 11px;
-  height: 11px;
+  width: var(--icon-inline);
+  height: var(--icon-inline);
 }
 .notification-bell__unreadStatus {
   display: inline-flex;
@@ -503,13 +503,13 @@
   border-radius: 11px;
   background: rgb(var(--color-accent) / 0.06);
   color: rgb(var(--color-accent));
-  font-size: 12px;
+  font-size: var(--text-meta);
   line-height: 1.6;
 }
 .notification-bell__error > svg {
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
+  width: var(--icon-inline);
+  height: var(--icon-inline);
   margin-top: 2px;
 }
 .notification-bell__error > span {
@@ -554,12 +554,12 @@
 .notification-bell__empty p {
   margin: 0;
   color: rgb(var(--color-text));
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 600;
 }
 .notification-bell__empty > span:last-of-type {
   max-width: 260px;
-  font-size: 12px;
+  font-size: var(--text-meta);
   line-height: 1.7;
 }
 .notification-bell__empty .notification-bell__textButton {
@@ -579,7 +579,7 @@
 }
 .notification-bell__footer > span {
   color: rgb(var(--color-muted));
-  font-size: 11px;
+  font-size: var(--text-meta);
 }
 .notification-bell__viewAll {
   display: inline-flex;
@@ -590,13 +590,13 @@
   padding: 4px 6px;
   border-radius: 7px;
   color: rgb(var(--color-brand));
-  font-size: 12px;
+  font-size: var(--text-body);
   font-weight: 600;
   text-decoration: none;
 }
 .notification-bell__viewAll svg {
-  width: 15px;
-  height: 15px;
+  width: var(--icon-control);
+  height: var(--icon-control);
 }
 .notification-bell__viewAll:focus-visible {
   outline: 2px solid rgb(var(--color-brand));
@@ -751,7 +751,7 @@ html.dark .notification-bell__filterIndicator {
     font-size: 18px;
   }
   .notification-bell__headingText p {
-    font-size: 10px;
+    font-size: var(--text-meta);
   }
   .notification-bell__searchBox {
     margin-inline: 16px;
@@ -795,7 +795,7 @@ html.dark .notification-bell__filterIndicator {
   }
   .notification-bell__textButton {
     gap: 3px;
-    font-size: 10px;
+    font-size: var(--text-body);
   }
 }
 @media (prefers-reduced-motion: reduce) {
