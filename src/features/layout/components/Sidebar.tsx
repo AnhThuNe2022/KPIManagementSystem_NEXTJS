@@ -422,7 +422,11 @@ export function Sidebar() {
 
           <div className="sidebar__footer">
             <div className="sidebar__footerArt" aria-hidden="true" />
+            <div className="sidebar__footerSnow" aria-hidden="true">
+              <span /><span /><span /><span /><span /><span /><span /><span />
+            </div>
             <span className="sidebar__footerRule" aria-hidden="true" />
+            <span className="sidebar__xmasWish">❄ Giáng sinh an lành</span>
             <p>
               Nghĩ khác biệt.
               <br />
