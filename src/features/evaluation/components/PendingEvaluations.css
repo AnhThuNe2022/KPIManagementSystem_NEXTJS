@@ -161,18 +161,18 @@ html.dark .pending-evaluations__statPill[data-variant="period"] {
 .pending-evaluations__listTools label { width: 160px; }
 .pending-evaluations__listTools select { font-size: var(--text-body); }
 .pending-evaluations__listTools .pending-evaluations__bulkReject { margin-left: 0; }
-.pending-evaluations__page .pending-evaluations__table { min-width: 1100px; font-size: var(--text-body); }
+.pending-evaluations__page .pending-evaluations__table { min-width: 1180px; font-size: var(--text-body); }
 .pending-evaluations__page .pending-evaluations__table th { padding: 11px 10px; font-size: var(--text-label); }
-.pending-evaluations__columnLabel { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; }
+.pending-evaluations__columnLabel { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; white-space: nowrap; }
 .pending-evaluations__columnLabel svg { width: var(--icon-inline); height: var(--icon-inline); flex-shrink: 0; opacity: .78; }
 .pending-evaluations__page .pending-evaluations__table td { padding: 12px 10px; line-height: 1.55; }
-.pending-evaluations__employeeColumn { width: 19%; }
-.pending-evaluations__companyColumn { width: 17%; }
-.pending-evaluations__periodColumn { width: auto; }
-.pending-evaluations__scoreColumn { width: 124px; text-align: center; }
-.pending-evaluations__dateColumn { width: 138px; }
-.pending-evaluations__statusColumn { width: 162px; }
-.pending-evaluations__actionsColumn { width: 196px; }
+.pending-evaluations__employeeColumn { width: 175px; }
+.pending-evaluations__companyColumn { width: 165px; }
+.pending-evaluations__periodColumn { width: auto; min-width: 210px; }
+.pending-evaluations__scoreColumn { width: 110px; text-align: center; }
+.pending-evaluations__dateColumn { width: 172px; }
+.pending-evaluations__statusColumn { width: 140px; }
+.pending-evaluations__actionsColumn { width: 164px; }
 .pending-evaluations__page .pending-evaluations__employeeCell > div { align-items: center; gap: 11px; padding: 0; border: 0; }
 .pending-evaluations__page .pending-evaluations__employeeCell > div > span { width: 34px; height: 34px; border-radius: 10px; color: var(--pending-avatar); background: var(--pending-avatar-soft); box-shadow: none; }
 .pending-evaluations__employeeCell > div > span > svg { width: 55%; height: 55%; }
@@ -181,11 +181,11 @@ html.dark .pending-evaluations__statPill[data-variant="period"] {
 .pending-evaluations__companyIdentity { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; }
 .pending-evaluations__companyLogo { display: block; width: 32px; height: 32px; flex-shrink: 0; object-fit: contain; object-position: center; }
 .pending-evaluations__company { display: inline-block; padding: 2px 6px; border: 1px solid rgb(var(--color-brand) / .15); border-radius: 4px; color: rgb(var(--color-brand)); background: rgb(var(--color-brand) / .05); font-size: var(--text-meta); font-weight: 750; }
-.pending-evaluations__department { display: block; margin-top: 6px; color: var(--panel-muted); font-size: var(--text-body); overflow-wrap: anywhere; }
+.pending-evaluations__department { display: block; margin-top: 6px; color: var(--panel-muted); font-size: var(--text-body); overflow-wrap: break-word; }
 .pending-evaluations__periodIdentity { display: flex; align-items: center; gap: 10px; }
 .pending-evaluations__periodIcon { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 34px; border-radius: 9px; color: var(--pending-purple); background: var(--pending-purple-soft); }
 .pending-evaluations__periodIcon svg { width: 17px; height: 17px; }
-.pending-evaluations__period { min-width: 0; font-size: var(--text-body); font-weight: 650; line-height: 1.7; overflow-wrap: anywhere; }
+.pending-evaluations__period { min-width: 0; font-size: var(--text-body); font-weight: 650; line-height: 1.7; overflow-wrap: break-word; }
 .pending-evaluations__date { display: flex; align-items: center; gap: 6px; }
 .pending-evaluations__date > svg { flex-shrink: 0; width: var(--icon-inline); height: var(--icon-inline); color: var(--pending-wait); }
 .pending-evaluations__page .pending-evaluations__table time { color: var(--panel-muted); font-size: var(--text-meta); line-height: 1.6; }

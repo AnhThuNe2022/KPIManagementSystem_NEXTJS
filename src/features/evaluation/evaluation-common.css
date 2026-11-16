@@ -219,7 +219,7 @@
   padding: 22px 14px;
   border-top: 1px solid rgb(var(--color-border) / 0.55);
   line-height: 1.8;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   vertical-align: middle;
 }
 .evaluation-common__table tbody tr[data-selected="true"] {

@@ -4,9 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { ActivityLogIcon, ArrowLeftIcon, ArrowRightIcon, BarChartIcon, CalendarIcon, CheckCircledIcon, CheckIcon, ClockIcon, Component1Icon, CrossCircledIcon, DownloadIcon, EyeOpenIcon, FileTextIcon, LayersIcon, MagnifyingGlassIcon, MixerHorizontalIcon, PaperPlaneIcon, PersonIcon, PieChartIcon, ReloadIcon, ResetIcon } from "@radix-ui/react-icons";
+import { ActivityLogIcon, ArrowLeftIcon, BarChartIcon, CalendarIcon, CheckCircledIcon, CheckIcon, ChevronDownIcon, ClockIcon, Component1Icon, CrossCircledIcon, DownloadIcon, EyeOpenIcon, FileTextIcon, LayersIcon, MagnifyingGlassIcon, MixerHorizontalIcon, PaperPlaneIcon, PersonIcon, PieChartIcon, ReloadIcon, ResetIcon } from "@radix-ui/react-icons";
 import { Pagination } from "@/components/ui/Pagination";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { FloatingSelectionBar } from "@/components/ui/FloatingSelectionBar";
 import { notify } from "@/components/ui/Toaster";
 import { UserRoleSystem } from "@/features/auth/types";
 import { companyApi } from "@/features/company/services/companyApi";
@@ -65,6 +66,24 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
   const [inspector, setInspector] = useState<Inspector | null>(null);
   const [task, setTask] = useState<Task | null>(null);
   const [exportDone, setExportDone] = useState<Task | null>(null);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!exportMenuOpen) return;
+    function onPointerDown(event: PointerEvent) {
+      if (!exportMenuRef.current?.contains(event.target as Node)) setExportMenuOpen(false);
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setExportMenuOpen(false);
+    }
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [exportMenuOpen]);
   const taskController = useRef<AbortController | null>(null);
   const selectPage = useRef<HTMLInputElement>(null);
 
@@ -242,7 +261,52 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
             <span className="summary-detail__heroCompany"><Image src={companyLogos[context?.companyCode ?? ""] ?? "/brand/deoca-icon.svg"} alt="" width={23} height={23} />{companyName}</span>
           </div>
         </div>
-        <div className="summary-detail__heroCount"><FileTextIcon aria-hidden="true" /><strong>{data ? number.format(data.total) : "—"}</strong><span>hồ sơ theo bộ lọc</span></div>
+        <div className="summary-detail__heroRight">
+          <div className="summary-detail__heroActions">
+            <div className="summary-detail__exportDropdown" ref={exportMenuRef}>
+              <button
+                type="button"
+                className="summary-detail__headAction summary-detail__heroBtn"
+                aria-expanded={exportMenuOpen}
+                aria-haspopup="menu"
+                disabled={unavailable || !data?.total}
+                onClick={() => setExportMenuOpen(open => !open)}
+              >
+                {task === "export-all" || task === "export-detail-all"
+                  ? <ReloadIcon className="summary-detail__spin" aria-hidden="true" />
+                  : exportDone === "export-all" || exportDone === "export-detail-all"
+                    ? <CheckIcon aria-hidden="true" />
+                    : <DownloadIcon aria-hidden="true" />}
+                <span>Xuất Excel</span>
+                <ChevronDownIcon className="summary-detail__chevron" aria-hidden="true" />
+              </button>
+              {exportMenuOpen && (
+                <div className="summary-detail__exportMenu" role="menu" aria-label="Tùy chọn xuất Excel tất cả">
+                  <button type="button" role="menuitem" disabled={unavailable || !data?.total} onClick={() => { setExportMenuOpen(false); prepare("export-all"); }}>
+                    <LayersIcon aria-hidden="true" />
+                    <span><strong>Tổng hợp tất cả</strong><small>1 file · {number.format(data?.total ?? 0)} hồ sơ</small></span>
+                  </button>
+                  <button type="button" role="menuitem" disabled={unavailable || !data?.total} onClick={() => { setExportMenuOpen(false); prepare("export-detail-all"); }}>
+                    <FileTextIcon aria-hidden="true" />
+                    <span><strong>Chi tiết tất cả</strong><small>Từng file · {number.format(data?.total ?? 0)} hồ sơ</small></span>
+                  </button>
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              className="summary-detail__headAction summary-detail__headAction--primary"
+              disabled={unavailable || !data?.total}
+              aria-haspopup="dialog"
+              onClick={() => prepare("approve-all")}
+            >
+              {task === "approve-all" ? <ReloadIcon className="summary-detail__spin" aria-hidden="true" /> : <PaperPlaneIcon aria-hidden="true" />}
+              <span>Gửi duyệt tất cả</span>
+              <span className="summary-detail__headBadge">{number.format(data?.total ?? 0)}</span>
+            </button>
+          </div>
+          <div className="summary-detail__heroCount"><FileTextIcon aria-hidden="true" /><strong>{data ? number.format(data.total) : "—"}</strong><span>hồ sơ theo bộ lọc</span></div>
+        </div>
       </header>
 
       <div className="summary-detail__workspace">
@@ -277,10 +341,16 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
           {(companyError || departmentError) && <p className="summary-detail__lookupError" role="alert">{companyError || departmentError} <button type="button" onClick={refresh}>Thử lại</button></p>}
           <div className="summary-detail__tableHeading">
             <h2 id="summary-detail-title"><LayersIcon aria-hidden="true" />Hồ sơ tổng hợp<span>{data?.total ?? "—"}</span></h2>
-            <div><label className="summary-detail__selectPage">
-              <input ref={selectPage} type="checkbox" aria-label="Chọn tất cả hồ sơ trên trang này" checked={!!data?.items.length && pageSelected === data.items.length}
-                disabled={unavailable || !data?.items.length} onChange={event => togglePage(event.target.checked)} />Chọn trang
-            </label>
+            <div className="summary-detail__headingTools">
+              <label className="summary-detail__selectPage">
+                <input ref={selectPage} type="checkbox" aria-label="Chọn tất cả hồ sơ trên trang này" checked={!!data?.items.length && pageSelected === data.items.length}
+                  disabled={unavailable || !data?.items.length} onChange={event => togglePage(event.target.checked)} />Chọn trang
+              </label>
+              {(data?.total ?? 0) > (data?.items.length ?? 0) && selected.length < (data?.total ?? 0) && (
+                <button type="button" className="summary-detail__headAction" disabled={unavailable} onClick={() => prepare("select-all")}>
+                  Chọn tất cả ({number.format(data?.total ?? 0)})
+                </button>
+              )}
               <button className="summary-detail__iconButton" type="button" onClick={refresh} disabled={unavailable} aria-label="Làm mới danh sách" title="Làm mới"><ReloadIcon className={loading ? "summary-detail__spin" : undefined} aria-hidden="true" /></button>
             </div>
           </div>
@@ -343,63 +413,45 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
           <Pagination page={page} pageSize={pageSize} total={data?.total ?? null} loading={loading} error={!!error} disabled={locked}
             itemLabel="hồ sơ" onPageChange={setPage} onPageSizeChange={size => { setPageSize(size); setPage(1); }} />
         </section>
-
-        <aside id="summary-actions" className="summary-detail__commands" aria-label="Thao tác tổng hợp">
-          <section className="summary-detail__reviewPanel">
-            <div className="summary-detail__commandTitle"><PaperPlaneIcon aria-hidden="true" /><h2>Xử lý hồ sơ</h2></div>
-            <div className="summary-detail__selectedCount"><strong key={selected.length}>{number.format(selected.length)}</strong><span>hồ sơ đã chọn</span>
-              {selected.length > 0
-                ? <button type="button" onClick={() => setSelected([])} disabled={locked}>Bỏ chọn</button>
-                : (data?.total ?? 0) > 0 && <button type="button" onClick={() => prepare("select-all")} disabled={unavailable}>Chọn tất cả ({data?.total})</button>}
-            </div>
-            <button type="button" className="summary-detail__button summary-detail__send" disabled={unavailable || !selected.length}
-              onClick={() => setReview({ kind: "approve", rows: selected })} aria-haspopup="dialog"><PaperPlaneIcon aria-hidden="true" />Gửi duyệt đã chọn<ArrowRightIcon aria-hidden="true" /></button>
-            <button type="button" className="summary-detail__button summary-detail__sendAll" disabled={unavailable || !data?.total}
-              onClick={() => prepare("approve-all")} aria-haspopup="dialog">{task === "approve-all" ? <ReloadIcon className="summary-detail__spin" aria-hidden="true" /> : <LayersIcon aria-hidden="true" />}Gửi duyệt tất cả<span>{data?.total ?? "—"}</span></button>
-            <button type="button" className="summary-detail__button summary-detail__return" disabled={unavailable || !selected.length}
-              onClick={() => setReview({ kind: "reject", rows: selected })} aria-haspopup="dialog"><ResetIcon aria-hidden="true" />Trả về hồ sơ đã chọn</button>
-            <p>{selected.length > 0 ? "Chọn quản lý cấp cao ở bước xác nhận gửi duyệt." : "Chọn hồ sơ ở bảng hoặc bấm “Chọn tất cả” để gửi duyệt / trả về theo nhóm."}</p>
-          </section>
-          <section className="summary-detail__exportPanel">
-            <div className="summary-detail__commandTitle"><DownloadIcon aria-hidden="true" /><h2>Xuất Excel</h2></div>
-            <p>Xuất theo mẫu Đèo Cả, giữ nguyên bộ lọc hiện tại.</p>
-            <div className="summary-detail__exportColumns">
-              <div className="summary-detail__exportGroup" role="group" aria-labelledby="summary-excel-summary">
-                <h3 id="summary-excel-summary" className="summary-detail__exportGroupTitle">Tổng hợp <small>1 file</small></h3>
-                <button type="button" className="summary-detail__exportCard" data-busy={task === "export-all"} data-complete={exportDone === "export-all"}
-                  disabled={unavailable || !data?.total} onClick={() => prepare("export-all")}>
-                  <span className="summary-detail__excelIcon">{exportDone === "export-all" ? <CheckIcon aria-hidden="true" /> : <LayersIcon aria-hidden="true" />}</span>
-                  <span><strong>{task === "export-all" ? "Đang tạo…" : "Tất cả"}</strong><small>{data?.total ?? "—"} hồ sơ</small></span>
-                </button>
-                <button type="button" className="summary-detail__exportCard" data-busy={task === "export-selected"} data-complete={exportDone === "export-selected"}
-                  disabled={unavailable || !selected.length} onClick={() => prepare("export-selected")}>
-                  <span className="summary-detail__excelIcon">{exportDone === "export-selected" ? <CheckIcon aria-hidden="true" /> : <FileTextIcon aria-hidden="true" />}</span>
-                  <span><strong>{task === "export-selected" ? "Đang tạo…" : "Đã chọn"}</strong><small>{selected.length} hồ sơ</small></span>
-                </button>
-              </div>
-              <div className="summary-detail__exportGroup" role="group" aria-labelledby="summary-excel-detail">
-                <h3 id="summary-excel-detail" className="summary-detail__exportGroupTitle">Chi tiết <small>Từng file</small></h3>
-                <button type="button" className="summary-detail__exportCard" data-busy={task === "export-detail-all"} data-complete={exportDone === "export-detail-all"}
-                  disabled={unavailable || !data?.total} onClick={() => prepare("export-detail-all")}>
-                  <span className="summary-detail__excelIcon">{exportDone === "export-detail-all" ? <CheckIcon aria-hidden="true" /> : <LayersIcon aria-hidden="true" />}</span>
-                  <span><strong>{task === "export-detail-all" ? "Đang tải…" : "Tất cả"}</strong><small>{data?.total ?? "—"} hồ sơ</small></span>
-                </button>
-                <button type="button" className="summary-detail__exportCard" data-busy={task === "export-detail-selected"} data-complete={exportDone === "export-detail-selected"}
-                  disabled={unavailable || !selected.length} onClick={() => prepare("export-detail-selected")}>
-                  <span className="summary-detail__excelIcon">{exportDone === "export-detail-selected" ? <CheckIcon aria-hidden="true" /> : <FileTextIcon aria-hidden="true" />}</span>
-                  <span><strong>{task === "export-detail-selected" ? "Đang tải…" : "Đã chọn"}</strong><small>{selected.length} hồ sơ</small></span>
-                </button>
-              </div>
-            </div>
-          </section>
-        </aside>
       </div>
-      {selected.length > 0 && <div className="summary-detail__mobileDock" role="group" aria-label="Xử lý hồ sơ đã chọn">
-        <span>{selected.length} hồ sơ</span>
-        <a className="summary-detail__iconButton" href="#summary-actions" title="Xuất tổng hợp" aria-label="Đến phần xuất Excel"><DownloadIcon aria-hidden="true" /></a>
-        <button type="button" className="summary-detail__iconButton" disabled={unavailable} onClick={() => setReview({ kind: "reject", rows: selected })} aria-label="Trả về hồ sơ đã chọn"><ResetIcon aria-hidden="true" /></button>
-        <button type="button" className="summary-detail__button summary-detail__primary" disabled={unavailable} onClick={() => setReview({ kind: "approve", rows: selected })}><PaperPlaneIcon aria-hidden="true" />Gửi duyệt</button>
-      </div>}
+      <FloatingSelectionBar
+        count={selected.length}
+        label="hồ sơ đã chọn"
+        disabled={locked}
+        onClear={() => setSelected([])}
+        actions={[
+          {
+            key: "approve",
+            label: "Gửi duyệt",
+            icon: <PaperPlaneIcon aria-hidden="true" />,
+            tone: "primary",
+            disabled: unavailable,
+            onClick: () => setReview({ kind: "approve", rows: selected }),
+          },
+          {
+            key: "export-selected",
+            label: "Xuất Excel",
+            icon: <DownloadIcon aria-hidden="true" />,
+            disabled: unavailable,
+            onClick: () => prepare("export-selected"),
+          },
+          {
+            key: "export-detail-selected",
+            label: "Xuất chi tiết",
+            icon: <FileTextIcon aria-hidden="true" />,
+            disabled: unavailable,
+            onClick: () => prepare("export-detail-selected"),
+          },
+          {
+            key: "reject",
+            label: "Trả về",
+            icon: <ResetIcon aria-hidden="true" />,
+            tone: "danger",
+            disabled: unavailable,
+            onClick: () => setReview({ kind: "reject", rows: selected }),
+          },
+        ]}
+      />
       {task && <div className="summary-detail__taskStatus" role="status"><ReloadIcon className="summary-detail__spin" aria-hidden="true" />{task.startsWith("export") ? "Đang chuẩn bị file Excel…" : "Đang lấy toàn bộ hồ sơ theo bộ lọc…"}</div>}
       {review && <SummaryReviewDialog target={review} level={level} onClose={() => setReview(null)} onProcessed={ids => {
         setSelected(rows => rows.filter(row => !ids.includes(row.evalId)));

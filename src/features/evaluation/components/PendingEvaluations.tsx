@@ -7,6 +7,7 @@ import {
   ActivityLogIcon,
   BarChartIcon,
   CalendarIcon,
+  CheckCircledIcon,
   ChevronDownIcon,
   Component1Icon,
   Cross2Icon,
@@ -21,6 +22,7 @@ import {
   ResetIcon,
 } from "@radix-ui/react-icons";
 import { pendingEvaluationApi } from "../services/pendingEvaluationApi";
+import { FloatingSelectionBar, type FloatingSelectionAction } from "@/components/ui/FloatingSelectionBar";
 import {
   UserRoleSystem,
 } from "@/features/auth/types";
@@ -263,7 +265,7 @@ export function PendingEvaluations({
 
   async function submitReject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (hr || !rejectTargets || rejectInFlight.current) return;
+    if (!rejectTargets || rejectInFlight.current) return;
     if (!rejectReason.trim()) {
       setRejectError("Vui lòng nhập lý do từ chối.");
       rejectDialogRef.current?.querySelector("textarea")?.focus();
@@ -276,7 +278,7 @@ export function PendingEvaluations({
     let completed = 0;
     try {
       for (const item of rejectTargets) {
-        await pendingEvaluationApi.reviewAction(item.id, { Action: 2, Level: UserRoleSystem.ManagerMid, Comment: rejectReason.trim(), StepId: item.stepId });
+        await pendingEvaluationApi.reviewAction(item.id, { Action: 2, Level: hr ? UserRoleSystem.HR : UserRoleSystem.ManagerMid, Comment: rejectReason.trim(), StepId: item.stepId });
         completed += 1;
       }
       setRejectTargets(null);
@@ -375,7 +377,7 @@ export function PendingEvaluations({
                 <option value="submittedDate_desc">Mới gửi gần đây</option><option value="submittedDate_asc">Gửi lâu trước</option><option value="employee_asc">Tên A→Z</option><option value="employee_desc">Tên Z→A</option>
               </select><ChevronDownIcon aria-hidden="true" />
             </div></label>
-            {!hr && selected.length > 0 && (
+            {selected.length > 0 && (
               <button
                 className={"evaluation-common__button" + " " + "pending-evaluations__rejectButton" + " " + "pending-evaluations__bulkReject"}
                 type="button"
@@ -579,18 +581,16 @@ export function PendingEvaluations({
                           <EyeOpenIcon aria-hidden="true" />
                           Xem
                         </button>
-                        {!hr && (
-                          <button
-                            className={`evaluation-common__button pending-evaluations__rejectButton`}
-                            type="button"
-                            aria-label={`Từ chối bản đánh giá của ${item.userName || item.sysTemCode || "nhân viên"}`}
-                            aria-haspopup="dialog"
-                            onClick={() => openReject([item])}
-                          >
-                            <Cross2Icon aria-hidden="true" />
-                            Từ chối
-                          </button>
-                        )}
+                        <button
+                          className={`evaluation-common__button pending-evaluations__rejectButton`}
+                          type="button"
+                          aria-label={`Từ chối bản đánh giá của ${item.userName || item.sysTemCode || "nhân viên"}`}
+                          aria-haspopup="dialog"
+                          onClick={() => openReject([item])}
+                        >
+                          <Cross2Icon aria-hidden="true" />
+                          Từ chối
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -613,7 +613,44 @@ export function PendingEvaluations({
           }}
         />
       </div>
-      {!hr && rejectTargets && (
+      {(() => {
+        const selectedItems = data?.items.filter((item) => selected.includes(`${item.id}:${item.stepId}`)) ?? [];
+        const actions: FloatingSelectionAction[] = [];
+        if (selectedItems.length === 1) {
+          actions.push({
+            key: "view",
+            label: "Xem bản đánh giá",
+            icon: <EyeOpenIcon aria-hidden="true" />,
+            tone: "primary",
+            onClick: () => setPreviewTarget(selectedItems[0]),
+          });
+        }
+        if (!allSelected && data?.items.length) {
+          actions.push({
+            key: "select-page",
+            label: "Chọn cả trang",
+            icon: <CheckCircledIcon aria-hidden="true" />,
+            onClick: () => setSelected(data.items.map((item) => `${item.id}:${item.stepId}`)),
+          });
+        }
+        actions.push({
+          key: "reject",
+          label: "Từ chối",
+          icon: <Cross2Icon aria-hidden="true" />,
+          tone: "danger",
+          disabled: loading || !data || Boolean(error),
+          onClick: () => openReject(selectedItems),
+        });
+        return (
+          <FloatingSelectionBar
+            count={selected.length}
+            label="bản đánh giá đã chọn"
+            actions={actions}
+            onClear={() => setSelected([])}
+          />
+        );
+      })()}
+      {rejectTargets && (
         <dialog
           ref={rejectDialogRef}
           className="pending-evaluations__rejectDialog"
@@ -748,20 +785,18 @@ export function PendingEvaluations({
             >
               Đóng
             </button>
-            {!hr && (
-              <button
-                className="evaluation-common__button pending-evaluations__rejectButton"
-                type="button"
-                onClick={() => {
-                  const target = previewTarget;
-                  setPreviewTarget(null);
-                  openReject([target]);
-                }}
-              >
-                <Cross2Icon aria-hidden="true" />
-                Từ chối
-              </button>
-            )}
+            <button
+              className="evaluation-common__button pending-evaluations__rejectButton"
+              type="button"
+              onClick={() => {
+                const target = previewTarget;
+                setPreviewTarget(null);
+                openReject([target]);
+              }}
+            >
+              <Cross2Icon aria-hidden="true" />
+              Từ chối
+            </button>
           </footer>
         </dialog>
       )}
