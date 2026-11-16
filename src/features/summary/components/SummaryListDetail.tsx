@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { ActivityLogIcon, ArrowLeftIcon, BarChartIcon, CalendarIcon, CheckCircledIcon, CheckIcon, ChevronDownIcon, ClockIcon, Component1Icon, CrossCircledIcon, DownloadIcon, EyeOpenIcon, FileTextIcon, LayersIcon, MagnifyingGlassIcon, MixerHorizontalIcon, PaperPlaneIcon, PersonIcon, PieChartIcon, ReloadIcon, ResetIcon } from "@radix-ui/react-icons";
+import { ActivityLogIcon, ArrowLeftIcon, BarChartIcon, CalendarIcon, CheckCircledIcon, CheckIcon, ChevronDownIcon, ClockIcon, Component1Icon, CrossCircledIcon, DownloadIcon, FileTextIcon, LayersIcon, MagnifyingGlassIcon, MixerHorizontalIcon, PaperPlaneIcon, PersonIcon, PieChartIcon, ReloadIcon, ResetIcon } from "@radix-ui/react-icons";
 import { Pagination } from "@/components/ui/Pagination";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { FloatingSelectionBar } from "@/components/ui/FloatingSelectionBar";
@@ -18,7 +18,6 @@ import { EvaluationStatus, type EvaluationFilterOption } from "@/features/evalua
 import type { PagedResult } from "@/lib/api/types";
 import { summaryApi } from "../services/summaryApi";
 import type { SummaryDetail, SummaryDetailFilters, SummaryMode } from "../types";
-import { SummaryRecordDialog } from "./SummaryRecordDialog";
 import { SummaryReviewDialog, type SummaryReviewTarget } from "./SummaryReviewDialog";
 import "./SummaryListDetail.css";
 
@@ -43,7 +42,7 @@ function completionPercent(value: number | null) {
 }
 
 type Task = "select-all" | "approve-all" | "export-selected" | "export-all" | "export-detail-selected" | "export-detail-all";
-type Inspector = { row: SummaryDetail; mode: "detail" | "history" | "approvers" };
+type Inspector = { row: SummaryDetail; mode: "history" | "approvers" };
 type Props = { mode: SummaryMode; periodId: number; companyId: number };
 
 export function SummaryListDetail({ mode, periodId, companyId }: Props) {
@@ -380,7 +379,7 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
                     <td className="summary-detail__index">{(page - 1) * pageSize + index + 1}</td>
                     <td className="summary-detail__employee"><div className="summary-detail__identity">
                       <span className="summary-detail__avatar"><PersonIcon aria-hidden="true" /></span>
-                      <div><button type="button" onClick={() => setInspector({ row, mode: "detail" })} disabled={locked}>{row.userName}</button><span>{row.userId}</span></div>
+                      <div><strong>{row.userName}</strong><span>{row.userId}</span></div>
                     </div></td>
                     <td className="summary-detail__unit"><strong>{row.jobName || "—"}</strong><span>{row.departmentName || "—"}</span>
                       <span className="summary-detail__company"><Image src={companyLogos[row.companyCode] ?? "/brand/deoca-icon.svg"} alt="" width={19} height={19} />{row.companyCode}</span>
@@ -390,7 +389,7 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
                     <td className="summary-detail__completion" data-label="Hệ số HTCV"><strong>{scoreLabel(row.rPercent)}</strong>
                       <span className="summary-detail__track" aria-hidden="true"><span style={{ width: completionPercent(row.rPercent) + "%" }} /></span>
                     </td>
-                    <td className="summary-detail__band" data-label="Tỷ lệ chi">{row.band ? <span className="summary-detail__bandBadge" data-tone={bandTone(row.band)}>{row.band}</span> : <span>—</span>}{row.note && <button type="button" title={row.note} onClick={() => setInspector({ row, mode: "detail" })} disabled={locked}>Xem ý kiến</button>}</td>
+                    <td className="summary-detail__band" data-label="Tỷ lệ chi">{row.band ? <span className="summary-detail__bandBadge" data-tone={bandTone(row.band)}>{row.band}</span> : <span>—</span>}{row.note && <span title={row.note}>{row.note}</span>}</td>
                     <td className="summary-detail__process"><span className="summary-detail__status" data-tone={rejected ? "danger" : complete ? "success" : waiting ? "waiting" : "progress"}>
                       {rejected ? <CrossCircledIcon aria-hidden="true" /> : complete ? <CheckCircledIcon aria-hidden="true" /> : <ClockIcon aria-hidden="true" />}{row.statusDisplay}
                     </span>{row.userDoing && <span className="summary-detail__reviewer"><PersonIcon aria-hidden="true" />{row.userDoing}</span>}
@@ -398,7 +397,6 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
                     </td>
                     <td className="summary-detail__actions">
                       <button type="button" onClick={() => setInspector({ row, mode: "history" })} disabled={locked} aria-haspopup="dialog"><ActivityLogIcon aria-hidden="true" />Quá trình</button>
-                      <button type="button" onClick={() => setInspector({ row, mode: "detail" })} disabled={locked} aria-haspopup="dialog"><EyeOpenIcon aria-hidden="true" />Chi tiết</button>
                     </td>
                   </tr>
                 );
@@ -457,8 +455,7 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
         setSelected(rows => rows.filter(row => !ids.includes(row.evalId)));
         setRevision(value => value + 1);
       }} />}
-      {inspector?.mode === "detail" && <SummaryRecordDialog row={inspector.row} onClose={() => setInspector(null)} onHistory={() => setInspector({ ...inspector, mode: "history" })} />}
-      {inspector && inspector.mode !== "detail" && <HistoryDialog mode={inspector.mode}
+      {inspector && <HistoryDialog mode={inspector.mode}
         row={{ id: inspector.row.evalId, userId: inspector.row.userId, systemCode: inspector.row.userId, name: inspector.row.userName, companyCode: inspector.row.companyCode, departmentName: inspector.row.departmentName, period: inspector.row.periodName, status: inspector.row.status }}
         onClose={() => setInspector(null)} onMutated={refresh} onModeChange={value => {
           if (value === "history" || value === "approvers") setInspector({ ...inspector, mode: value });
