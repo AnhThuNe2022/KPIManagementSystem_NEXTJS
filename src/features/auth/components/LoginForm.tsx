@@ -24,17 +24,34 @@ export function LoginForm() {
     setErrors({}); setServerError(""); setLoading(true);
    try {
   const response = await fetch("/api/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ username, password }),
+      method: "POST",
+      headers: {
+          "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+          username: username.trim(),
+          password,
+      }),
   });
 
-  const data = (await response.json()) as { message?: string };
 
-  if (!response.ok) {
+if (response.redirected) {
+    throw new Error("API đăng nhập bị redirect ngoài dự kiến.");
+}
+
+const contentType = response.headers.get("content-type");
+
+if (!contentType?.includes("application/json")) {
+    throw new Error("API đăng nhập không trả về JSON hợp lệ.");
+}
+
+const data = await response.json();
+
+if (!response.ok) {
     throw new Error(data.message || "Đăng nhập thất bại.");
-  }
+}
+
 
   // Cập nhật trạng thái xác thực
   await refresh();
