@@ -14,24 +14,66 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false); const [errors, setErrors] = useState<Errors>({});
   const [serverError, setServerError] = useState(""); const [loading, setLoading] = useState(false);
   async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const nextErrors: Errors = {};
+    event.preventDefault(); 
+    event.stopPropagation();
+
+    const nextErrors: Errors = {};
     if (!username.trim()) nextErrors.username = "Vui lòng nhập tên đăng nhập hoặc email.";
     if (!password) nextErrors.password = "Vui lòng nhập mật khẩu.";
     if (Object.keys(nextErrors).length) { setErrors(nextErrors); return; }
     setErrors({}); setServerError(""); setLoading(true);
-    try {
+   try {
+  const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+          "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+          username: username.trim(),
+          password,
+      }),
+  });
 
-      const response = await fetch("/api/auth/login",
-        { method: "POST", headers: { "Content-Type": "application/json" },
-         credentials: "include", body: JSON.stringify({ username, password }) });
-      const data = await response.json() as { message?: string };
-      if (!response.ok) throw new Error(data.message);
-      await refresh();
-      router.replace(params.get("next") || "/dashboard");
-      router.refresh();
-    }
-    catch (error) { setServerError(error instanceof Error ? error.message : "Không thể đăng nhập. Vui lòng thử lại."); }
-    finally { setLoading(false); }
+
+if (response.redirected) {
+    throw new Error("API đăng nhập bị redirect ngoài dự kiến.");
+}
+
+const contentType = response.headers.get("content-type");
+
+if (!contentType?.includes("application/json")) {
+    throw new Error("API đăng nhập không trả về JSON hợp lệ.");
+}
+
+const data = await response.json();
+
+if (!response.ok) {
+    throw new Error(data.message || "Đăng nhập thất bại.");
+}
+
+
+  // Cập nhật trạng thái xác thực
+  await refresh();
+
+  // Lấy đường dẫn cần chuyển đến sau đăng nhập
+  const next = params.get("next");
+  const target =
+    next && next.startsWith("/") && !next.startsWith("//")
+      ? next
+      : "/dashboard";
+
+  router.replace(target);
+  router.refresh();
+} catch (error) {
+  setServerError(
+    error instanceof Error
+      ? error.message
+      : "Không thể đăng nhập. Vui lòng thử lại."
+  );
+} finally {
+  setLoading(false);
+}
   }
   return (
     <form className="login-form" onSubmit={submit} noValidate aria-label="Đăng nhập hệ thống KPI" aria-busy={loading}>

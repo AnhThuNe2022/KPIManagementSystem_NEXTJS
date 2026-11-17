@@ -5,6 +5,7 @@ import type { LoginCredentials } from "@/features/auth/types";
 export async function POST(request: Request) {
   try {
 
+
     const body = (await request.json()) as Partial<LoginCredentials>;
 
     if (!body.username?.trim() || !body.password) {
@@ -15,7 +16,6 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
     await authenticate({
       username: body.username.trim(),
       password: body.password,
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
 
   } catch (error) {
-    console.error("LOGIN ERROR:", error);
+       console.log("LOGIN ERROR:",error);
 
     return NextResponse.json(
       {
