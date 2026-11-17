@@ -1,6 +1,5 @@
 import React from "react";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { appConfig } from "@/config/app";
 import { Sidebar } from "@/features/layout/components/Sidebar";
 import { AppHeader } from "@/features/layout/components/AppHeader";
@@ -10,9 +9,6 @@ export default async function MainLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const cookieStore = await cookies();
 
-  // if (!cookieStore.has(appConfig.authCookieName)) {
-  //   redirect("/login");
-  // }
 
   const userName =
     cookieStore.get(appConfig.userNameCookieName)?.value ?? "Người dùng";

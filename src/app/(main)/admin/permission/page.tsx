@@ -1,7 +1,4 @@
 import { Suspense } from "react";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { appConfig } from "@/config/app";
 import { Permissions } from "@/features/permissions/components/Permissions";
 
 export const metadata = { title: "Quản lý quyền | Đèo Cả", description: "Quản lý quyền truy cập, màn hình, vai trò và người dùng." };
