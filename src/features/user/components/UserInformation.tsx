@@ -17,37 +17,43 @@ import {
   PlusIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
-import styles from "../user-information.module.css";
-import { useAuth } from "@/contexts/AuthContext";
+import "../user-common.css";
+import { useAuth } from "@/features/auth/AuthProvider";
 import AssignmentDialog from "./AssignmentDialog";
 import PasswordChange from "./PasswordChange";
-import { organizationApi } from "../service/organizationApi";
-import { userApi } from "../service/userApi";
-import { useUserInfor } from "../hooks/useUserInformation";
+import { userOrganizationApi } from "../services/userOrganizationApi";
+import { userApi } from "../services/userApi";
+import { useUserInformation } from "../hooks/useUserInformation";
 import { useCallback, useEffect, useState } from "react";
 import {
   AssignmentType,
   UserOrganizationDto,
-} from "@/types/organization";
+} from "@/features/user/types";
 
 import {
   AssignmentScopeType,
+} from "@/features/condition-assignments/types";
+import {
   CompanyDto,
-  EnumCompanyCode,
-  FilterString
-} from "@/types/employee";
+} from "@/features/company/types";
+import {
+  FilterString,
+} from "@/lib/api/types";
 
 import {
   ChangePasswordDto,
-} from "@/types/employee";
-import { notify } from "@/components/ui/toast";
-import { companyApi } from "../service/companyApi";
+} from "@/features/user/types";
+import { notify } from "@/components/ui/Toaster";
+import { companyApi } from "@/features/company/services/companyApi";
+import { companyLogos } from "@/features/company/companyLogos";
 import ComplaintDialog from "./ComplaintDialog";
-import { ConditionStatus, EnumCodeNoti, NotificationDto } from "@/types/notification";
-import { conditionApi } from "../service/conditionApi";
-import { notificationApi } from "../service/notificationApi";
+import { ConditionStatus } from "@/features/condition-assignments/types";
+import { EnumCodeNoti, NotificationDto } from "@/features/notifications/types";
+import { conditionAssignmentApi } from "@/features/condition-assignments/services/conditionAssignmentApi";
+import { notificationApi } from "@/features/notifications/services/notificationApi";
+import "./UserInformation.css";
 
-export default function UserInforPage() {
+export default function UserInformation() {
   const {
     user,
     isLoading: authLoading,
@@ -56,7 +62,7 @@ export default function UserInforPage() {
   const {
     employee,
     isLoading: userInforLoading,
-  } = useUserInfor(user?.id);
+  } = useUserInformation(user?.id);
 
   const [activeTab, setActiveTab] =
     useState(0);
@@ -76,7 +82,7 @@ export default function UserInforPage() {
   const [editingAssignment, setEditingAssignment] =
     useState<UserOrganizationDto | null>(null);
 
-  const [isPasswordDialogOpen, setIsPasswordDialogOpen] =
+  const [, setIsPasswordDialogOpen] =
     useState(false);
 
   const [isLoading, setIsLoading] =
@@ -87,6 +93,7 @@ export default function UserInforPage() {
 
   const [isComplaintDialogOpen, setIsComplaintDialogOpen] = useState(false);
   const [complaintReason, setComplaintReason] = useState("");
+  const [hasPendingChanges, setHasPendingChanges] = useState(false);
 
   /**
    * =========================================================
@@ -111,9 +118,10 @@ export default function UserInforPage() {
         setError(null);
 
         const result =
-          await organizationApi.getPaged(userId);
+          await userOrganizationApi.getPaged(userId);
 
         setAssignments(result.items ?? []);
+        setHasPendingChanges(false);
       } catch (err) {
         console.error(err);
 
@@ -237,6 +245,7 @@ export default function UserInforPage() {
     return next;
   });
 
+  setHasPendingChanges(true);
   closeAssignmentDialog();
   notify("info", "Đã cập nhật bản nháp đơn vị công tác. Nhấn Lưu thay đổi để lưu vào hệ thống.");
 };
@@ -251,7 +260,7 @@ export default function UserInforPage() {
       setError(null);
 
       if (assignments.length > 0) {
-        const result = await organizationApi.upsert(
+        const result = await userOrganizationApi.upsert(
           user.id,
           assignments
         );
@@ -397,7 +406,7 @@ const createComplaint = async (
   // =====================================================
 
   const listCondition =
-    await conditionApi.getAll(filter);
+    await conditionAssignmentApi.getAll(filter);
 
   const receivers = Array.from(
     new Map(
@@ -549,6 +558,7 @@ const createComplaint = async (
       // Chưa tồn tại trên DB
       return prev.filter(assignment => assignment !== item);
     });
+    setHasPendingChanges(true);
     notify("info", "Đã gỡ đơn vị khỏi bản nháp. Nhấn Lưu thay đổi để lưu vào hệ thống.");
   };
 
@@ -559,23 +569,23 @@ const createComplaint = async (
    */
 if (authLoading || userInforLoading) {
   return (
-    <div className={styles.page} role="status" aria-label="Đang tải thông tin nhân viên" aria-busy="true">
-      <header className={styles.pageHeader}>
+    <div className="user-information__page" role="status" aria-label="Đang tải thông tin nhân viên" aria-busy="true">
+      <header className="user-common__pageHeader">
         <div>
-          <span className={styles.eyebrow}>Hồ sơ nhân viên</span>
+          <span className="user-information__eyebrow">Hồ sơ nhân viên</span>
           <h1>Thông tin cá nhân</h1>
           <p>Hồ sơ, đơn vị công tác và bảo mật tài khoản của bạn.</p>
         </div>
       </header>
-      <div className={styles.toolbar}>
-        <div className={styles.loadingTabs} />
+      <div className="user-information__toolbar">
+        <div className="user-information__loadingTabs" />
       </div>
-      <div className={styles.generalPanel}>
-        <div className={styles.loadingProfile}>
-          <div className={styles.loadingAvatar} />
-          <div className={styles.loadingName} />
+      <div className="user-information__generalPanel">
+        <div className="user-information__loadingProfile">
+          <div className="user-information__loadingAvatar" />
+          <div className="user-information__loadingName" />
         </div>
-        <div className={styles.loadingPanel}>
+        <div className="user-information__loadingPanel">
           <div /><div /><div />
         </div>
       </div>
@@ -599,21 +609,21 @@ if (authLoading || userInforLoading) {
  */
 
 return (
-  <div className={styles.page}>
+  <div className="user-information__page">
 
     <div
-      className={styles.pageFrame}
+      className="user-information__pageFrame"
     >
 
       {/* =====================================================
           HEADER
       ===================================================== */}
       <div
-        className={styles.pageHeader}
+        className="user-common__pageHeader"
       >
 
         <div>
-          <span className={styles.eyebrow}>Hồ sơ nhân viên</span>
+          <span className="user-information__eyebrow">Hồ sơ nhân viên</span>
           <h1 className="text-xl font-medium text-[rgb(var(--color-text))]">
             Thông tin cá nhân
           </h1>
@@ -626,7 +636,7 @@ return (
         disabled={isLoading}
         title="Nếu sai thông tin, hãy gửi cho admin"
         aria-label="Báo lỗi thông tin"
-        className={styles.button + " " + styles.reportButton}
+        className="user-common__button user-information__reportButton"
       >
         <ExclamationTriangleIcon aria-hidden="true" />
         Báo lỗi thông tin
@@ -640,7 +650,7 @@ return (
       ===================================================== */}
       {error && (
         <div
-          className={styles.alert}
+          className="user-information__alert"
         >
           {error}
         </div>
@@ -650,14 +660,14 @@ return (
       {/* =====================================================
           CONTENT
       ===================================================== */}
-      <div className={styles.content}>
+      <div className="user-information__content">
 
         {/* ===================================================
             TABS
         =================================================== */}
-        <div className={styles.toolbar}>
+        <div className="user-information__toolbar">
 
-          <div className={styles.tabTrack} data-tab={activeTab} role="tablist" aria-label="Thông tin tài khoản">
+          <div className="user-information__tabTrack" data-tab={activeTab} role="tablist" aria-label="Thông tin tài khoản">
 
             {/* TAB THÔNG TIN */}
             <button
@@ -743,14 +753,14 @@ return (
             TAB THÔNG TIN CHUNG
         =================================================== */}
         {activeTab === 0 && (
-          <div className={styles.generalPanel}>
+          <div className="user-information__generalPanel">
 
             {/* -----------------------------------------------
                 THÔNG TIN NHÂN VIÊN
             ------------------------------------------------ */}
-            <div className={styles.identityCard}>
+            <div className="user-information__identityCard">
 
-              <div className={styles.avatar} aria-hidden="true">
+              <div className="user-information__avatar" aria-hidden="true">
                 {employee?.fullName?.trim().split(/\s+/).slice(-2).map(part => part[0]).join("").toUpperCase() || "DC"}
               </div>
 
@@ -778,20 +788,20 @@ return (
                 value={employee?.jobPosition?.name}
               />
 
-              <div className={styles.credentialScene} aria-hidden="true">
-                <div className={styles.credentialCard}>
-                  <div className={styles.credentialBrand}>
-                    <Image src="/brand/deoca-icon.png" alt="" width={34} height={34} />
+              <div className="user-information__credentialScene" aria-hidden="true">
+                <div className="user-information__credentialCard">
+                  <div className="user-information__credentialBrand">
+                    <Image src="/brand/deoca-icon.svg" alt="" width={34} height={34} />
                     <span>ĐÈO CẢ GROUP<small>THẺ NHÂN SỰ · KPI</small></span>
                     <IdCardIcon />
                   </div>
-                  <div className={styles.credentialName}>{employee?.fullName || "Hồ sơ nhân viên"}</div>
-                  <div className={styles.credentialBottom}>
+                  <div className="user-information__credentialName">{employee?.fullName || "Hồ sơ nhân viên"}</div>
+                  <div className="user-information__credentialBottom">
                     <span>{employee?.systemCode || "Hồ sơ nội bộ"}</span>
                     <span>Cùng kiến tạo giá trị.</span>
                   </div>
                 </div>
-                <span className={styles.credentialSeal}><BackpackIcon /></span>
+                <span className="user-information__credentialSeal"><BackpackIcon /></span>
               </div>
 
             </div>
@@ -800,15 +810,20 @@ return (
             {/* =================================================
                 ĐƠN VỊ CÔNG TÁC
             ================================================= */}
-            <div className={styles.panel}>
+            <div className="user-information__panel">
 
               {/* Header */}
-              <div className={styles.panelHeader}>
+              <div className="user-common__panelHeader">
 
                 <div>
                   <h2 className="text-lg font-semibold text-[rgb(var(--color-text))]">
                     <LayersIcon aria-hidden="true" />
                     Đơn vị công tác
+                    {assignments.filter(a => !a.isDeleted).length > 0 && (
+                      <span className="user-information__panelCount">
+                        {assignments.filter(a => !a.isDeleted).length}
+                      </span>
+                    )}
                   </h2>
 
                   <p className="mt-1 text-xs text-[rgb(var(--color-accent))]">
@@ -821,7 +836,7 @@ return (
                 <button
                   type="button"
                   onClick={openAddAssignment}
-                  className={styles.button}
+                  className="user-common__button"
                 >
                   <PlusIcon aria-hidden="true" />
                   Thêm đơn vị
@@ -863,11 +878,11 @@ return (
                 </div>
               ) : (
                 <div
-                  className={styles.tableWrap}
+                  className="user-information__tableWrap"
                 >
 
                   <table
-                    className={styles.table}
+                    className="user-information__table"
                   >
 
                     <thead>
@@ -974,7 +989,7 @@ return (
 
                       {assignments
                         .filter(assignment => !assignment.isDeleted)
-                        .map((assignment, index) => (
+                        .map(assignment => (
 
                         <tr
                           data-primary={assignment.assignmentType === AssignmentType.Primary}
@@ -993,34 +1008,40 @@ return (
 
                           {/* Loại */}
                           <td data-label="Loại" className="px-4 py-5">
-
-                            <div className="flex items-center gap-2">
-
-                              {assignment.assignmentType ===
-                                AssignmentType.Primary && (
-                                <DrawingPinFilledIcon className={styles.primaryPin} aria-hidden="true" />
+                            <span
+                              className="user-information__typeBadge"
+                              data-primary={assignment.assignmentType === AssignmentType.Primary}
+                            >
+                              {assignment.assignmentType === AssignmentType.Primary && (
+                                <DrawingPinFilledIcon className="user-information__primaryPin" aria-hidden="true" />
                               )}
-
-                              <span className="text-[rgb(var(--color-text))]">
-                                {getAssignmentTypeText(
-                                  assignment.assignmentType
-                                )}
-                              </span>
-
-                            </div>
-
+                              {getAssignmentTypeText(assignment.assignmentType)}
+                            </span>
                           </td>
 
 
                           {/* Mã NV */}
                           <td data-label="Mã NV" className="px-4 py-5 text-[rgb(var(--color-muted))]">
-                            {assignment.employeeCode ?? "-"}
+                            {assignment.employeeCode ? (
+                              <span className="user-information__empCode">{assignment.employeeCode}</span>
+                            ) : "-"}
                           </td>
 
 
                           {/* Công ty */}
                           <td data-label="Công ty" className="px-4 py-5 text-[rgb(var(--color-text))]">
-                            {assignment.companyName ?? "-"}
+                            {assignment.companyName ? (() => {
+                              const matchedCompany = companies.find(
+                                c => c.id === assignment.companyId || c.companyName === assignment.companyName
+                              );
+                              const logoSrc = (matchedCompany?.companyCode && companyLogos[matchedCompany.companyCode]) || "/brand/deoca-icon.svg";
+                              return (
+                                <span className="user-information__companyCell">
+                                  <Image src={logoSrc} alt="" width={20} height={20} />
+                                  <span>{assignment.companyName}</span>
+                                </span>
+                              );
+                            })() : "-"}
                           </td>
 
 
@@ -1032,20 +1053,29 @@ return (
 
                           {/* Chức danh */}
                           <td data-label="Chức danh" className="px-4 py-5 text-[rgb(var(--color-text))]">
-                            {assignment.jobTitle ?? "-"}
+                            {assignment.jobTitle ? (
+                              <span className="user-information__roleTag">{assignment.jobTitle}</span>
+                            ) : "-"}
                           </td>
 
 
                           {/* Quản lý */}
                           <td data-label="Quản lý" className="px-4 py-5 text-[rgb(var(--color-text))]">
-                            {assignment.managerName ?? "-"}
+                            {assignment.managerName ? (
+                              <span className="user-information__managerCell">
+                                <span className="user-information__managerAvatar" aria-hidden="true">
+                                  {assignment.managerName.trim().split(/\s+/).slice(-1)[0]?.[0]?.toUpperCase() || "?"}
+                                </span>
+                                <span>{assignment.managerName}</span>
+                              </span>
+                            ) : "-"}
                           </td>
 
 
                           {/* Action */}
                           <td data-label="Thao tác" className="px-4 py-5">
 
-                            <div className={styles.rowActions}>
+                            <div className="user-information__rowActions">
 
                               {/* EDIT */}
                               <button
@@ -1055,7 +1085,7 @@ return (
                                     assignment
                                   )
                                 }
-                                className={styles.iconButton}
+                                className="user-information__iconButton"
                                 title="Sửa"
                                 aria-label={"Chỉnh sửa " + (assignment.companyName || "đơn vị công tác")}
                               >
@@ -1066,7 +1096,7 @@ return (
                               {/* DELETE */}
                               <button
                                 type="button"
-                                className={styles.iconButton + " " + styles.deleteButton}
+                                className="user-information__iconButton user-information__deleteButton"
                                 title="Xóa"
                                 aria-label={"Gỡ " + (assignment.companyName || "đơn vị công tác")}
                                 onClick={() =>
@@ -1090,8 +1120,9 @@ return (
             <button
               type="button"
               onClick={saveAssignments}
-              disabled={isLoading || assignmentsLoading}
-              className={styles.primaryButton + " " + styles.saveButton}
+              disabled={isLoading || assignmentsLoading || !hasPendingChanges}
+              data-dirty={hasPendingChanges || undefined}
+              className="user-common__primaryButton user-information__saveButton"
             >
               {isLoading && (
                 <span
@@ -1121,15 +1152,15 @@ return (
             TAB ĐỔI MẬT KHẨU
         =================================================== */}
         {activeTab === 1 && (
-          <div className={styles.panel + " " + styles.passwordLayout}>
+          <div className="user-information__panel user-information__passwordLayout">
 
             <PasswordChange
               isAdmin={false}
               onPasswordSubmit={handlePasswordSubmit}
             />
 
-            <aside className={styles.passwordAside}>
-              <div className={styles.lockArt} aria-hidden="true"><LockClosedIcon /></div>
+            <aside className="user-information__passwordAside">
+              <div className="user-information__lockArt" aria-hidden="true"><LockClosedIcon /></div>
               <h3>Một lớp bảo vệ.<br />An tâm làm việc.</h3>
               <p>Giữ mật khẩu riêng cho tài khoản công việc, tránh dùng lại mật khẩu từ các dịch vụ khác.</p>
               <ul>
@@ -1195,9 +1226,9 @@ function InfoRow({
 }) {
   return (
     <div
-      className={styles.infoRow}
+      className="user-information__infoRow"
     >
-      <span className={styles.factIcon} aria-hidden="true">{icon}</span>
+      <span className="user-information__factIcon" aria-hidden="true">{icon}</span>
       <div
         className="
           mb-1

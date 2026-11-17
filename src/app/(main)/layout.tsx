@@ -2,8 +2,8 @@ import React from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { appConfig } from "@/config/app";
-import { Sidebar } from "@/features/layout/components/sidebar";
-import { AppHeader } from "@/features/layout/components/app-header";
+import { Sidebar } from "@/features/layout/components/Sidebar";
+import { AppHeader } from "@/features/layout/components/AppHeader";
 
 export default async function MainLayout({
   children,
@@ -18,7 +18,7 @@ export default async function MainLayout({
     cookieStore.get(appConfig.userNameCookieName)?.value ?? "Người dùng";
 
   return (
-    <div className="min-h-screen bg-[rgb(var(--color-page))] text-[rgb(var(--color-text))]">
+    <div className="min-h-screen flow-root bg-[rgb(var(--color-page))] text-[rgb(var(--color-text))]">
       <AppHeader userName={userName} />
 
       <div className="flex">

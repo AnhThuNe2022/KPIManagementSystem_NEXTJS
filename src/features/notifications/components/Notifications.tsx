@@ -19,12 +19,12 @@ import {
   PersonIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
-import { notificationApi, NOTIFICATIONS_CHANGED } from "@/features/user/service/notificationApi";
-import type { NotificationItem, NotificationPage } from "@/types/notification";
-import styles from "../notifications.module.css";
+import { notificationApi, NOTIFICATIONS_CHANGED } from "@/features/notifications/services/notificationApi";
+import type { NotificationItem, NotificationPage } from "@/features/notifications/types";
+import "./Notifications.css";
 import { searchText, internalNotificationLink } from "@/features/notifications/notificationUtils";
-import { Pagination } from "@/components/ui/pagination";
-import { notify } from "@/components/ui/toast";
+import { Pagination } from "@/components/ui/Pagination";
+import { notify } from "@/components/ui/Toaster";
 
 type Status = "all" | "unread" | "read";
 const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
@@ -157,66 +157,24 @@ export function Notifications() {
   }
 
   return (
-    <div className={styles.page} data-ui>
-      <header className={styles.heading}>
-        <div className={styles.headingIdentity}>
-          <div>
-            <h1>
-              Thông báo<span className={styles.headingCount}>{data?.total ?? "—"}</span>
-            </h1>
-            <p className={styles.description}>
-              {data ? (
-                data.unreadCount ? (
-                  <>
-                    <strong>{data.unreadCount} chưa đọc</strong>
-                    <span aria-hidden="true"> · </span>Theo dõi các cập nhật của bạn.
-                  </>
-                ) : (
-                  "Bạn đã xem hết các cập nhật mới."
-                )
-              ) : (
-                "Cập nhật công việc và hoạt động của bạn."
-              )}
-            </p>
-          </div>
-          <div className={styles.actions}>
-            <button
-              type="button"
-              className={`${styles.button} ${styles.primary}`}
-              disabled={disabled || !data?.unreadCount}
-              onClick={() => void mutate(() => notificationApi.markAllRead(), "Đã đánh dấu tất cả thông báo là đã đọc.")}
-            >
-              <CheckIcon aria-hidden="true" />
-              Đọc tất cả
-            </button>
-            <button
-              type="button"
-              className={`${styles.button} ${styles.danger}`}
-              disabled={disabled || !data?.total}
-              onClick={() => confirmRef.current?.showModal()}
-            >
-              <TrashIcon aria-hidden="true" />
-              Xóa tất cả
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="notifications__page" data-ui>
+      <h1 className="notifications__srOnly">Thông báo</h1>
 
-      <div className={styles.workspace}>
-        <aside className={styles.overview} aria-label="Tổng quan thông báo">
-          <div className={styles.summary}>
-            <div className={styles.summaryLabel}>
+      <div className="notifications__workspace">
+        <aside className="notifications__overview" aria-label="Tổng quan thông báo">
+          <div className="notifications__summary">
+            <div className="notifications__summaryLabel">
               <span>Hộp thư của bạn</span>
-              <span className={styles.summaryBell}>
+              <span className="notifications__summaryBell">
                 <BellIcon aria-hidden="true" />
               </span>
             </div>
-            <div className={styles.summaryCount}>
+            <div className="notifications__summaryCount">
               <strong>{data?.unreadCount ?? "—"}</strong>
               <span>chưa đọc</span>
             </div>
             <progress
-              className={styles.readProgress}
+              className="notifications__readProgress"
               value={readCount}
               max={Math.max(data?.total ?? 0, 1)}
               aria-label="Số thông báo đã đọc"
@@ -225,14 +183,14 @@ export function Notifications() {
               {readCount} / {data?.total ?? 0} thông báo đã đọc
             </p>
           </div>
-          <div className={styles.overviewBody}>
+          <div className="notifications__overviewBody">
             <div
-              className={styles.filters}
+              className="notifications__filters"
               role="group"
               aria-label="Lọc trạng thái thông báo"
               data-active={status}
             >
-              <span className={styles.filterIndicator} aria-hidden="true" />
+              <span className="notifications__filterIndicator" aria-hidden="true" />
               {(
                 [
                   ["all", "Tất cả", BellIcon],
@@ -264,7 +222,7 @@ export function Notifications() {
                 </button>
               ))}
             </div>
-            <nav className={styles.quickLinks} aria-label="Truy cập nhanh">
+            <nav className="notifications__quickLinks" aria-label="Truy cập nhanh">
               <h2>Truy cập nhanh</h2>
               {(
                 [
@@ -274,7 +232,7 @@ export function Notifications() {
                 ] as const
               ).map(([href, label, Icon]) => (
                 <Link key={href} href={href}>
-                  <span className={styles.quickLinkIcon}>
+                  <span className="notifications__quickLinkIcon">
                     <Icon aria-hidden="true" />
                   </span>
                   <span>{label}</span>
@@ -285,13 +243,13 @@ export function Notifications() {
           </div>
         </aside>
 
-        <section className={styles.inbox} aria-label="Danh sách thông báo">
-          <div className={styles.toolbar}>
-            <div className={styles.streamHeading}>
-              <span className={styles.streamIcon}>
+        <section className="notifications__inbox" aria-label="Danh sách thông báo">
+          <div className="notifications__toolbar">
+            <div className="notifications__streamHeading">
+              <span className="notifications__streamIcon">
                 <EnvelopeOpenIcon aria-hidden="true" />
               </span>
-              <div className={styles.streamTitle}>
+              <div className="notifications__streamTitle">
                 <h2>
                   {status === "unread"
                     ? "Chưa đọc"
@@ -308,46 +266,68 @@ export function Notifications() {
                 </span>
               </div>
             </div>
-            <div className={styles.search} role="search">
-              <MagnifyingGlassIcon aria-hidden="true" />
-              <label htmlFor="notifications-search" className={styles.srOnly}>
-                Tìm thông báo
-              </label>
-              <input
-                ref={searchRef}
-                id="notifications-search"
-                type="search"
-                value={query}
-                placeholder="Tìm nội dung thông báo…"
-                autoComplete="off"
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                  setPage(1);
-                }}
-              />
-              {query && (
+            <div className="notifications__toolbarControls">
+              <div className="notifications__actions">
                 <button
                   type="button"
-                  aria-label="Xóa từ khóa tìm kiếm"
-                  onClick={() => {
-                    setQuery("");
-                    setPage(1);
-                    searchRef.current?.focus();
-                  }}
+                  className={`notifications__button notifications__primary`}
+                  disabled={disabled || !data?.unreadCount}
+                  onClick={() => void mutate(() => notificationApi.markAllRead(), "Đã đánh dấu tất cả thông báo là đã đọc.")}
                 >
-                  <Cross2Icon aria-hidden="true" />
+                  <CheckIcon aria-hidden="true" />
+                  Đọc tất cả
                 </button>
-              )}
+                <button
+                  type="button"
+                  className={`notifications__button notifications__danger`}
+                  disabled={disabled || !data?.total}
+                  onClick={() => confirmRef.current?.showModal()}
+                >
+                  <TrashIcon aria-hidden="true" />
+                  Xóa tất cả
+                </button>
+              </div>
+              <div className="notifications__search" role="search">
+                <MagnifyingGlassIcon aria-hidden="true" />
+                <label htmlFor="notifications-search" className="notifications__srOnly">
+                  Tìm thông báo
+                </label>
+                <input
+                  ref={searchRef}
+                  id="notifications-search"
+                  type="search"
+                  value={query}
+                  placeholder="Tìm nội dung thông báo…"
+                  autoComplete="off"
+                  onChange={(event) => {
+                    setQuery(event.target.value);
+                    setPage(1);
+                  }}
+                />
+                {query && (
+                  <button
+                    type="button"
+                    aria-label="Xóa từ khóa tìm kiếm"
+                    onClick={() => {
+                      setQuery("");
+                      setPage(1);
+                      searchRef.current?.focus();
+                    }}
+                  >
+                    <Cross2Icon aria-hidden="true" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
           {error && (
-            <div className={styles.error} role="alert">
+            <div className="notifications__error" role="alert">
               <InfoCircledIcon aria-hidden="true" />
               <span>{error}</span>
               <button
                 type="button"
-                className={styles.retry}
+                className="notifications__retry"
                 disabled={loading || busy}
                 onClick={() => setRevision((value) => value + 1)}
               >
@@ -356,11 +336,11 @@ export function Notifications() {
             </div>
           )}
 
-          <div className={styles.content} aria-busy={loading || busy}>
+          <div className="notifications__content" aria-busy={loading || busy}>
             {!ready && (loading || !error) ? (
-              <div className={styles.skeletons} role="status" aria-label="Đang tải thông báo">
+              <div className="notifications__skeletons" role="status" aria-label="Đang tải thông báo">
                 {[0, 1, 2, 3].map((key) => (
-                  <div className={styles.skeleton} key={key} aria-hidden="true">
+                  <div className="notifications__skeleton" key={key} aria-hidden="true">
                     <i />
                     <div>
                       <i />
@@ -370,29 +350,29 @@ export function Notifications() {
                 ))}
               </div>
             ) : ready && items.length ? (
-              <div className={styles.groups}>
+              <div className="notifications__groups">
                 {Array.from(groups, ([day, dayItems]) => (
-                  <section key={day} className={styles.group} aria-label={day || "Thông báo khác"}>
+                  <section key={day} className="notifications__group" aria-label={day || "Thông báo khác"}>
                     {day && (
-                      <h3 className={styles.groupTitle}>
+                      <h3 className="notifications__groupTitle">
                         <CalendarIcon aria-hidden="true" />
                         {day}
                         <span>{dayItems.length}</span>
                       </h3>
                     )}
-                    <ul className={styles.list}>
+                    <ul className="notifications__list">
                       {dayItems.map((item) => {
                         const date = notificationDate(item.createdAt);
                         return (
-                          <li key={item.id} className={styles.row} data-unread={!item.isRead}>
-                            <span className={styles.itemIcon}>
+                          <li key={item.id} className="notifications__row" data-unread={!item.isRead}>
+                            <span className="notifications__itemIcon">
                               {item.isRead ? (
                                 <EnvelopeOpenIcon aria-hidden="true" />
                               ) : (
                                 <EnvelopeClosedIcon aria-hidden="true" />
                               )}
                             </span>
-                            <div className={styles.message}>
+                            <div className="notifications__message">
                               <button
                                 type="button"
                                 disabled={disabled || (item.isRead && !item.linkNoti)}
@@ -402,8 +382,8 @@ export function Notifications() {
                               >
                                 {item.message}
                               </button>
-                              <div className={styles.meta}>
-                                <span className={styles.timestamp}>
+                              <div className="notifications__meta">
+                                <span className="notifications__timestamp">
                                   {date && (
                                     <>
                                       <ClockIcon aria-hidden="true" />
@@ -411,7 +391,7 @@ export function Notifications() {
                                     </>
                                   )}
                                 </span>
-                                <span className={styles.status}>
+                                <span className="notifications__status">
                                   {item.isRead ? (
                                     <CheckIcon aria-hidden="true" />
                                   ) : (
@@ -421,11 +401,11 @@ export function Notifications() {
                                 </span>
                               </div>
                             </div>
-                            <div className={styles.rowActions}>
+                            <div className="notifications__rowActions">
                               {!item.isRead && (
                                 <button
                                   type="button"
-                                  className={styles.iconButton}
+                                  className="notifications__iconButton"
                                   disabled={disabled}
                                   title="Đánh dấu đã đọc"
                                   aria-label={`Đánh dấu đã đọc: ${item.message}`}
@@ -438,7 +418,7 @@ export function Notifications() {
                               )}
                               <button
                                 type="button"
-                                className={`${styles.iconButton} ${styles.danger}`}
+                                className={`notifications__iconButton notifications__danger`}
                                 disabled={disabled}
                                 title="Xóa thông báo"
                                 aria-label={`Xóa thông báo: ${item.message}`}
@@ -457,8 +437,8 @@ export function Notifications() {
                 ))}
               </div>
             ) : (
-              <div className={styles.empty}>
-                <span className={styles.emptyIcon}>
+              <div className="notifications__empty">
+                <span className="notifications__emptyIcon">
                   {error && !ready ? (
                     <InfoCircledIcon aria-hidden="true" />
                   ) : term ? (
@@ -488,7 +468,7 @@ export function Notifications() {
                 {filtering && !error && (
                   <button
                     type="button"
-                    className={styles.button}
+                    className="notifications__button"
                     onClick={() => {
                       setQuery("");
                       setStatus("all");
@@ -519,11 +499,11 @@ export function Notifications() {
 
       <dialog
         ref={confirmRef}
-        className={styles.dialog}
+        className="notifications__dialog"
         aria-labelledby="delete-notifications-title"
         aria-describedby="delete-notifications-description"
       >
-        <span className={`${styles.emptyIcon} ${styles.danger}`}>
+        <span className={`notifications__emptyIcon notifications__danger`}>
           <TrashIcon aria-hidden="true" />
         </span>
         <h2 id="delete-notifications-title">Xóa tất cả thông báo?</h2>
@@ -531,10 +511,10 @@ export function Notifications() {
           Toàn bộ {data?.total ?? 0} thông báo, gồm cả đã đọc và chưa đọc, sẽ bị xóa. Bạn không thể
           khôi phục sau khi xóa.
         </p>
-        <div className={styles.actions}>
+        <div className="notifications__actions">
           <button
             type="button"
-            className={styles.button}
+            className="notifications__button"
             autoFocus
             disabled={busy}
             onClick={() => confirmRef.current?.close()}
@@ -543,7 +523,7 @@ export function Notifications() {
           </button>
           <button
             type="button"
-            className={`${styles.button} ${styles.deleteConfirm}`}
+            className={`notifications__button notifications__deleteConfirm`}
             disabled={disabled}
             onClick={() =>
               void mutate(
@@ -560,7 +540,7 @@ export function Notifications() {
           </button>
         </div>
         {error && (
-          <p role="alert" className={styles.dialogError}>
+          <p role="alert" className="notifications__dialogError">
             {error}
           </p>
         )}

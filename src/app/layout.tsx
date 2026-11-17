@@ -1,7 +1,7 @@
 import "./globals.css";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider } from "@/features/auth/AuthProvider";
 import type { Metadata } from "next";
-import { AppToaster } from "@/components/ui/toast";
+import { AppToaster } from "@/components/ui/Toaster";
 export const metadata: Metadata = {
   title: "KPI Management System",
   description: "DCG KPI management platform",

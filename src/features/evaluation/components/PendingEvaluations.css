@@ -1,0 +1,437 @@
+.pending-evaluations__page { --pending-avatar: #182b81; --pending-avatar-soft: #eaf0ff; --pending-purple: #6740a4; --pending-purple-soft: #f1ebfc; --pending-wait: #81520a; --pending-wait-soft: #fff2d6; --pending-rejected: #b42336; --pending-rejected-soft: #ffe7ed; }
+html.dark .pending-evaluations__page { --pending-avatar: #a7bbff; --pending-avatar-soft: #202f50; --pending-purple: #c4adff; --pending-purple-soft: #302747; --pending-wait: #e9c979; --pending-wait-soft: #39301d; --pending-rejected: #ffafba; --pending-rejected-soft: #492532; }
+.pending-evaluations__heading {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin: 12px 0 20px;
+  padding: 20px 24px;
+  overflow: hidden;
+  border: 1px solid rgb(var(--color-border) / .85);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgb(var(--color-surface)) 0%, rgb(var(--color-brand) / .04) 65%, rgb(var(--deoca-accent-rgb) / .035) 100%);
+  box-shadow: 0 8px 24px -18px rgb(var(--deoca-primary-rgb) / .28);
+}
+html.dark .pending-evaluations__heading {
+  background: linear-gradient(135deg, rgb(var(--color-surface)) 0%, rgb(var(--color-brand) / .09) 65%, rgb(var(--deoca-accent-rgb) / .06) 100%);
+  box-shadow: 0 10px 28px -18px rgb(0 0 0 / .6);
+}
+.pending-evaluations__headingBody {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+.pending-evaluations__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: rgb(var(--color-brand));
+  font-size: var(--text-meta);
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.pending-evaluations__eyebrow::before {
+  content: "";
+  width: 18px;
+  height: 2.5px;
+  border-radius: 2px;
+  background: rgb(var(--deoca-accent-rgb));
+}
+.pending-evaluations__titleLine {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+}
+.pending-evaluations__heading h1 {
+  margin: 0;
+  font-size: clamp(25px, 2.2vw, 32px);
+  font-weight: 750;
+  line-height: 1.3;
+  letter-spacing: -.03em;
+  text-wrap: balance;
+}
+.pending-evaluations__description {
+  margin: 6px 0 0;
+  color: var(--panel-muted);
+  font-size: var(--text-body);
+  line-height: 1.7;
+}
+.pending-evaluations__headingAside {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid rgb(var(--color-border) / .85);
+  border-radius: 15px;
+  background: rgb(var(--color-surface) / .85);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .08), 0 8px 20px -12px rgb(var(--panel-shadow) / .35);
+}
+.pending-evaluations__statPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 5px 14px 5px 7px;
+  border-radius: 10px;
+  background: rgb(var(--color-brand) / .045);
+  color: var(--panel-muted);
+  font-size: var(--text-meta);
+  font-weight: 600;
+  white-space: nowrap;
+}
+html.dark .pending-evaluations__statPill {
+  background: rgb(255 255 255 / .04);
+}
+.pending-evaluations__statBadge {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 7px;
+  border-radius: 9px;
+  background: rgb(var(--color-brand) / .12);
+  color: rgb(var(--color-brand));
+}
+html.dark .pending-evaluations__statBadge {
+  background: rgb(var(--color-brand) / .2);
+  color: #93c5fd;
+}
+.pending-evaluations__statPill strong {
+  color: inherit;
+  font-size: 20px;
+  font-weight: 750;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.pending-evaluations__statPill[data-variant="period"] {
+  align-items: center;
+  color: rgb(var(--color-text));
+  background: rgb(var(--deoca-accent-rgb) / .06);
+}
+html.dark .pending-evaluations__statPill[data-variant="period"] {
+  background: rgb(var(--deoca-accent-rgb) / .1);
+}
+.pending-evaluations__statPill[data-variant="period"] .pending-evaluations__statBadge {
+  background: rgb(var(--deoca-accent-rgb) / .12);
+  color: rgb(var(--color-accent));
+}
+.pending-evaluations__statPill[data-variant="period"] svg {
+  width: var(--icon-inline);
+  height: var(--icon-inline);
+  color: inherit;
+}
+.pending-evaluations__page .pending-evaluations__filters { padding: 16px; margin-bottom: 18px; border-radius: 14px; }
+.pending-evaluations__primaryFilters { display: grid; grid-template-columns: minmax(180px, 1.4fr) minmax(140px, 1fr) minmax(140px, 1fr) auto; align-items: start; gap: 12px; }
+.pending-evaluations__primaryFilters label, .pending-evaluations__advancedFilters label, .pending-evaluations__selectField { min-width: 0; }
+.pending-evaluations__page .pending-evaluations__filters :is(input, select) { font-size: var(--text-body); }
+.pending-evaluations__searchControl > svg:last-child { left: 13px; right: auto; }
+.pending-evaluations__filterButtons { display: flex; align-items: center; gap: 8px; }
+.pending-evaluations__page .pending-evaluations__filterButtons button { min-height: 44px; border-radius: 9px; font-size: var(--text-body); }
+.pending-evaluations__page .pending-evaluations__applyButton { color: #fff; border-color: transparent; background: rgb(var(--deoca-accent-rgb)); box-shadow: 0 3px 8px rgb(var(--deoca-accent-rgb) / .16); }
+.pending-evaluations__page .pending-evaluations__applyButton:focus-visible { outline-color: rgb(var(--color-accent)); }
+.pending-evaluations__moreFilters { gap: 8px; }
+.pending-evaluations__moreFilters > b { display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 6px; color: rgb(var(--color-brand)); background: rgb(var(--color-brand) / .1); font-size: var(--text-meta); }
+.pending-evaluations__moreFilters > svg:last-child { width: var(--icon-inline); height: var(--icon-inline); }
+.pending-evaluations__moreFilters[aria-expanded="true"] { color: rgb(var(--color-brand)); background: rgb(var(--color-brand) / .08); }
+.pending-evaluations__moreFilters[aria-expanded="true"] > svg:last-child { transform: rotate(180deg); }
+.pending-evaluations__page .pending-evaluations__clearButton { width: 44px; padding: 0; }
+.pending-evaluations__advancedFilters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgb(var(--color-border) / .65); }
+.pending-evaluations__advancedFilters[hidden] { display: none; }
+.pending-evaluations__advancedFilters label > span, .pending-evaluations__advancedFilters .pending-evaluations__selectField > span { display: block; margin-bottom: 7px; color: var(--panel-muted); font-size: var(--text-label); }
+.pending-evaluations__filterHint { grid-column: 1 / -1; margin: 0; color: var(--panel-muted); font-size: var(--text-meta); }
+.pending-evaluations__appliedFilters { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding-top: 13px; border-top: 1px solid rgb(var(--color-border) / .55); font-size: var(--text-meta); }
+.pending-evaluations__appliedFilters > span:first-child { color: var(--panel-muted); }
+.pending-evaluations__appliedFilters > span:not(:first-child) { max-width: 100%; padding: 4px 9px; border-radius: 6px; color: rgb(var(--color-brand)); background: rgb(var(--color-brand) / .07); overflow-wrap: anywhere; }
+.pending-evaluations__page .pending-evaluations__listHeading { padding: 14px 20px; }
+.pending-evaluations__page .pending-evaluations__listHeading h2 { font-size: 15px; }
+.pending-evaluations__page .pending-evaluations__listIcon { color: rgb(var(--color-accent)); background: rgb(var(--color-accent) / .1); box-shadow: none; }
+.pending-evaluations__listTools { display: flex; align-items: center; gap: 8px; }
+.pending-evaluations__listTools label { width: 160px; }
+.pending-evaluations__listTools select { font-size: var(--text-body); }
+.pending-evaluations__listTools .pending-evaluations__bulkReject { margin-left: 0; }
+.pending-evaluations__page .pending-evaluations__table { min-width: 1180px; font-size: var(--text-body); }
+.pending-evaluations__page .pending-evaluations__table th { padding: 11px 10px; font-size: var(--text-label); }
+.pending-evaluations__columnLabel { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; white-space: nowrap; }
+.pending-evaluations__columnLabel svg { width: var(--icon-inline); height: var(--icon-inline); flex-shrink: 0; opacity: .78; }
+.pending-evaluations__page .pending-evaluations__table td { padding: 12px 10px; line-height: 1.55; }
+.pending-evaluations__employeeColumn { width: 175px; }
+.pending-evaluations__companyColumn { width: 165px; }
+.pending-evaluations__periodColumn { width: auto; min-width: 210px; }
+.pending-evaluations__scoreColumn { width: 110px; text-align: center; }
+.pending-evaluations__dateColumn { width: 172px; }
+.pending-evaluations__statusColumn { width: 140px; }
+.pending-evaluations__actionsColumn { width: 164px; }
+.pending-evaluations__page .pending-evaluations__employeeCell > div { align-items: center; gap: 11px; padding: 0; border: 0; }
+.pending-evaluations__page .pending-evaluations__employeeCell > div > span { width: 34px; height: 34px; border-radius: 10px; color: var(--pending-avatar); background: var(--pending-avatar-soft); box-shadow: none; }
+.pending-evaluations__employeeCell > div > span > svg { width: 55%; height: 55%; }
+.pending-evaluations__page .pending-evaluations__employeeCell strong { font-size: var(--text-body); }
+.pending-evaluations__page .pending-evaluations__employeeCell > div > div > span { color: var(--panel-muted); font-size: var(--text-body); }
+.pending-evaluations__companyIdentity { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; }
+.pending-evaluations__companyLogo { display: block; width: 32px; height: 32px; flex-shrink: 0; object-fit: contain; object-position: center; }
+.pending-evaluations__company { display: inline-block; padding: 2px 6px; border: 1px solid rgb(var(--color-brand) / .15); border-radius: 4px; color: rgb(var(--color-brand)); background: rgb(var(--color-brand) / .05); font-size: var(--text-meta); font-weight: 750; }
+.pending-evaluations__department { display: block; margin-top: 6px; color: var(--panel-muted); font-size: var(--text-body); overflow-wrap: break-word; }
+.pending-evaluations__periodIdentity { display: flex; align-items: center; gap: 10px; }
+.pending-evaluations__periodIcon { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 34px; border-radius: 9px; color: var(--pending-purple); background: var(--pending-purple-soft); }
+.pending-evaluations__periodIcon svg { width: 17px; height: 17px; }
+.pending-evaluations__period { min-width: 0; font-size: var(--text-body); font-weight: 650; line-height: 1.7; overflow-wrap: break-word; }
+.pending-evaluations__date { display: flex; align-items: center; gap: 6px; }
+.pending-evaluations__date > svg { flex-shrink: 0; width: var(--icon-inline); height: var(--icon-inline); color: var(--pending-wait); }
+.pending-evaluations__page .pending-evaluations__table time { color: var(--panel-muted); font-size: var(--text-meta); line-height: 1.6; }
+.pending-evaluations__page .pending-evaluations__status { max-width: 100%; padding: 5px 10px 5px 14px; border-radius: 3px; clip-path: polygon(9px 0, 100% 0, 100% 100%, 9px 100%, 0 50%); color: var(--pending-wait); background: var(--pending-wait-soft); font-size: var(--text-meta); font-weight: 700; line-height: 1.5; }
+.pending-evaluations__page .pending-evaluations__status[data-rejected="true"] { color: var(--pending-rejected); background: var(--pending-rejected-soft); }
+.pending-evaluations__page .pending-evaluations__status[data-tone="review"] { color: #1d4ed8; background: #e8f0ff; }
+.pending-evaluations__page .pending-evaluations__status[data-tone="hr"] { color: var(--pending-purple); background: var(--pending-purple-soft); }
+html.dark .pending-evaluations__page .pending-evaluations__status[data-tone="review"] { color: #93c5fd; background: #1e2f52; }
+.pending-evaluations__scoreCell { text-align: center; }
+.pending-evaluations__scoreBadge { display: inline-flex; align-items: center; justify-content: center; min-width: 52px; padding: 4px 10px; border: 1px solid rgb(var(--color-border)); border-radius: 8px; background: var(--panel-well, rgb(var(--color-surface))); color: rgb(var(--color-text)); font-weight: 700; font-variant-numeric: tabular-nums; }
+html.dark .pending-evaluations__page .evaluation-common__viewButton { color: #dbeafe; border-color: rgb(147 197 253 / .28); background: rgb(59 130 246 / .14); }
+html.dark .pending-evaluations__page .evaluation-common__viewButton:hover:not(:disabled) { border-color: rgb(147 197 253 / .5); background: rgb(59 130 246 / .24); }
+html.dark .pending-evaluations__page .pending-evaluations__filters :is(input:disabled, select:disabled, button:disabled) { color: rgb(var(--color-text) / .55); border-color: rgb(var(--color-border) / .85); }
+.pending-evaluations__page .pending-evaluations__status i { width: 5px; height: 5px; border: 1px solid currentColor; background: transparent; }
+.pending-evaluations__page .pending-evaluations__reason { display: block; margin-top: 8px; color: var(--pending-rejected); font-size: var(--text-body); white-space: pre-wrap; overflow-wrap: anywhere; }
+.pending-evaluations__page .pending-evaluations__selectionCount { color: rgb(var(--color-brand)); font-size: var(--text-meta); }
+.pending-evaluations__page .pending-evaluations__rowActions button { min-height: 38px; padding: 7px 9px; border-radius: 8px; font-size: var(--text-body); }
+.pending-evaluations__page .pending-evaluations__rowActions button:disabled { opacity: .55; cursor: not-allowed; }
+.pending-evaluations__page footer > p, .pending-evaluations__page footer label, .pending-evaluations__page footer button { font-size: var(--text-label); }
+.pending-evaluations__page footer select { font-size: var(--text-body); }
+.pending-evaluations__table .pending-evaluations__selectionCell {
+  width: 48px;
+  padding-inline: 8px;
+  text-align: center;
+}
+.pending-evaluations__checkboxControl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 32px;
+  min-height: 40px;
+  cursor: pointer;
+}
+.pending-evaluations__checkboxControl input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: rgb(var(--color-brand));
+  cursor: pointer;
+}
+.pending-evaluations__selectionLabel {
+  display: none;
+}
+.pending-evaluations__selectionCount {
+  color: var(--panel-muted);
+  font-size: var(--text-meta);
+}
+.pending-evaluations__rowActions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+}
+.pending-evaluations__previewBody {
+  padding: 20px 22px;
+}
+.pending-evaluations__previewGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+  margin: 0;
+}
+.pending-evaluations__previewGrid dt {
+  margin-bottom: 4px;
+  color: var(--panel-muted);
+  font-size: var(--text-label);
+}
+.pending-evaluations__previewGrid dd {
+  margin: 0;
+  color: rgb(var(--color-text));
+  font-size: var(--text-body);
+  overflow-wrap: anywhere;
+}
+.pending-evaluations__previewFull {
+  grid-column: 1 / -1;
+}
+.pending-evaluations__rejectButton {
+  min-height: 36px;
+  padding: 7px 10px;
+  border-color: rgb(var(--color-accent) / 0.25);
+  color: rgb(var(--color-accent));
+  background: rgb(var(--color-accent) / 0.045);
+}
+.pending-evaluations__bulkReject {
+  min-height: 40px;
+  margin-left: auto;
+}
+.pending-evaluations__rejectDialog {
+  width: min(480px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid rgb(var(--color-border));
+  border-radius: 18px;
+  color: rgb(var(--color-text));
+  background: var(--panel-paper);
+  box-shadow: var(--panel-depth);
+  overscroll-behavior: contain;
+}
+.pending-evaluations__rejectDialog::backdrop {
+  background: rgb(7 16 41 / 0.5);
+}
+.pending-evaluations__rejectDialog[open] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity 250ms var(--ease-out),
+    transform 250ms var(--ease-out);
+}
+.pending-evaluations__rejectDialog[open]::backdrop {
+  opacity: 1;
+  transition: opacity 250ms var(--ease-out);
+}
+@starting-style {
+  .pending-evaluations__rejectDialog[open] {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  .pending-evaluations__rejectDialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+.pending-evaluations__rejectHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgb(var(--color-border));
+}
+.pending-evaluations__rejectHeader h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 750;
+}
+.pending-evaluations__rejectBody {
+  padding: 20px;
+}
+.pending-evaluations__rejectBody p {
+  margin: 0 0 16px;
+  color: var(--panel-muted);
+  font-size: var(--text-meta);
+}
+.pending-evaluations__rejectBody label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: var(--text-label);
+  font-weight: 650;
+}
+.pending-evaluations__rejectBody textarea {
+  display: block;
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border: 1px solid rgb(var(--color-border));
+  border-radius: 11px;
+  resize: vertical;
+  background: var(--panel-well);
+  color: rgb(var(--color-text));
+  box-shadow: var(--panel-recess);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.7;
+}
+.pending-evaluations__rejectFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 0 20px 20px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pending-evaluations__rejectButton:not(:disabled):hover {
+    color: rgb(var(--color-accent));
+    background: rgb(var(--color-accent) / 0.1);
+  }
+}
+@container evaluationReview (max-width: 1200px) {
+  .pending-evaluations__total { padding-left: 0; border-left: 0; }
+}
+@container evaluationReview (max-width: 900px) {
+  .pending-evaluations__primaryFilters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pending-evaluations__primaryFilters > label:first-child, .pending-evaluations__filterButtons { grid-column: 1 / -1; }
+  .pending-evaluations__filterButtons { justify-content: flex-end; }
+}
+@container evaluationReview (max-width: 1050px) {
+  .pending-evaluations__page .pending-evaluations__table, .pending-evaluations__page .pending-evaluations__table tbody { display: block; min-width: 0; }
+  .pending-evaluations__page .pending-evaluations__table { table-layout: auto; }
+  .pending-evaluations__page .pending-evaluations__table thead, .pending-evaluations__page .pending-evaluations__table thead tr { display: block; }
+  .pending-evaluations__page .pending-evaluations__table th:not(.pending-evaluations__selectionCell) { display: none; }
+  .pending-evaluations__page .pending-evaluations__table th.pending-evaluations__selectionCell { display: block; width: 100%; height: auto; padding: 8px 16px; text-align: left; }
+  .pending-evaluations__page .pending-evaluations__table tbody { display: grid; gap: 14px; padding: 16px; }
+  .pending-evaluations__page .pending-evaluations__table tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 20px; padding: 20px; border: 1px solid rgb(var(--color-border) / .65); border-radius: 14px; }
+  .pending-evaluations__page .pending-evaluations__table td { min-width: 0; padding: 0; border: 0; }
+  .pending-evaluations__page .pending-evaluations__table td::before { content: attr(data-label); display: block; margin-bottom: 8px; color: var(--panel-muted); font-size: var(--text-label); font-weight: 500; }
+  .pending-evaluations__page .pending-evaluations__table td.pending-evaluations__selectionCell { width: auto; text-align: left; grid-column: 1 / -1; grid-row: 1; padding-bottom: 10px; border-bottom: 1px solid rgb(var(--color-border) / .6); }
+  .pending-evaluations__page .pending-evaluations__table .pending-evaluations__employeeCell { grid-column: 1 / -1; grid-row: 2; }
+  .pending-evaluations__page .pending-evaluations__table .pending-evaluations__periodCell { grid-column: 1 / -1; grid-row: 3; }
+  .pending-evaluations__page .pending-evaluations__table .pending-evaluations__organizationCell { grid-column: 1 / -1; grid-row: 4; }
+  .pending-evaluations__page .pending-evaluations__table .pending-evaluations__dateCell { grid-column: 1; grid-row: 5; }
+  .pending-evaluations__page .pending-evaluations__table .pending-evaluations__statusCell { grid-column: 2; grid-row: 5; text-align: right; }
+  .pending-evaluations__page .pending-evaluations__table .pending-evaluations__actionsCell { grid-column: 1 / -1; grid-row: 6; }
+  .pending-evaluations__page .pending-evaluations__table .pending-evaluations__selectionCell::before, .pending-evaluations__page .pending-evaluations__table .pending-evaluations__employeeCell::before, .pending-evaluations__page .pending-evaluations__table .pending-evaluations__actionsCell::before { display: none; }
+  .pending-evaluations__selectionLabel { display: inline; font-size: var(--text-meta); }
+  .pending-evaluations__rowActions > button { flex: 1; }
+  .pending-evaluations__page .pending-evaluations__rowActions > button, .pending-evaluations__checkboxControl { min-height: 44px; }
+  .pending-evaluations__page .pending-evaluations__tableWrap { overflow: visible; }
+}
+@container evaluationReview (max-width: 600px) {
+  .pending-evaluations__heading { margin-top: 14px; }
+  .pending-evaluations__heading h1 { font-size: 25px; }
+  .pending-evaluations__total { font-size: var(--text-meta); }
+  .pending-evaluations__total strong { font-size: 19px; }
+  .pending-evaluations__page .pending-evaluations__filters { padding: 12px; }
+  .pending-evaluations__primaryFilters { gap: 10px; }
+  .pending-evaluations__page .pending-evaluations__filters :is(input, select), .pending-evaluations__listTools select { font-size: 16px; }
+  .pending-evaluations__filterButtons { justify-content: stretch; gap: 7px; }
+  .pending-evaluations__filterButtons > button:first-child { flex: 1; }
+  .pending-evaluations__page .pending-evaluations__filterButtons button { padding-inline: 10px; }
+  .pending-evaluations__page .pending-evaluations__clearButton { flex-shrink: 0; }
+  .pending-evaluations__advancedFilters { grid-template-columns: minmax(0, 1fr); }
+  .pending-evaluations__page .pending-evaluations__listHeading { padding: 13px 16px; flex-wrap: wrap; }
+  .pending-evaluations__page .pending-evaluations__listHeading > div { flex-basis: 100%; }
+  .pending-evaluations__page .pending-evaluations__listTools { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+  .pending-evaluations__listTools label { width: 100%; min-width: 0; }
+  .pending-evaluations__listTools[data-hr="false"] label { grid-column: 1 / -1; }
+  .pending-evaluations__listTools .pending-evaluations__bulkReject { justify-self: start; }
+  .pending-evaluations__page .pending-evaluations__table tbody { padding: 12px; }
+  .pending-evaluations__page .pending-evaluations__table tbody tr { gap: 16px 14px; padding: 16px; }
+  .pending-evaluations__periodIcon { width: 28px; height: 30px; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .pending-evaluations__page .pending-evaluations__applyButton:not(:disabled):hover { background: rgb(var(--deoca-accent-hover-rgb)); }
+}
+@media (pointer: coarse) {
+  .pending-evaluations__page .pending-evaluations__rowActions > button { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pending-evaluations__rejectDialog[open],
+  .pending-evaluations__rejectDialog[open]::backdrop {
+    transition: opacity 200ms var(--ease-out) !important;
+  }
+  @starting-style {
+    .pending-evaluations__rejectDialog[open] {
+      transform: translateY(0) scale(1);
+    }
+  }
+}

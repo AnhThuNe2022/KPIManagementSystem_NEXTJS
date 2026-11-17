@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { authenticate } from "@/lib/api/auth";
-import type { LoginCredentials } from "@/types/auth";
+import { authenticate } from "@/features/auth/services/authenticate";
+import type { LoginCredentials } from "@/features/auth/types";
 
 export async function POST(request: Request) {
   try {

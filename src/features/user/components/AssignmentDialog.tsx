@@ -4,16 +4,18 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   CompanyDto,
+} from "@/features/company/types";
+import {
   DepartmentDto,
-} from "@/types/employee";
+} from "@/features/department/types";
 
 import {
   UserOrganizationDto,
-} from "@/types/organization";
+} from "@/features/user/types";
 
 import {
   AssignmentType,
-} from "@/types/organization";
+} from "@/features/user/types";
 import {
   BackpackIcon,
   CheckIcon,
@@ -24,10 +26,10 @@ import {
   MixIcon,
   PersonIcon,
 } from "@radix-ui/react-icons";
-import styles from "../user-information.module.css";
-import { departmentApi } from "../service/departmentApi";
+import "../user-common.css";
+import { departmentApi } from "@/features/department/services/departmentApi";
 import ManagerSearch, { ManagerOption } from "./ManagerSearch";
-import { SearchableSelect } from "@/components/ui/searchable-select";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 
 interface AssignmentDialogProps {
   open: boolean;
@@ -379,7 +381,7 @@ if (!open) {
 
 return (
   <dialog
-    className={styles.dialog}
+    className="user-common__dialog"
     ref={dialogRef}
     aria-labelledby="AssignmentDialog-title"
     onCancel={event => {
@@ -388,12 +390,12 @@ return (
     }}
   >
     <div
-      className={styles.dialogSurface}
+      className="user-common__dialogSurface"
     >
       {/* =====================================================
           HEADER
       ===================================================== */}
-      <div className={styles.dialogHeader}>
+      <div className="user-common__dialogHeader">
         <h2 id="AssignmentDialog-title"
           className="
             text-[20px]
@@ -411,8 +413,8 @@ return (
       {/* =====================================================
           BODY
       ===================================================== */}
-      <div className={styles.dialogBody}>
-        <div className={styles.formFields}>
+      <div className="user-common__dialogBody">
+        <div className="user-common__formFields">
 
           {/* =================================================
               ROW 1
@@ -428,7 +430,7 @@ return (
                 className="
                   mb-1
                   block
-                  text-[12px]
+                  text-[13px]
                   font-medium
                   text-[rgb(var(--color-muted))]
                 "
@@ -564,7 +566,7 @@ return (
                 className="
                   mb-1
                   block
-                  text-[12px]
+                  text-[13px]
                   font-medium
                   text-[rgb(var(--color-muted))]
                 "
@@ -627,7 +629,7 @@ return (
                 className="
                   mb-1
                   block
-                  text-[12px]
+                  text-[13px]
                   font-medium
                   text-[rgb(var(--color-muted))]
                 "
@@ -688,7 +690,7 @@ return (
                 className="
                   mb-1
                   block
-                  text-[12px]
+                  text-[13px]
                   font-medium
                   text-[rgb(var(--color-muted))]
                 "
@@ -751,7 +753,7 @@ return (
               className="
                 mb-1
                 block
-                text-[12px]
+                text-[13px]
                 font-medium
                 text-[rgb(var(--color-muted))]
               "
@@ -852,7 +854,7 @@ return (
                   <label
                     htmlFor="managerId"
                     className="
-                      text-[12px]
+                      text-[13px]
                       font-medium
                       text-[rgb(var(--color-muted))]
                     "
@@ -890,14 +892,14 @@ return (
           FOOTER
       ===================================================== */}
       <div
-        className={styles.dialogFooter}
+        className="user-common__dialogFooter"
       >
         {/* HỦY */}
         <button
           type="button"
           onClick={handleClose}
           disabled={isSubmitting}
-          className={styles.button}
+          className="user-common__button"
         >
           <Cross2Icon aria-hidden="true" />
           Hủy
@@ -908,7 +910,7 @@ return (
           type="button"
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className={styles.primaryButton}
+          className="user-common__primaryButton"
         >
           <CheckIcon aria-hidden="true" />
           {isSubmitting

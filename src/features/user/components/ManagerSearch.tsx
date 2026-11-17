@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SearchableSelect } from "@/components/ui/searchable-select";
-import { organizationApi } from "../service/organizationApi";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { userOrganizationApi } from "../services/userOrganizationApi";
 
 export interface ManagerOption {
   id: string;
@@ -40,7 +40,7 @@ export default function ManagerSearch({ userId, value, initialManager, disabled 
     setLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const result = await organizationApi.searchManagers(userId, keyword.trim());
+        const result = await userOrganizationApi.searchManagers(userId, keyword.trim());
         if (!active) return;
         const managers = new Map<string, ManagerOption>();
         for (const item of result.items) {

@@ -5,7 +5,7 @@ import {
   Cross2Icon,
   PaperPlaneIcon,
 } from "@radix-ui/react-icons";
-import styles from "../user-information.module.css";
+import "../user-common.css";
 
 interface ComplaintDialogProps {
   open: boolean;
@@ -43,7 +43,7 @@ export default function ComplaintDialog({
 
   return (
     <dialog
-      className={styles.dialog}
+      className="user-common__dialog"
       ref={dialogRef}
       aria-labelledby="ComplaintDialog-title"
       onCancel={event => {
@@ -51,16 +51,16 @@ export default function ComplaintDialog({
         if (!loading) onClose();
       }}
     >
-      <div className={styles.dialogSurface}>
+      <div className="user-common__dialogSurface">
         {/* Header */}
-        <div className={styles.dialogHeader}>
+        <div className="user-common__dialogHeader">
           <h2 id="ComplaintDialog-title" className="text-lg font-semibold">
             Báo với admin
           </h2>
         </div>
 
         {/* Content */}
-        <div className={styles.dialogBody}>
+        <div className="user-common__dialogBody">
           <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
             Nhập thông tin sai hoặc cần báo với admin:
           </p>
@@ -95,12 +95,12 @@ export default function ComplaintDialog({
         </div>
 
         {/* Actions */}
-        <div className={styles.dialogFooter}>
+        <div className="user-common__dialogFooter">
           <button
             type="button"
             onClick={onClose}
             disabled={loading}
-            className={styles.button}
+            className="user-common__button"
           >
             <Cross2Icon aria-hidden="true" />
             Hủy bỏ
@@ -110,7 +110,7 @@ export default function ComplaintDialog({
             type="button"
             onClick={onSubmit}
             disabled={loading}
-            className={styles.primaryButton}
+            className="user-common__primaryButton"
           >
             <PaperPlaneIcon aria-hidden="true" />
             {loading ? "Đang gửi..." : "Xác nhận"}

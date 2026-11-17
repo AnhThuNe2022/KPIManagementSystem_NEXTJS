@@ -1,28 +1,25 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Image from "next/image";
-import localFont from "next/font/local";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { LoginForm } from "@/features/auth/components/login-form";
-import { LoginBackdrop } from "@/features/auth/components/login-backdrop";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { LoginForm } from "@/features/auth/components/LoginForm";
+import { LoginBackdrop } from "@/features/auth/components/LoginBackdrop";
 import "@/features/auth/login.css";
-
-const manrope = localFont({ src: "../../../../public/fonts/manrope.ttf", display: "swap", variable: "--font-login" });
 
 export const metadata: Metadata = {
   title: "Đăng nhập | Đèo Cả KPI",
   description: "Hệ thống quản trị mục tiêu và hiệu suất của Tập đoàn Đèo Cả.",
-  icons: { icon: "/brand/deoca-icon.png" },
+  icons: { icon: "/brand/deoca-icon.svg" },
 };
 
 export default function LoginPage() {
   return (
-    <main className={`${manrope.variable} login-page`}>
+    <main className="login-page">
       <LoginBackdrop />
       <a className="login-skip-link" href="#login-panel">Đến biểu mẫu đăng nhập</a>
       <header className="login-header">
         <a className="login-brand" href="https://deoca.vn/" target="_blank" rel="noreferrer" aria-label="Website Tập đoàn Đèo Cả (mở tab mới)">
-          <Image src="/brand/deoca-group.png" alt="Đèo Cả Group — Nghĩ khác biệt, tạo cách biệt" width={960} height={389} className="login-logo" priority />
+          <Image src="/brand/deoca-group.svg" alt="Đèo Cả Group — Nghĩ khác biệt, tạo cách biệt" width={960} height={389} className="login-logo" priority />
         </a>
         <div className="login-workspace"><strong>KPI Workspace</strong><span>Mục tiêu chung. Giá trị riêng.</span></div>
         <div className="login-header-actions">
@@ -53,7 +50,7 @@ export default function LoginPage() {
           </div>
         </section>
         <section className="login-panel" id="login-panel" aria-labelledby="login-heading">
-          <div className="login-panel-welcome" aria-hidden="true"><Image src="/brand/deoca-icon.png" alt="" width={32} height={32} /></div>
+          <div className="login-panel-welcome" aria-hidden="true"><Image src="/brand/deoca-icon.svg" alt="" width={32} height={32} /></div>
           <p className="login-panel-kicker">Không gian làm việc của bạn</p>
           <h2 id="login-heading">Đăng nhập</h2>
           <p className="login-panel-description">Chào mừng trở lại! Cùng Đèo Cả<br />{" "}bắt đầu một ngày làm việc hiệu quả.</p>
