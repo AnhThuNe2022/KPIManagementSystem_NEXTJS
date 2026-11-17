@@ -2,6 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { appConfig } from "@/config/app";
+import { ApiError } from "./errors";
 
 const API_URL = process.env.AUTH_API_URL?.replace(/\/$/, "");
 
@@ -21,9 +22,8 @@ export async function apiClient<T>(
 
   headers.set("Content-Type", "application/json");
 
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
+  if (!token) throw new Error("UNAUTHORIZED");
+  headers.set("Authorization", "Bearer " + token);
 
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
@@ -31,13 +31,31 @@ export async function apiClient<T>(
     cache: "no-store",
   });
 
-  if (!response.ok) {
-    if (response.status === 401) {
-      throw new Error("UNAUTHORIZED");
-    }
-    console.log(`API Error: ${response.status} ${response.statusText}`);
-    throw new Error(`API_ERROR_${response.status}`);
+if (!response.ok) {
+  const errorText = await response.text();
+
+  console.error("API ERROR:", {
+    url: `${API_URL}${endpoint}`,
+    status: response.status,
+    statusText: response.statusText,
+    response: errorText,
+  });
+
+  if (response.status === 401) {
+    throw new Error("UNAUTHORIZED");
   }
-  
+
+  throw new ApiError(response.status, errorText, response.headers.get("content-type"));
+}
+
+if (response.status === 204) return undefined as T;
+
+const contentType =
+  response.headers.get("content-type") ?? "";
+
+if (contentType.includes("application/json")) {
   return response.json() as Promise<T>;
+}
+
+return response.text() as Promise<T>;
 }

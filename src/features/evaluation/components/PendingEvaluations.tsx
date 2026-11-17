@@ -1,0 +1,805 @@
+"use client";
+
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import {
+  ActivityLogIcon,
+  BarChartIcon,
+  CalendarIcon,
+  CheckCircledIcon,
+  ChevronDownIcon,
+  Component1Icon,
+  Cross2Icon,
+  ClockIcon,
+  EyeOpenIcon,
+  FileTextIcon,
+  InfoCircledIcon,
+  MagnifyingGlassIcon,
+  MixerHorizontalIcon,
+  PersonIcon,
+  ReloadIcon,
+  ResetIcon,
+} from "@radix-ui/react-icons";
+import { pendingEvaluationApi } from "../services/pendingEvaluationApi";
+import { FloatingSelectionBar, type FloatingSelectionAction } from "@/components/ui/FloatingSelectionBar";
+import {
+  UserRoleSystem,
+} from "@/features/auth/types";
+import {
+  type EvaluationFilterOption,
+  type EvaluationTypeOption,
+  type PendingEvaluationDto,
+  type PendingEvaluationFilters,
+} from "@/features/evaluation/types";
+import {
+  type PagedResult,
+} from "@/lib/api/types";
+import "../evaluation-common.css";
+import "./PendingEvaluations.css";
+import { Pagination } from "@/components/ui/Pagination";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { notify } from "@/components/ui/Toaster";
+import { evaluationLookupApi } from "../services/evaluationLookupApi";
+import { formatEvaluationDate, requestMessage, companyOptions, periodOptions, evaluationTypeOptions } from "../evaluationDisplay";
+import { companyLogos } from "@/features/company/companyLogos";
+
+const emptyFilters: PendingEvaluationFilters = {
+  keyword: "",
+  companyId: "",
+  departmentId: "",
+  periodId: "",
+};
+
+function pendingStatusMeta(item: PendingEvaluationDto, fallbackLabel: string) {
+  if (item.isRejected || item.status === "Rejected") {
+    return { label: "Bị từ chối", tone: "rejected" as const };
+  }
+  switch (item.status) {
+    case "DirectManagerReviewing":
+      return { label: "QL trực tiếp duyệt", tone: "review" as const };
+    case "ManagerMidReviewing":
+      return { label: "QL cấp trung duyệt", tone: "review" as const };
+    case "HRReviewing":
+      return { label: "HR duyệt", tone: "hr" as const };
+    case "CompileHRList":
+      return { label: "Tổng hợp HR", tone: "hr" as const };
+    case "DirectorReviewCompileHRList":
+      return { label: "Giám đốc duyệt", tone: "review" as const };
+    default:
+      return { label: fallbackLabel, tone: "wait" as const };
+  }
+}
+export function PendingEvaluations({
+  level,
+}: {
+  level: UserRoleSystem.ManagerMid | UserRoleSystem.HR;
+}) {
+  const hr = level === UserRoleSystem.HR;
+  const title = hr ? "Danh sách chờ nhận xét" : "Danh sách NS chờ đánh giá";
+  const pendingLabel = hr ? "Chờ nhận xét" : "Chờ đánh giá";
+  const [filters, setFilters] = useState(emptyFilters);
+  const [applied, setApplied] = useState(emptyFilters);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [sortBy, setSortBy] = useState("submittedDate_desc");
+  const [appliedSortBy, setAppliedSortBy] = useState("submittedDate_desc");
+  const [revision, setRevision] = useState(0);
+  const [snapshot, setSnapshot] = useState<{
+    key: string;
+    data: PagedResult<PendingEvaluationDto>;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [companies, setCompanies] = useState<EvaluationFilterOption[]>([]);
+  const [periods, setPeriods] = useState<EvaluationFilterOption[]>([]);
+  const [evaluationTypes, setEvaluationTypes] = useState<EvaluationTypeOption[]>([]);
+  const [typeId, setTypeId] = useState("");
+  const [departments, setDepartments] = useState<EvaluationFilterOption[]>([]);
+  const [lookupsBusy, setLookupsBusy] = useState(true);
+  const [lookupError, setLookupError] = useState("");
+  const [departmentBusy, setDepartmentBusy] = useState(false);
+  const [departmentError, setDepartmentError] = useState("");
+  const [lookupRevision, setLookupRevision] = useState(0);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [rejectTargets, setRejectTargets] = useState<PendingEvaluationDto[] | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectBusy, setRejectBusy] = useState(false);
+  const [rejectError, setRejectError] = useState("");
+  const [previewTarget, setPreviewTarget] = useState<PendingEvaluationDto | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const advancedCount = Number(Boolean(typeId)) + Number(Boolean(filters.periodId));
+  const rejectInFlight = useRef(false);
+  const rejectDialogRef = useRef<HTMLDialogElement>(null);
+  const previewDialogRef = useRef<HTMLDialogElement>(null);
+  const requestKey = JSON.stringify({ level, page, pageSize, sortBy: appliedSortBy, ...applied });
+  const ready = snapshot?.key === requestKey;
+  const data = ready ? snapshot.data : null;
+  const allSelected = Boolean(
+    data?.items.length &&
+      data.items.every((item) => selected.includes(`${item.id}:${item.stepId}`)),
+  );
+  const activeFilters = Object.values(applied).filter(Boolean).length;
+  const availablePeriods =
+    hr && typeId
+      ? (evaluationTypes.find((type) => type.id === typeId)?.periods ?? []).filter((period) =>
+          periods.some((available) => available.id === period.id),
+        )
+      : periods;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError("");
+    setSelected([]);
+    pendingEvaluationApi
+      .get({
+        page,
+        pageSize,
+        level,
+        filters: applied,
+        sortBy: appliedSortBy,
+        signal: controller.signal,
+      })
+      .then((result) => {
+        if (controller.signal.aborted) return;
+        const lastPage = Math.max(1, Math.ceil(result.total / pageSize));
+        if (page > lastPage) {
+          setPage(lastPage);
+          return;
+        }
+        setSnapshot({ key: requestKey, data: result });
+      })
+      .catch((cause: unknown) => {
+        if (!controller.signal.aborted)
+          setError(requestMessage(cause, "Không tải được danh sách. Vui lòng thử lại."));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [applied, appliedSortBy, level, page, pageSize, requestKey, revision]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLookupsBusy(true);
+    setLookupError("");
+    Promise.allSettled([
+      evaluationLookupApi.getCompanies(level, controller.signal),
+      evaluationLookupApi.getPeriods(controller.signal),
+      hr ? evaluationLookupApi.getTypes(controller.signal) : Promise.resolve([]),
+    ]).then(([companyResult, periodResult, typeResult]) => {
+      if (controller.signal.aborted) return;
+      setCompanies(companyResult.status === "fulfilled" ? companyOptions(companyResult.value) : []);
+      setPeriods(periodResult.status === "fulfilled" ? periodOptions(periodResult.value) : []);
+      setEvaluationTypes(typeResult.status === "fulfilled" ? evaluationTypeOptions(typeResult.value) : []);
+      const failed = [companyResult, periodResult, typeResult].find(
+        (result) => result.status === "rejected",
+      );
+      if (failed?.status === "rejected")
+        setLookupError(requestMessage(failed.reason, "Chưa tải được một số lựa chọn bộ lọc."));
+      setLookupsBusy(false);
+    });
+    return () => controller.abort();
+  }, [hr, level, lookupRevision]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setDepartments([]);
+    setDepartmentError("");
+    setDepartmentBusy(Boolean(filters.companyId));
+    if (!filters.companyId) return () => controller.abort();
+    evaluationLookupApi
+      .getDepartments(filters.companyId, level, controller.signal)
+      .then((result) => {
+        if (!controller.signal.aborted) setDepartments(periodOptions(result));
+      })
+      .catch((cause: unknown) => {
+        if (!controller.signal.aborted)
+          setDepartmentError(requestMessage(cause, "Chưa tải được danh sách phòng ban."));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setDepartmentBusy(false);
+      });
+    return () => controller.abort();
+  }, [filters.companyId, level, lookupRevision]);
+
+  useEffect(() => {
+    if (!rejectTargets) return;
+    const dialog = rejectDialogRef.current;
+    if (!dialog) return;
+    dialog.showModal();
+    dialog.querySelector("textarea")?.focus();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [rejectTargets]);
+
+  useEffect(() => {
+    const dialog = previewDialogRef.current;
+    if (!previewTarget || !dialog) return;
+    dialog.showModal();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [previewTarget]);
+
+  function applyFilters(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (hr && typeId && !filters.periodId) {
+      setAdvancedOpen(true);
+      window.requestAnimationFrame(() => document.getElementById("pending-period-filter")?.focus());
+      return;
+    }
+    setApplied({ ...filters, keyword: filters.keyword.trim() });
+    setAppliedSortBy(sortBy);
+    setPage(1);
+  }
+
+  function clearFilters() {
+    setSortBy("submittedDate_desc");
+    setAppliedSortBy("submittedDate_desc");
+    setTypeId("");
+    setFilters(emptyFilters);
+    setApplied(emptyFilters);
+    setPage(1);
+    setRevision((value) => value + 1);
+  }
+
+  function openReject(targets: PendingEvaluationDto[]) {
+    if (hr || !targets.length) return;
+    setRejectReason("");
+    setRejectError("");
+    setRejectTargets(targets);
+  }
+
+  function closeReject() {
+    if (!rejectInFlight.current) setRejectTargets(null);
+  }
+
+  async function submitReject(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!rejectTargets || rejectInFlight.current) return;
+    if (!rejectReason.trim()) {
+      setRejectError("Vui lòng nhập lý do từ chối.");
+      rejectDialogRef.current?.querySelector("textarea")?.focus();
+      return;
+    }
+
+    rejectInFlight.current = true;
+    setRejectBusy(true);
+    setRejectError("");
+    let completed = 0;
+    try {
+      for (const item of rejectTargets) {
+        await pendingEvaluationApi.reviewAction(item.id, { Action: 2, Level: hr ? UserRoleSystem.HR : UserRoleSystem.ManagerMid, Comment: rejectReason.trim(), StepId: item.stepId });
+        completed += 1;
+      }
+      setRejectTargets(null);
+      notify("success", `Đã từ chối ${completed} bản đánh giá.`);
+    } catch (cause) {
+      setRejectTargets(rejectTargets.slice(completed));
+      const message =
+        cause instanceof Error && cause.message === "FORBIDDEN"
+          ? "Bạn chưa có quyền từ chối bản đánh giá này."
+          : requestMessage(cause, "Chưa từ chối được bản đánh giá. Vui lòng thử lại.");
+      const feedback = completed ? `Đã từ chối ${completed}/${rejectTargets.length} bản. ${message}` : message;
+      setRejectError(feedback);
+      notify(completed ? "warning" : "error", feedback);
+    } finally {
+      if (completed) setRevision((value) => value + 1);
+      rejectInFlight.current = false;
+      setRejectBusy(false);
+    }
+  }
+
+  return (
+    <section className={"evaluation-common__page" + " " + "pending-evaluations__page"} aria-labelledby="pending-title">
+      <header className="pending-evaluations__heading">
+        <div className="pending-evaluations__headingBody">
+          <span className="pending-evaluations__eyebrow">{hr ? "Nhân sự rà soát" : "Đánh giá nhân sự"}</span>
+          <div className="pending-evaluations__titleLine">
+            <h1 id="pending-title">{title}</h1>
+          </div>
+          <p className="pending-evaluations__description">{hr ? "Theo dõi các bản đánh giá đang chờ ý kiến nhân sự." : "Theo dõi các bản đánh giá của nhân sự đang chờ bạn xử lý."}</p>
+        </div>
+        <div className="pending-evaluations__headingAside">
+          <div className="pending-evaluations__statPill">
+            <span className="pending-evaluations__statBadge"><strong>{data?.total.toLocaleString("vi-VN") ?? "—"}</strong></span>
+            <span>{hr ? "bản chờ nhận xét" : "bản chờ đánh giá"}</span>
+          </div>
+          {data?.items[0]?.periodLabel && (
+            <div className="pending-evaluations__statPill" data-variant="period">
+              <span className="pending-evaluations__statBadge" aria-hidden="true"><CalendarIcon /></span>
+              <span>{data.items[0].periodLabel}</span>
+            </div>
+          )}
+        </div>
+      </header>
+
+      <form className={"evaluation-common__filters" + " " + "pending-evaluations__filters"} onSubmit={applyFilters} aria-label="Lọc danh sách chờ duyệt">
+        <div className="pending-evaluations__primaryFilters">
+          <label><span className="evaluation-common__srOnly">Nhân viên</span><div className={"evaluation-common__control" + " " + "pending-evaluations__searchControl"}>
+            <MagnifyingGlassIcon aria-hidden="true" />
+            <input type="search" value={filters.keyword} maxLength={200} placeholder="Tìm theo tên / mã NV" onChange={(event) => setFilters((value) => ({ ...value, keyword: event.target.value }))} />
+          </div></label>
+          <div className="pending-evaluations__selectField">
+            <SearchableSelect id="pending-company-filter" label="Công ty" value={filters.companyId} options={companies} placeholder={lookupsBusy ? "Đang tải…" : "Tất cả công ty"} disabled={lookupsBusy || !companies.length} onChange={(companyId) => setFilters((value) => ({ ...value, companyId, departmentId: "" }))} />
+          </div>
+          <div className="pending-evaluations__selectField">
+            <SearchableSelect id="pending-department-filter" label="Phòng ban" value={filters.departmentId} options={departments} placeholder={departmentBusy ? "Đang tải…" : !filters.companyId ? "Chọn công ty trước" : "Tất cả phòng ban"} disabled={!filters.companyId || departmentBusy || !departments.length} onChange={(departmentId) => setFilters((value) => ({ ...value, departmentId }))} />
+          </div>
+          <div className="pending-evaluations__filterButtons">
+            <button className={"evaluation-common__button" + " " + "pending-evaluations__moreFilters"} type="button" aria-expanded={advancedOpen} aria-controls="pending-extra-filters" onClick={() => setAdvancedOpen((value) => !value)}>
+              <MixerHorizontalIcon aria-hidden="true" />Lọc thêm{advancedCount > 0 && <b>{advancedCount}</b>}<ChevronDownIcon aria-hidden="true" />
+            </button>
+            <button className={"evaluation-common__button" + " " + "pending-evaluations__clearButton"} type="button" onClick={clearFilters} aria-label="Xóa bộ lọc" title="Xóa bộ lọc"><ResetIcon aria-hidden="true" /></button>
+            <button className={"evaluation-common__button" + " " + "pending-evaluations__applyButton"} type="submit" disabled={loading || Boolean(hr && typeId && !availablePeriods.length)}><MagnifyingGlassIcon aria-hidden="true" />{loading ? "Đang tải…" : "Áp dụng"}</button>
+          </div>
+        </div>
+        <div id="pending-extra-filters" className="pending-evaluations__advancedFilters" hidden={!advancedOpen}>
+          {hr && <div className="pending-evaluations__selectField">
+            <span>Loại đánh giá</span>
+            <SearchableSelect id="pending-type-filter" label="Loại đánh giá" value={typeId} options={evaluationTypes} placeholder={lookupsBusy ? "Đang tải…" : "Tất cả loại đánh giá"} disabled={lookupsBusy || !evaluationTypes.length} onChange={(value) => { setTypeId(value); setFilters((current) => ({ ...current, periodId: "" })); }} />
+          </div>}
+          <div className="pending-evaluations__selectField">
+            <span>Kỳ đánh giá{hr && typeId && " (bắt buộc)"}</span>
+            <SearchableSelect id="pending-period-filter" label="Kỳ đánh giá" value={filters.periodId} options={availablePeriods} placeholder={lookupsBusy ? "Đang tải…" : hr && typeId ? availablePeriods.length ? "Chọn kỳ đánh giá" : "Loại này chưa có kỳ phù hợp" : "Tất cả kỳ đánh giá"} disabled={lookupsBusy || !availablePeriods.length} required={hr && Boolean(typeId)} onChange={(periodId) => setFilters((value) => ({ ...value, periodId }))} />
+          </div>
+          {hr && typeId && !filters.periodId && <p className="pending-evaluations__filterHint" role="status">Chọn kỳ đánh giá để áp dụng loại đánh giá này.</p>}
+        </div>
+        {(lookupError || departmentError) && <div className="evaluation-common__error" role="alert"><InfoCircledIcon aria-hidden="true" /><span>{lookupError || departmentError}</span><button type="button" onClick={() => setLookupRevision((value) => value + 1)}>Thử lại</button></div>}
+        {activeFilters > 0 && <div className="pending-evaluations__appliedFilters">
+          <span>Đang lọc</span>
+          {applied.keyword && <span>{applied.keyword}</span>}
+          {applied.companyId && <span>{companies.find((option) => option.id === applied.companyId)?.name || applied.companyId}</span>}
+          {applied.departmentId && <span>{departments.find((option) => option.id === applied.departmentId)?.name || applied.departmentId}</span>}
+          {applied.periodId && <span>{periods.find((option) => option.id === applied.periodId)?.name || applied.periodId}</span>}
+        </div>}
+      </form>
+
+      <div className="evaluation-common__inbox" aria-busy={loading}>
+        <div className={"evaluation-common__listHeading" + " " + "pending-evaluations__listHeading"}>
+          <div>
+            <span className={"evaluation-common__listIcon" + " " + "pending-evaluations__listIcon"}><FileTextIcon aria-hidden="true" /></span>
+            <h2>Bản đánh giá</h2><span className="evaluation-common__count">{data?.total ?? "—"}</span>
+            {selected.length > 0 && <span className="pending-evaluations__selectionCount" role="status">Đã chọn {selected.length}</span>}
+          </div>
+          <div className="pending-evaluations__listTools" data-hr={hr}>
+            <label><span className="evaluation-common__srOnly">Sắp xếp</span><div className="evaluation-common__control">
+              <select value={appliedSortBy} disabled={loading} onChange={(event) => { setSortBy(event.target.value); setAppliedSortBy(event.target.value); setPage(1); }}>
+                <option value="submittedDate_desc">Mới gửi gần đây</option><option value="submittedDate_asc">Gửi lâu trước</option><option value="employee_asc">Tên A→Z</option><option value="employee_desc">Tên Z→A</option>
+              </select><ChevronDownIcon aria-hidden="true" />
+            </div></label>
+            {selected.length > 0 && (
+              <button
+                className={"evaluation-common__button" + " " + "pending-evaluations__rejectButton" + " " + "pending-evaluations__bulkReject"}
+                type="button"
+                disabled={loading || !data || Boolean(error)}
+                aria-haspopup="dialog"
+                onClick={() => openReject(data?.items.filter((item) => selected.includes(`${item.id}:${item.stepId}`)) ?? [])}
+              >
+                <Cross2Icon aria-hidden="true" />
+                Từ chối ({selected.length})
+              </button>
+            )}
+            <button className="evaluation-common__refresh" type="button" title="Tải lại danh sách" aria-label="Tải lại danh sách" disabled={loading} onClick={() => setRevision((value) => value + 1)}><ReloadIcon aria-hidden="true" /></button>
+          </div>
+        </div>
+        {error ? (
+          <div className="evaluation-common__empty" role="alert">
+            <span className="evaluation-common__emptyIcon">
+              <InfoCircledIcon aria-hidden="true" />
+            </span>
+            <h3>Chưa tải được danh sách</h3>
+            <p>{error}</p>
+            <button
+              className="evaluation-common__button"
+              type="button"
+              onClick={() => setRevision((value) => value + 1)}
+            >
+              Thử lại
+            </button>
+            {error.includes("đăng nhập") && (
+              <Link
+                className="evaluation-common__loginLink"
+                href={`/login?next=${hr ? "/hr/pending" : "/manager/pending"}`}
+              >
+                Đăng nhập lại
+              </Link>
+            )}
+          </div>
+        ) : loading || !ready ? (
+          <div className="evaluation-common__loading" role="status">
+            <span className="evaluation-common__srOnly">Đang tải danh sách</span>
+            {[0, 1, 2].map((row) => (
+              <div key={row} className="evaluation-common__skeleton" aria-hidden="true">
+                <i />
+                <div>
+                  <i />
+                  <i />
+                </div>
+                <i />
+              </div>
+            ))}
+          </div>
+        ) : !data?.items.length ? (
+          <div className="evaluation-common__empty">
+            <span className="evaluation-common__emptyIcon">
+              <FileTextIcon aria-hidden="true" />
+            </span>
+            <h3>{activeFilters ? "Chưa có kết quả phù hợp" : "Chưa có bản đánh giá chờ xử lý"}</h3>
+            <p>
+              {activeFilters
+                ? "Thử thay đổi từ khóa hoặc bớt điều kiện lọc."
+                : "Các bản đánh giá cần bạn xử lý sẽ xuất hiện tại đây."}
+            </p>
+            {activeFilters > 0 && (
+              <button className="evaluation-common__button" type="button" onClick={clearFilters}>
+                Xóa bộ lọc
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="evaluation-common__tableWrap">
+            <table className={`evaluation-common__table pending-evaluations__table`}>
+              <caption className="evaluation-common__srOnly">{title}</caption>
+              <thead>
+                <tr>
+                  <th scope="col" className="pending-evaluations__selectionCell">
+                    <label className="pending-evaluations__checkboxControl">
+                      <input
+                        type="checkbox"
+                        aria-label="Chọn tất cả bản đánh giá trên trang"
+                        checked={allSelected}
+                        ref={(element) => {
+                          if (element) element.indeterminate = selected.length > 0 && !allSelected;
+                        }}
+                        onChange={(event) =>
+                          setSelected(
+                            event.target.checked
+                              ? data.items.map((item) => `${item.id}:${item.stepId}`)
+                              : [],
+                          )
+                        }
+                      />
+                      <span className="pending-evaluations__selectionLabel">Chọn tất cả trên trang</span>
+                    </label>
+                  </th>
+                  <th scope="col" className="pending-evaluations__employeeColumn">
+                    <span className="pending-evaluations__columnLabel"><PersonIcon aria-hidden="true" />Nhân viên</span>
+                  </th>
+                  <th scope="col" className="pending-evaluations__companyColumn">
+                    <span className="pending-evaluations__columnLabel"><Component1Icon aria-hidden="true" />Đơn vị</span>
+                  </th>
+                  <th scope="col" className="pending-evaluations__periodColumn">
+                    <span className="pending-evaluations__columnLabel"><CalendarIcon aria-hidden="true" />Kỳ đánh giá</span>
+                  </th>
+                  <th scope="col" className="pending-evaluations__scoreColumn">
+                    <span className="pending-evaluations__columnLabel"><BarChartIcon aria-hidden="true" />Điểm tự ĐG</span>
+                  </th>
+                  <th scope="col" className="pending-evaluations__dateColumn">
+                    <span className="pending-evaluations__columnLabel"><ClockIcon aria-hidden="true" />Ngày gửi / duyệt cuối</span>
+                  </th>
+                  <th scope="col" className="pending-evaluations__statusColumn">
+                    <span className="pending-evaluations__columnLabel"><ActivityLogIcon aria-hidden="true" />Trạng thái</span>
+                  </th>
+                  <th scope="col" className="pending-evaluations__actionsColumn">
+                    <span className="pending-evaluations__columnLabel"><MixerHorizontalIcon aria-hidden="true" />Thao tác</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.items.map((item) => (
+                  <tr
+                    key={`${item.id}:${item.stepId}`}
+                    data-selected={selected.includes(`${item.id}:${item.stepId}`)}
+                  >
+                    <td className="pending-evaluations__selectionCell">
+                      <label className="pending-evaluations__checkboxControl">
+                        <input
+                          type="checkbox"
+                          aria-label={`Chọn bản đánh giá của ${item.userName || item.sysTemCode || "nhân viên"}`}
+                          checked={selected.includes(`${item.id}:${item.stepId}`)}
+                          onChange={(event) =>
+                            setSelected((value) =>
+                              event.target.checked
+                                ? [...value, `${item.id}:${item.stepId}`]
+                                : value.filter((key) => key !== `${item.id}:${item.stepId}`),
+                            )
+                          }
+                        />
+                        <span className="pending-evaluations__selectionLabel">Chọn bản đánh giá</span>
+                      </label>
+                    </td>
+                    <td data-label="Nhân viên" className="pending-evaluations__employeeCell">
+                      <div className="evaluation-common__employee">
+                        <span className="evaluation-common__avatar" aria-hidden="true">
+                          <PersonIcon aria-hidden="true" />
+                        </span>
+                        <div>
+                          <strong>{item.userName || "Chưa có tên"}</strong>
+                          <span>{item.sysTemCode || item.userCode}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td data-label="Đơn vị" className="pending-evaluations__organizationCell">
+                      <span className="pending-evaluations__companyIdentity"><Image className="pending-evaluations__companyLogo" src={companyLogos[item.companyCode?.trim().toUpperCase() ?? ""] ?? "/brand/deoca-icon.svg"} alt="" width={32} height={32} /><span className="pending-evaluations__company">{item.companyCode || "—"}</span></span><span className="pending-evaluations__department">{item.departmentName || "—"}</span>
+                    </td>
+                    <td data-label="Kỳ đánh giá" className="pending-evaluations__periodCell">
+                      <div className="pending-evaluations__periodIdentity"><span className="pending-evaluations__periodIcon" aria-hidden="true"><CalendarIcon /></span><span className="pending-evaluations__period">{item.periodLabel || "—"}</span></div>
+                    </td>
+                    <td data-label="Điểm tự ĐG" className="pending-evaluations__scoreCell">
+                      <span className="pending-evaluations__scoreBadge">
+                        {item.selfScore != null ? Number(item.selfScore).toFixed(1) : "—"}
+                      </span>
+                    </td>
+                    <td data-label="Ngày gửi / duyệt cuối" className="pending-evaluations__dateCell">
+                      <span className="pending-evaluations__date"><ClockIcon aria-hidden="true" /><time
+                        dateTime={
+                          formatEvaluationDate(item.submittedDate, "")
+                            ? item.submittedDate!
+                            : undefined
+                        }
+                      >
+                        {formatEvaluationDate(item.submittedDate, "") || "—"}
+                      </time></span>
+                    </td>
+                    <td data-label="Trạng thái" className="pending-evaluations__statusCell">
+                      {(() => {
+                        const statusMeta = pendingStatusMeta(item, pendingLabel);
+                        return (
+                          <span
+                            className={"evaluation-common__status" + " " + "pending-evaluations__status"}
+                            data-rejected={statusMeta.tone === "rejected"}
+                            data-tone={statusMeta.tone}
+                          >
+                            <i aria-hidden="true" />
+                            {statusMeta.label}
+                          </span>
+                        );
+                      })()}
+                      {item.isRejected && item.reason && (
+                        <span className="pending-evaluations__reason">{item.reason}</span>
+                      )}
+                    </td>
+                    <td data-label="Thao tác" className="pending-evaluations__actionsCell">
+                      <div className="pending-evaluations__rowActions">
+                        <button
+                          className={`evaluation-common__button evaluation-common__viewButton`}
+                          type="button"
+                          aria-label={`Xem thông tin bản đánh giá của ${item.userName || item.sysTemCode || "nhân viên"}`}
+                          aria-haspopup="dialog"
+                          onClick={() => setPreviewTarget(item)}
+                        >
+                          <EyeOpenIcon aria-hidden="true" />
+                          Xem
+                        </button>
+                        <button
+                          className={`evaluation-common__button pending-evaluations__rejectButton`}
+                          type="button"
+                          aria-label={`Từ chối bản đánh giá của ${item.userName || item.sysTemCode || "nhân viên"}`}
+                          aria-haspopup="dialog"
+                          onClick={() => openReject([item])}
+                        >
+                          <Cross2Icon aria-hidden="true" />
+                          Từ chối
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <Pagination
+          itemLabel="bản đánh giá"
+          page={page}
+          pageSize={pageSize}
+          total={data?.total ?? null}
+          loading={loading}
+          error={Boolean(error)}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+        />
+      </div>
+      {(() => {
+        const selectedItems = data?.items.filter((item) => selected.includes(`${item.id}:${item.stepId}`)) ?? [];
+        const actions: FloatingSelectionAction[] = [];
+        if (selectedItems.length === 1) {
+          actions.push({
+            key: "view",
+            label: "Xem bản đánh giá",
+            icon: <EyeOpenIcon aria-hidden="true" />,
+            tone: "primary",
+            onClick: () => setPreviewTarget(selectedItems[0]),
+          });
+        }
+        if (!allSelected && data?.items.length) {
+          actions.push({
+            key: "select-page",
+            label: "Chọn cả trang",
+            icon: <CheckCircledIcon aria-hidden="true" />,
+            onClick: () => setSelected(data.items.map((item) => `${item.id}:${item.stepId}`)),
+          });
+        }
+        actions.push({
+          key: "reject",
+          label: "Từ chối",
+          icon: <Cross2Icon aria-hidden="true" />,
+          tone: "danger",
+          disabled: loading || !data || Boolean(error),
+          onClick: () => openReject(selectedItems),
+        });
+        return (
+          <FloatingSelectionBar
+            count={selected.length}
+            label="bản đánh giá đã chọn"
+            actions={actions}
+            onClear={() => setSelected([])}
+          />
+        );
+      })()}
+      {rejectTargets && (
+        <dialog
+          ref={rejectDialogRef}
+          className="pending-evaluations__rejectDialog"
+          aria-labelledby="reject-title"
+          onCancel={(event) => {
+            event.preventDefault();
+            closeReject();
+          }}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) closeReject();
+          }}
+        >
+          <form onSubmit={submitReject} aria-busy={rejectBusy}>
+            <header className="pending-evaluations__rejectHeader">
+              <h2 id="reject-title">Lý do từ chối</h2>
+              <button
+                className="evaluation-common__refresh"
+                type="button"
+                aria-label="Đóng lý do từ chối"
+                disabled={rejectBusy}
+                onClick={closeReject}
+              >
+                <Cross2Icon aria-hidden="true" />
+              </button>
+            </header>
+            <div className="pending-evaluations__rejectBody">
+              <p>
+                {rejectTargets.length === 1
+                  ? rejectTargets[0].userName || rejectTargets[0].sysTemCode || "Nhân viên"
+                  : `${rejectTargets.length} bản đánh giá đã chọn`}
+              </p>
+              <label htmlFor="reject-reason">Lý do</label>
+              <textarea
+                id="reject-reason"
+                rows={4}
+                placeholder="Nhập lý do từ chối…"
+                required
+                value={rejectReason}
+                disabled={rejectBusy}
+                aria-describedby={rejectError ? "reject-error" : undefined}
+                onChange={(event) => setRejectReason(event.target.value)}
+              />
+              {rejectError && (
+                <div id="reject-error" className="evaluation-common__error" role="alert">
+                  {rejectError}
+                </div>
+              )}
+            </div>
+            <footer className="pending-evaluations__rejectFooter">
+              <button
+                className="evaluation-common__button"
+                type="button"
+                disabled={rejectBusy}
+                onClick={closeReject}
+              >
+                Đóng
+              </button>
+              <button
+                className={`evaluation-common__button pending-evaluations__rejectButton`}
+                type="submit"
+                disabled={rejectBusy}
+              >
+                {rejectBusy ? "Đang từ chối…" : "Xác nhận từ chối"}
+              </button>
+            </footer>
+          </form>
+        </dialog>
+      )}
+      {previewTarget && (
+        <dialog
+          ref={previewDialogRef}
+          className="pending-evaluations__rejectDialog"
+          aria-labelledby="preview-title"
+          onCancel={(event) => {
+            event.preventDefault();
+            setPreviewTarget(null);
+          }}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setPreviewTarget(null);
+          }}
+        >
+          <header className="pending-evaluations__rejectHeader">
+            <h2 id="preview-title">Chi tiết phiếu đánh giá</h2>
+            <button
+              className="evaluation-common__refresh"
+              type="button"
+              aria-label="Đóng chi tiết phiếu đánh giá"
+              onClick={() => setPreviewTarget(null)}
+            >
+              <Cross2Icon aria-hidden="true" />
+            </button>
+          </header>
+          <div className="pending-evaluations__previewBody">
+            <dl className="pending-evaluations__previewGrid">
+              <div>
+                <dt>Nhân viên</dt>
+                <dd>{previewTarget.userName || "—"} ({previewTarget.sysTemCode || previewTarget.userCode || "—"})</dd>
+              </div>
+              <div>
+                <dt>Đơn vị</dt>
+                <dd>{previewTarget.companyCode || "—"} — {previewTarget.departmentName || "—"}</dd>
+              </div>
+              <div>
+                <dt>Kỳ đánh giá</dt>
+                <dd>{previewTarget.periodLabel || "—"}</dd>
+              </div>
+              <div>
+                <dt>Điểm tự đánh giá</dt>
+                <dd><strong>{previewTarget.selfScore != null ? Number(previewTarget.selfScore).toFixed(1) : "—"}</strong></dd>
+              </div>
+              <div>
+                <dt>Ngày gửi</dt>
+                <dd>{formatEvaluationDate(previewTarget.submittedDate, "") || "—"}</dd>
+              </div>
+              <div>
+                <dt>Trạng thái</dt>
+                <dd>{pendingStatusMeta(previewTarget, pendingLabel).label}</dd>
+              </div>
+              {previewTarget.reason && (
+                <div className="pending-evaluations__previewFull">
+                  <dt>Ghi chú / Lý do</dt>
+                  <dd>{previewTarget.reason}</dd>
+                </div>
+              )}
+            </dl>
+          </div>
+          <footer className="pending-evaluations__rejectFooter">
+            <button
+              className="evaluation-common__button"
+              type="button"
+              onClick={() => setPreviewTarget(null)}
+            >
+              Đóng
+            </button>
+            <button
+              className="evaluation-common__button pending-evaluations__rejectButton"
+              type="button"
+              onClick={() => {
+                const target = previewTarget;
+                setPreviewTarget(null);
+                openReject([target]);
+              }}
+            >
+              <Cross2Icon aria-hidden="true" />
+              Từ chối
+            </button>
+          </footer>
+        </dialog>
+      )}
+    </section>
+  );
+}

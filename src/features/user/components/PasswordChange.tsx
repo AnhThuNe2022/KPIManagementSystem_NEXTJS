@@ -1,0 +1,927 @@
+"use client";
+
+import { useState } from "react";
+import {
+  CheckIcon,
+  DesktopIcon,
+  IdCardIcon,
+  LockClosedIcon,
+  PersonIcon,
+} from "@radix-ui/react-icons";
+import "../user-common.css";
+import { ChangePasswordDto } from "@/features/user/types";
+import "./PasswordChange.css";
+
+interface PasswordChangeProps {
+  isAdmin?: boolean;
+
+  onPasswordSubmit: (
+    model: ChangePasswordDto
+  ) => Promise<void> | void;
+}
+
+export default function PasswordChange({
+  isAdmin = false,
+  onPasswordSubmit,
+}: PasswordChangeProps) {
+  type PasswordChangeMethod = "cms" | "kpi";
+
+  const [form, setForm] =
+    useState<ChangePasswordDto>({});
+
+  const [isSaving, setIsSaving] =
+    useState(false);
+
+  const [showCurrentPassword, setShowCurrentPassword] =
+    useState(false);
+
+  const [showNewPassword, setShowNewPassword] =
+    useState(false);
+
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
+
+  const [showCmsPassword, setShowCmsPassword] =
+    useState(false);
+
+  const [errors, setErrors] =
+    useState<Record<string, string>>({});
+
+  const [changeMethod, setChangeMethod] =
+    useState<PasswordChangeMethod>("kpi");
+
+  const updateField = <
+    K extends keyof ChangePasswordDto
+  >(
+    field: K,
+    value: ChangePasswordDto[K]
+  ) => {
+    setForm(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    setErrors(prev => ({
+      ...prev,
+      [field]: "",
+    }));
+  };
+
+  const validate = () => {
+    const nextErrors: Record<
+      string,
+      string
+    > = {};
+
+    if (!isAdmin && changeMethod === "kpi" && !form.currentPassword?.trim()) {
+      nextErrors.currentPassword =
+        "Vui lòng nhập mật khẩu KPI hiện tại.";
+    }
+
+    if (!isAdmin && changeMethod === "cms") {
+      if (!form.cmsUsername?.trim()) {
+        nextErrors.cmsUsername =
+          "Vui lòng nhập tên người dùng CMS.";
+      }
+      if (!form.cmsPassword?.trim()) {
+        nextErrors.cmsPassword =
+          "Vui lòng nhập mật khẩu CMS.";
+      }
+    }
+
+    if (!form.newPassword?.trim()) {
+      nextErrors.newPassword =
+        "Vui lòng nhập mật khẩu mới.";
+    } else if (form.newPassword.length < 6) {
+      nextErrors.newPassword =
+        "Mật khẩu mới cần ít nhất 6 ký tự.";
+    } else if (
+      !isAdmin &&
+      changeMethod === "kpi" &&
+      form.currentPassword &&
+      form.newPassword === form.currentPassword
+    ) {
+      nextErrors.newPassword =
+        "Mật khẩu mới không được trùng mật khẩu hiện tại.";
+    }
+
+    if (!form.confirmPassword?.trim()) {
+      nextErrors.confirmPassword =
+        "Vui lòng xác nhận mật khẩu.";
+    }
+
+    if (
+      form.newPassword &&
+      form.confirmPassword &&
+      form.newPassword !==
+        form.confirmPassword
+    ) {
+      nextErrors.confirmPassword =
+        "Mật khẩu xác nhận không khớp.";
+    }
+
+    setErrors(nextErrors);
+
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const newPassword = form.newPassword ?? "";
+  const strengthChecks = [
+    { label: "Từ 8 ký tự", passed: newPassword.length >= 8 },
+    { label: "Chữ hoa", passed: /[A-Z]/.test(newPassword) },
+    { label: "Chữ số", passed: /\d/.test(newPassword) },
+    { label: "Ký tự đặc biệt", passed: /[^A-Za-z0-9]/.test(newPassword) },
+  ];
+  const strengthScore = strengthChecks.filter(item => item.passed).length;
+  const strengthTone = strengthScore <= 1 ? "weak" : strengthScore <= 2 ? "medium" : "strong";
+  const strengthLabel = strengthScore <= 1 ? "Yếu" : strengthScore <= 2 ? "Trung bình" : "Mạnh";
+  const passwordsMatch = Boolean(
+    newPassword && form.confirmPassword && newPassword === form.confirmPassword
+  );
+
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
+    if (!validate()) {
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      await onPasswordSubmit({
+        ...form,
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+const handleChangeMethod = (
+  method: PasswordChangeMethod
+) => {
+  setChangeMethod(method);
+
+  if (method === "cms") {
+    updateField("currentPassword", "");
+  } else {
+    updateField("cmsUsername", "");
+    updateField("cmsPassword", "");
+  }
+};
+
+return (
+  <form
+    id="password-form"
+    onSubmit={handleSubmit}
+    className="user-common__passwordForm"
+  >
+    <header className="password-change__passwordHeader">
+      <span className="password-change__sectionIcon" aria-hidden="true"><LockClosedIcon /></span>
+      <div><h2>Đổi mật khẩu</h2><p>Xác thực tài khoản trước khi đặt mật khẩu mới.</p></div>
+    </header>
+
+    {/* =========================
+        METHOD
+    ========================== */}
+    {!isAdmin && (
+      <div>
+        <label className="mb-3 block text-sm font-medium text-[rgb(var(--color-text))]">
+          Phương thức đổi mật khẩu
+        </label>
+
+        <div className="password-change__methodOptions">
+          {/* CMS */}
+          <label
+            className={`user-common__methodOption
+              flex
+              cursor-pointer
+              items-start
+              gap-3
+              rounded-md
+              border
+              p-4
+              transition
+              ${
+                changeMethod === "cms"
+                  ? `
+                    border-[rgb(var(--color-brand))]
+                    bg-[rgb(var(--color-brand))]/5
+                  `
+                  : `
+                    border-[rgb(var(--color-border))]
+                    hover:bg-[rgb(var(--color-page))]
+                  `
+              }
+            `}
+          >
+            <input
+              type="radio"
+              name="passwordChangeMethod"
+              value="cms"
+              checked={changeMethod === "cms"}
+              onChange={() =>
+                handleChangeMethod("cms")
+              }
+              disabled={isSaving}
+              className="
+                mt-0.5
+                h-4
+                w-4
+                accent-[rgb(var(--color-brand))]
+              "
+            />
+
+            <span className="password-change__methodIcon" aria-hidden="true"><DesktopIcon /></span>
+
+            <div>
+              <div className="text-sm font-medium text-[rgb(var(--color-text))]">
+                Tài khoản CMS
+              </div>
+
+              <div className="mt-1 text-xs text-[rgb(var(--color-muted))]">
+                Sử dụng tài khoản CMS để xác thực
+              </div>
+            </div>
+          </label>
+
+          {/* KPI */}
+          <label
+            className={`user-common__methodOption
+              flex
+              cursor-pointer
+              items-start
+              gap-3
+              rounded-md
+              border
+              p-4
+              transition
+              ${
+                changeMethod === "kpi"
+                  ? `
+                    border-[rgb(var(--color-brand))]
+                    bg-[rgb(var(--color-brand))]/5
+                  `
+                  : `
+                    border-[rgb(var(--color-border))]
+                    hover:bg-[rgb(var(--color-page))]
+                  `
+              }
+            `}
+          >
+            <input
+              type="radio"
+              name="passwordChangeMethod"
+              value="kpi"
+              checked={changeMethod === "kpi"}
+              onChange={() =>
+                handleChangeMethod("kpi")
+              }
+              disabled={isSaving}
+              className="
+                mt-0.5
+                h-4
+                w-4
+                accent-[rgb(var(--color-brand))]
+              "
+            />
+
+            <span className="password-change__methodIcon" aria-hidden="true"><IdCardIcon /></span>
+
+            <div>
+              <div className="text-sm font-medium text-[rgb(var(--color-text))]">
+                Mật khẩu KPI hiện tại
+              </div>
+
+              <div className="mt-1 text-xs text-[rgb(var(--color-muted))]">
+                Sử dụng mật khẩu KPI hiện tại
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+    )}
+
+    {/* =========================
+        CMS METHOD
+    ========================== */}
+    {!isAdmin && changeMethod === "cms" && (
+      <div className="space-y-4">
+        {/* CMS Username */}
+        <div>
+          <label htmlFor="profile-cmsUsername" className="mb-1 block text-sm font-medium text-[rgb(var(--color-text))]">
+            <PersonIcon aria-hidden="true" />
+            Tên người dùng CMS
+          </label>
+
+          <input
+            id="profile-cmsUsername"
+            autoComplete="username"
+            type="text"
+            value={form.cmsUsername ?? ""}
+            onChange={e =>
+              updateField(
+                "cmsUsername",
+                e.target.value
+              )
+            }
+            disabled={isSaving}
+            className="
+              w-full
+              rounded-md
+              border
+              border-[rgb(var(--color-border))]
+              bg-[rgb(var(--color-surface))]
+              px-3
+              py-2
+              text-[rgb(var(--color-text))]
+              outline-none
+              transition
+              placeholder:text-[rgb(var(--color-muted))]
+              focus:border-[rgb(var(--color-brand))]
+            "
+          />
+
+          {errors.cmsUsername && (
+            <p className="mt-1 text-sm text-red-500">
+              {errors.cmsUsername}
+            </p>
+          )}
+        </div>
+
+        {/* CMS Password */}
+        <div>
+          <label htmlFor="profile-cmsPassword" className="mb-1 block text-sm font-medium text-[rgb(var(--color-text))]">
+            <LockClosedIcon aria-hidden="true" />
+            Mật khẩu CMS
+          </label>
+
+          <div className="relative">
+            <input
+            id="profile-cmsPassword"
+            autoComplete="current-password"
+              type={
+                showCmsPassword
+                  ? "text"
+                  : "password"
+              }
+              value={form.cmsPassword ?? ""}
+              onChange={e =>
+                updateField(
+                  "cmsPassword",
+                  e.target.value
+                )
+              }
+              disabled={isSaving}
+              className="
+                w-full
+                rounded-md
+                border
+                border-[rgb(var(--color-border))]
+                bg-[rgb(var(--color-surface))]
+                px-3
+                py-2
+                pr-10
+                text-[rgb(var(--color-text))]
+                outline-none
+                transition
+                focus:border-[rgb(var(--color-brand))]
+              "
+            />
+
+            <button
+              type="button"
+              onClick={() =>
+                setShowCmsPassword(
+                  prev => !prev
+                )
+              }
+              disabled={isSaving}
+              aria-label={
+                showCmsPassword
+                  ? "Ẩn mật khẩu"
+                  : "Hiện mật khẩu"
+              }
+              title={
+                showCmsPassword
+                  ? "Ẩn mật khẩu"
+                  : "Hiện mật khẩu"
+              }
+              className="
+                absolute
+                right-3
+                top-1/2
+                -translate-y-1/2
+                text-[rgb(var(--color-muted))]
+                transition
+                hover:text-[rgb(var(--color-text))]
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
+            >
+              {showCmsPassword ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="h-5 w-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 3l18 18"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M10.58 10.58a2 2 0 002.84 2.84"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9.88 5.09A10.94 10.94 0 0112 4.88c5.23 0 8.87 4.12 9.93 7.12a11.8 11.8 0 01-3.01 4.55"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6.61 6.61A11.8 11.8 0 002.07 12C3.13 15 6.77 19.12 12 19.12c1.61 0 3.05-.35 4.3-.91"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="h-5 w-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M2.07 12C3.13 9 6.77 4.88 12 4.88S20.87 9 21.93 12C20.87 15 17.23 19.12 12 19.12S3.13 15 2.07 12z"
+                  />
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="3"
+                  />
+                </svg>
+              )}
+            </button>
+          </div>
+
+          {errors.cmsPassword && (
+            <p className="mt-1 text-sm text-red-500">
+              {errors.cmsPassword}
+            </p>
+          )}
+        </div>
+      </div>
+    )}
+
+    {/* =========================
+        KPI METHOD
+    ========================== */}
+    {!isAdmin && changeMethod === "kpi" && (
+      <div>
+        <label htmlFor="profile-currentPassword" className="mb-1 block text-sm font-medium text-[rgb(var(--color-text))]">
+          <LockClosedIcon aria-hidden="true" />
+          Mật khẩu KPI hiện tại
+        </label>
+
+        <div className="relative">
+          <input
+            id="profile-currentPassword"
+            autoComplete="current-password"
+            type={
+              showCurrentPassword
+                ? "text"
+                : "password"
+            }
+            value={form.currentPassword ?? ""}
+            onChange={e =>
+              updateField(
+                "currentPassword",
+                e.target.value
+              )
+            }
+            disabled={isSaving}
+            className="
+              w-full
+              rounded-md
+              border
+              border-[rgb(var(--color-border))]
+              bg-[rgb(var(--color-surface))]
+              px-3
+              py-2
+              pr-10
+              text-[rgb(var(--color-text))]
+              outline-none
+              transition
+              focus:border-[rgb(var(--color-brand))]
+            "
+          />
+
+          <button
+            type="button"
+            onClick={() =>
+              setShowCurrentPassword(
+                prev => !prev
+              )
+            }
+            disabled={isSaving}
+            aria-label={
+              showCurrentPassword
+                ? "Ẩn mật khẩu"
+                : "Hiện mật khẩu"
+            }
+            title={
+              showCurrentPassword
+                ? "Ẩn mật khẩu"
+                : "Hiện mật khẩu"
+            }
+            className="
+              absolute
+              right-3
+              top-1/2
+              -translate-y-1/2
+              text-[rgb(var(--color-muted))]
+              transition
+              hover:text-[rgb(var(--color-text))]
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+            "
+          >
+            {showCurrentPassword ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                className="h-5 w-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 3l18 18"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M10.58 10.58a2 2 0 002.84 2.84"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9.88 5.09A10.94 10.94 0 0112 4.88c5.23 0 8.87 4.12 9.93 7.12a11.8 11.8 0 01-3.01 4.55"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6.61 6.61A11.8 11.8 0 002.07 12C3.13 15 6.77 19.12 12 19.12c1.61 0 3.05-.35 4.3-.91"
+                />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                className="h-5 w-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M2.07 12C3.13 9 6.77 4.88 12 4.88S20.87 9 21.93 12C20.87 15 17.23 19.12 12 19.12S3.13 15 2.07 12z"
+                />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="3"
+                />
+              </svg>
+            )}
+          </button>
+        </div>
+
+        {errors.currentPassword && (
+          <p className="mt-1 text-sm text-red-500">
+            {errors.currentPassword}
+          </p>
+        )}
+      </div>
+    )}
+
+    {/* =========================
+        NEW PASSWORD
+    ========================== */}
+    <div>
+      <label htmlFor="profile-newPassword" className="mb-1 block text-sm font-medium text-[rgb(var(--color-text))]">
+        <LockClosedIcon aria-hidden="true" />
+        Mật khẩu mới
+      </label>
+
+      <div className="relative">
+        <input
+            id="profile-newPassword"
+            autoComplete="new-password"
+          type={
+            showNewPassword
+              ? "text"
+              : "password"
+          }
+          value={form.newPassword ?? ""}
+          onChange={e =>
+            updateField(
+              "newPassword",
+              e.target.value
+            )
+          }
+          disabled={isSaving}
+          className="
+            w-full
+            rounded-md
+            border
+            border-[rgb(var(--color-border))]
+            bg-[rgb(var(--color-surface))]
+            px-3
+            py-2
+            pr-10
+            text-[rgb(var(--color-text))]
+            outline-none
+            transition
+            focus:border-[rgb(var(--color-brand))]
+          "
+        />
+
+        <button
+          type="button"
+          onClick={() =>
+            setShowNewPassword(
+              prev => !prev
+            )
+          }
+          disabled={isSaving}
+          aria-label={
+            showNewPassword
+              ? "Ẩn mật khẩu"
+              : "Hiện mật khẩu"
+          }
+          title={
+            showNewPassword
+              ? "Ẩn mật khẩu"
+              : "Hiện mật khẩu"
+          }
+          className="
+            absolute
+            right-3
+            top-1/2
+            -translate-y-1/2
+            text-[rgb(var(--color-muted))]
+            transition
+            hover:text-[rgb(var(--color-text))]
+            disabled:cursor-not-allowed
+            disabled:opacity-50
+          "
+        >
+          {showNewPassword ? (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              className="h-5 w-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3 3l18 18"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10.58 10.58a2 2 0 002.84 2.84"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9.88 5.09A10.94 10.94 0 0112 4.88c5.23 0 8.87 4.12 9.93 7.12a11.8 11.8 0 01-3.01 4.55"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6.61 6.61A11.8 11.8 0 002.07 12C3.13 15 6.77 19.12 12 19.12c1.61 0 3.05-.35 4.3-.91"
+              />
+            </svg>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              className="h-5 w-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M2.07 12C3.13 9 6.77 4.88 12 4.88S20.87 9 21.93 12C20.87 15 17.23 19.12 12 19.12S3.13 15 2.07 12z"
+              />
+              <circle
+                cx="12"
+                cy="12"
+                r="3"
+              />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {errors.newPassword && (
+        <p className="mt-1 text-sm text-red-500">
+          {errors.newPassword}
+        </p>
+      )}
+
+      {newPassword && (
+        <div className="password-change__strength" data-tone={strengthTone}>
+          <div className="password-change__strengthTop">
+            <div className="password-change__strengthBars" aria-hidden="true">
+              {[1, 2, 3, 4].map(step => (
+                <span key={step} data-active={strengthScore >= step} />
+              ))}
+            </div>
+            <span className="password-change__strengthLabel">Độ mạnh: {strengthLabel}</span>
+          </div>
+          <ul className="password-change__rules">
+            {strengthChecks.map(rule => (
+              <li key={rule.label} data-passed={rule.passed}>
+                <CheckIcon aria-hidden="true" />
+                {rule.label}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+
+    {/* =========================
+        CONFIRM PASSWORD
+    ========================== */}
+    <div>
+      <label htmlFor="profile-confirmPassword" className="mb-1 block text-sm font-medium text-[rgb(var(--color-text))]">
+        <CheckIcon aria-hidden="true" />
+        Xác nhận mật khẩu
+      </label>
+
+      <div className="relative">
+        <input
+            id="profile-confirmPassword"
+            autoComplete="new-password"
+          type={
+            showConfirmPassword
+              ? "text"
+              : "password"
+          }
+          value={form.confirmPassword ?? ""}
+          onChange={e =>
+            updateField(
+              "confirmPassword",
+              e.target.value
+            )
+          }
+          disabled={isSaving}
+          className="
+            w-full
+            rounded-md
+            border
+            border-[rgb(var(--color-border))]
+            bg-[rgb(var(--color-surface))]
+            px-3
+            py-2
+            pr-10
+            text-[rgb(var(--color-text))]
+            outline-none
+            transition
+            focus:border-[rgb(var(--color-brand))]
+          "
+        />
+
+        <button
+          type="button"
+          onClick={() =>
+            setShowConfirmPassword(
+              prev => !prev
+            )
+          }
+          disabled={isSaving}
+          aria-label={
+            showConfirmPassword
+              ? "Ẩn mật khẩu"
+              : "Hiện mật khẩu"
+          }
+          title={
+            showConfirmPassword
+              ? "Ẩn mật khẩu"
+              : "Hiện mật khẩu"
+          }
+          className="
+            absolute
+            right-3
+            top-1/2
+            -translate-y-1/2
+            text-[rgb(var(--color-muted))]
+            transition
+            hover:text-[rgb(var(--color-text))]
+            disabled:cursor-not-allowed
+            disabled:opacity-50
+          "
+        >
+          {showConfirmPassword ? (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              className="h-5 w-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3 3l18 18"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10.58 10.58a2 2 0 002.84 2.84"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9.88 5.09A10.94 10.94 0 0112 4.88c5.23 0 8.87 4.12 9.93 7.12a11.8 11.8 0 01-3.01 4.55"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6.61 6.61A11.8 11.8 0 002.07 12C3.13 15 6.77 19.12 12 19.12c1.61 0 3.05-.35 4.3-.91"
+              />
+            </svg>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              className="h-5 w-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M2.07 12C3.13 9 6.77 4.88 12 4.88S20.87 9 21.93 12C20.87 15 17.23 19.12 12 19.12S3.13 15 2.07 12z"
+              />
+              <circle
+                cx="12"
+                cy="12"
+                r="3"
+              />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {errors.confirmPassword ? (
+        <p className="mt-1 text-sm text-red-500">
+          {errors.confirmPassword}
+        </p>
+      ) : passwordsMatch && (
+        <p className="password-change__match">
+          <CheckIcon aria-hidden="true" />
+          Mật khẩu xác nhận khớp
+        </p>
+      )}
+    </div>
+
+    {/* =========================
+        SAVE
+    ========================== */}
+    <button
+      type="submit"
+      disabled={isSaving}
+      className="user-common__primaryButton"
+    >
+      <LockClosedIcon aria-hidden="true" />
+      {isSaving ? "Đang cập nhật…" : "Cập nhật mật khẩu"}
+    </button>
+  </form>
+);
+}

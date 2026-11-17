@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
 import "./globals.css";
-
+import { AuthProvider } from "@/features/auth/AuthProvider";
+import type { Metadata } from "next";
+import { AppToaster } from "@/components/ui/Toaster";
 export const metadata: Metadata = {
   title: "KPI Management System",
   description: "DCG KPI management platform",
@@ -16,7 +17,12 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: "try { const theme = localStorage.getItem('dcg-theme'); const isDark = theme ? theme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches; document.documentElement.classList.toggle('dark', isDark); } catch {}" }} />
       </head>
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          {children}
+          <AppToaster />
+        </AuthProvider>
+      </body>
     </html>
   );
 }
