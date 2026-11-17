@@ -1,4 +1,4 @@
-import { request } from "@/lib/api/request";
+import { downloadFile, request } from "@/lib/api/request";
 import type { PagedResult } from "@/lib/api/types";
 import type { EvaluationExport } from "../evaluationExport";
 import type { SummaryDetail, SummaryDetailFilters, SummaryFilters, SummaryMode, SummaryRequest, SummaryRow } from "../types";
@@ -10,6 +10,11 @@ export const summaryApi = {
       body: JSON.stringify(listIds),
       signal,
     });
+  },
+  exportSummary(items: SummaryDetail[], signal?: AbortSignal) {
+    return downloadFile("/export-file/summary-evaluations", {
+      method: "POST", body: JSON.stringify(items), signal,
+    }, "tong-hop-danh-gia.xlsx");
   },
   getDetails(mode: SummaryMode, periodId: number, page: number, pageSize: number, filters: SummaryDetailFilters, signal?: AbortSignal) {
     return request<PagedResult<SummaryDetail>>("/summary/detail", {

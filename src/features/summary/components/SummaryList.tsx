@@ -61,7 +61,6 @@ export function SummaryList({ mode }: { mode: SummaryMode }) {
   const pageTotalEval = data?.items.reduce((sum, row) => sum + row.totalEval, 0) ?? 0;
   const uniqueCompanies = new Set(data?.items.map(row => row.companyName) ?? []).size;
   const latestPeriod = data?.items[0]?.period ?? "";
-  const canExport = Boolean(filters.typeId && filters.periodId);
   const periods = types.find(type => type.id === filters.typeId)?.periods ?? [];
   const filtered = filters.companyIds.length > 0 || !!(filters.typeId || filters.periodId || filters.jobPositionId);
 
@@ -115,7 +114,7 @@ export function SummaryList({ mode }: { mode: SummaryMode }) {
   }, [exportState]);
 
   async function exportExcel() {
-    if (!filters.typeId || !filters.periodId || !data?.total || exportController.current) return;
+    if (!data?.total || exportController.current) return;
     const controller = new AbortController();
     exportController.current = controller;
     setExportState("loading");
@@ -127,29 +126,16 @@ export function SummaryList({ mode }: { mode: SummaryMode }) {
       if (!groups.items.length || groups.items.length !== groups.total) {
         throw new Error("Chưa lấy đủ nhóm tổng hợp. Vui lòng làm mới và xuất lại.");
       }
-      const [result, template, workbook] = await Promise.all([
-        summaryApi.detail(mode, groups.items.map(row => row.periodId), filters.companyIds, controller.signal),
-        fetch("/excel/danh_sach_tong_hop_hr_template.xlsx", { signal: controller.signal }),
-        import("../summaryExport"),
-      ]);
+      const result = await summaryApi.detail(mode, groups.items.map(row => row.periodId), filters.companyIds, controller.signal);
       controller.signal.throwIfAborted();
-      if (!template.ok) throw new Error("Chưa tải được mẫu Excel.");
       if (!result.total) {
         notify("info", "Không có bản đánh giá chi tiết để xuất.");
         return;
       }
-      if (result.items.length !== result.total) throw new Error("Chưa lấy đủ dữ liệu chi tiết để xuất Excel.");
-      const templateData = await template.arrayBuffer();
-      controller.signal.throwIfAborted();
-      const blob = workbook.createSummaryWorkbook(result.items, templateData);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "danh-sach-tong-hop-" + (mode === "HrSummary" ? "hr" : "director") + "-" + new Date().toISOString().slice(0, 10) + ".xlsx";
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      if (result.items.length !== result.total) throw new Error("Chưa lấy đủ hồ sơ cần xuất Excel.");
+      await summaryApi.exportSummary(result.items, controller.signal);
       setExportState("complete");
-      notify("success", "Đã xuất " + result.items.length + " bản đánh giá theo mẫu.");
+      notify("success", "Đã xuất " + result.items.length + " bản đánh giá.");
     } catch (cause) {
       if (!controller.signal.aborted) notify("error", requestMessage(cause, cause instanceof Error ? cause.message : "Chưa xuất được Excel. Vui lòng thử lại."));
     } finally {
@@ -180,10 +166,9 @@ export function SummaryList({ mode }: { mode: SummaryMode }) {
           <p>Tổng hợp bản đánh giá theo kỳ, biểu mẫu và công ty.</p>
         </div>
         <div className="hr-summary__headingActions">
-          {!canExport && <span className="hr-summary__exportHint">Chọn loại & kỳ để xuất Excel</span>}
-          <button type="button" className="hr-summary__button hr-summary__export" data-ready={canExport || undefined} data-state={exportState} onClick={exportExcel} disabled={loading || !!error || !data?.total || exporting || !canExport} aria-busy={exporting} title={canExport ? "Xuất Excel theo bộ lọc hiện tại" : "Chọn loại đánh giá và kỳ đánh giá để xuất Excel"}>
+          <button type="button" className="hr-summary__button hr-summary__export" data-ready={!!data?.total || undefined} data-state={exportState} onClick={exportExcel} disabled={loading || !!error || !data?.total || exporting} aria-busy={exporting} title="Xuất Excel tổng hợp theo bộ lọc hiện tại">
             <span className="hr-summary__exportGlyph" aria-hidden="true"><DownloadIcon /><CheckIcon /></span>
-            <span role="status">{exporting ? "Đang xuất…" : exportState === "complete" ? "Đã xuất Excel" : "Xuất Excel"}</span>
+            <span role="status">{exporting ? "Đang xuất…" : exportState === "complete" ? "Đã xuất Excel" : "Excel tổng hợp"}</span>
           </button>
           <button type="button" className="hr-summary__refresh" aria-label="Làm mới danh sách tổng hợp" title="Làm mới" disabled={loading} onClick={() => setRevision(value => value + 1)}>
             <ReloadIcon className={loading ? "hr-summary__spinning" : undefined} aria-hidden="true" />

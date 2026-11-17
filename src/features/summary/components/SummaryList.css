@@ -76,7 +76,6 @@ html.dark .hr-summary__glassCard {
   .hr-summary__glassCard { display: none; }
 }
 .hr-summary__headingActions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
-.hr-summary__exportHint { color: var(--summary-muted); font-size: var(--text-meta); }
 .hr-summary__export[data-ready="true"] { border-color: rgb(22 128 93 / .28); color: #16805d; background: rgb(22 128 93 / .08); }
 .hr-summary__export[data-ready="true"]:hover:not(:disabled) { border-color: rgb(22 128 93 / .42); background: rgb(22 128 93 / .14); }
 html.dark .hr-summary__export[data-ready="true"] { border-color: rgb(103 218 171 / .32); color: #67daab; background: rgb(103 218 171 / .12); }
