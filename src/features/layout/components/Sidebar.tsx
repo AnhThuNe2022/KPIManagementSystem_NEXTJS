@@ -47,6 +47,16 @@ function sortMenus(menus: MenuDto[]): MenuDto[] {
     .map(menu => ({ ...menu, children: sortMenus(menu.children ?? []) }));
 }
 
+function DcgSparkIcon() {
+  return (
+    <svg className="sidebar__dcgSparkIcon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path className="is-red" d="M6.2 1.8 13.4 9H10.1L6.2 5.1V1.8ZM17.8 1.8V5.1L15.1 7.8H11.8L17.8 1.8Z" />
+      <path className="is-blue" d="M1.8 6.8H6.1L10.3 12 6.1 17.2H1.8L6 12 1.8 6.8ZM22.2 6.8H17.9L13.7 12l4.2 5.2h4.3L18 12l4.2-5.2Z" />
+      <path className="is-red" d="M6.8 22.2v-4.3L12 13.7l5.2 4.2v4.3L12 18l-5.2 4.2Z" />
+    </svg>
+  );
+}
+
 export function Sidebar() {
   const [navigation, setNavigation] = useState<MenuDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,6 +69,9 @@ export function Sidebar() {
   const selectedGroupIndex = navigation.findIndex(item => item.id === selectedGroupId && containsPath(item, selectedPathname));
   const activeIndex = selectedGroupIndex >= 0 ? selectedGroupIndex : navigation.findIndex(item => containsPath(item, selectedPathname));
   const [collapsed, setCollapsed] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [dockOpenIndex, setDockOpenIndex] = useState<number | null>(null);
+  const [dockCompactLeft, setDockCompactLeft] = useState<number | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [openGroups, setOpenGroups] = useState<Record<number, boolean>>({});
@@ -67,6 +80,7 @@ export function Sidebar() {
   const [flyoutTop, setFlyoutTop] = useState(0);
   const [lastFlyoutIndex, setLastFlyoutIndex] = useState(Math.max(activeIndex, 0));
   const sidebarRef = useRef<HTMLElement>(null);
+  const dockRef = useRef<HTMLDivElement>(null);
   const flyoutRef = useRef<HTMLDivElement>(null);
   const mobileDialogRef = useRef<HTMLDialogElement>(null);
   const navRef = useRef<HTMLElement>(null);
@@ -74,8 +88,9 @@ export function Sidebar() {
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const highlightedIndex = hoveredIndex ?? focusedIndex ?? Math.max(activeIndex, 0);
   const visiblyCollapsed = collapsed && !mobileOpen;
-  const flyoutIndex = visiblyCollapsed ? (hoveredIndex ?? focusedIndex) : null;
-  const flyoutItem = visiblyCollapsed ? navigation[flyoutIndex ?? lastFlyoutIndex] : null;
+  const visiblyFullscreen = fullscreen && collapsed && !mobileOpen;
+  const flyoutIndex = visiblyCollapsed && !visiblyFullscreen ? (hoveredIndex ?? focusedIndex) : null;
+  const flyoutItem = visiblyCollapsed && !visiblyFullscreen ? navigation[flyoutIndex ?? lastFlyoutIndex] : null;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -162,6 +177,61 @@ export function Sidebar() {
     return () => document.removeEventListener("pointerdown", dismiss);
   }, [flyoutIndex]);
 
+  useEffect(() => {
+    if (!visiblyFullscreen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!dockRef.current?.contains(event.target as Node)) {
+        setDockOpenIndex(null);
+      }
+    };
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      if (dockOpenIndex !== null) setDockOpenIndex(null);
+      else setFullscreen(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [visiblyFullscreen, dockOpenIndex]);
+
+  useEffect(() => {
+    if (!visiblyFullscreen) {
+      setDockCompactLeft(null);
+      return;
+    }
+    const measureFloatingBar = () => {
+      const bar = document.querySelector<HTMLElement>(".floating-selection-bar__pill, .summary-detail__taskStatus");
+      if (!bar) {
+        setDockCompactLeft(null);
+        return;
+      }
+      if (bar.offsetWidth <= 0 || bar.offsetHeight <= 0) {
+        setDockCompactLeft(null);
+        return;
+      }
+      const parentLeft = (bar.offsetParent as HTMLElement | null)?.getBoundingClientRect().left ?? 0;
+      const settledRight = parentLeft + bar.offsetLeft + bar.offsetWidth;
+      const nextLeft = Math.min(Math.round(settledRight + 14), window.innerWidth - 68);
+      setDockCompactLeft(nextLeft);
+      setDockOpenIndex(null);
+    };
+    measureFloatingBar();
+    const mutationObserver = new MutationObserver(measureFloatingBar);
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+    const resizeObserver = new ResizeObserver(measureFloatingBar);
+    const currentBar = document.querySelector<HTMLElement>(".floating-selection-bar__pill, .summary-detail__taskStatus");
+    if (currentBar) resizeObserver.observe(currentBar);
+    window.addEventListener("resize", measureFloatingBar);
+    return () => {
+      mutationObserver.disconnect();
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", measureFloatingBar);
+    };
+  }, [visiblyFullscreen]);
+
   useEffect(
     () => () => {
       if (leaveTimer.current) clearTimeout(leaveTimer.current);
@@ -187,6 +257,7 @@ export function Sidebar() {
     event.preventDefault();
     cancelReturn();
     setMobileOpen(false);
+    setDockOpenIndex(null);
     setHoveredIndex(null);
     setFocusedIndex(null);
     setSelectedGroupId(navigation[index].id);
@@ -224,6 +295,7 @@ export function Sidebar() {
       ref={sidebarRef}
       className="sidebar__sidebar"
       data-collapsed={visiblyCollapsed}
+      data-fullscreen={visiblyFullscreen}
       aria-label="Thanh điều hướng"
       onPointerEnter={cancelReturn}
       onPointerLeave={scheduleReturn}
@@ -268,7 +340,11 @@ export function Sidebar() {
                   return;
                 }
                 cancelReturn();
-                setCollapsed((value) => !value);
+                setCollapsed((value) => {
+                  if (value) setFullscreen(false);
+                  return !value;
+                });
+                setDockOpenIndex(null);
                 setHoveredIndex(null);
                 setFocusedIndex(null);
               }}
@@ -425,6 +501,22 @@ export function Sidebar() {
             <div className="sidebar__footerSnow" aria-hidden="true">
               <span /><span /><span /><span /><span /><span /><span /><span />
             </div>
+            <button
+              type="button"
+              className="sidebar__fullscreenTrigger"
+              onClick={() => {
+                cancelReturn();
+                setHoveredIndex(null);
+                setFocusedIndex(null);
+                setDockOpenIndex(null);
+                setFullscreen(true);
+              }}
+              aria-label="Chế độ toàn màn hình"
+              title="Chế độ toàn màn hình"
+              tabIndex={visiblyCollapsed && !visiblyFullscreen ? 0 : -1}
+            >
+              <DcgSparkIcon />
+            </button>
             <span className="sidebar__footerRule" aria-hidden="true" />
             <span className="sidebar__xmasWish">❄ Giáng sinh an lành</span>
             <p>
@@ -468,6 +560,103 @@ export function Sidebar() {
               <span className="sidebar__flyoutHint">{flyoutItem.title}</span>
             )}
           </div>
+        </div>
+      )}
+      {visiblyFullscreen && (
+        <div
+          ref={dockRef}
+          className="sidebar__dock"
+          data-compact={dockCompactLeft !== null}
+          style={dockCompactLeft !== null ? ({ "--dock-compact-left": `${dockCompactLeft}px` } as CSSProperties) : undefined}
+          role="toolbar"
+          aria-label="Thanh điều hướng nhanh toàn màn hình"
+        >
+          <div className="sidebar__dockItems">
+            {navigation.map((item, index) => {
+              const hasChildren = item.children.length > 0;
+              const href = menuHref(item.url);
+              const isActive = activeIndex === index;
+              const isOpen = dockOpenIndex === index;
+              return (
+                <div
+                  key={item.id}
+                  className="sidebar__dockGroup"
+                  onPointerEnter={(event) => {
+                    if (event.pointerType === "touch") return;
+                    cancelReturn();
+                    setDockOpenIndex(index);
+                  }}
+                  onPointerLeave={() => {
+                    cancelReturn();
+                    leaveTimer.current = setTimeout(() => {
+                      setDockOpenIndex((current) => (current === index ? null : current));
+                    }, 160);
+                  }}
+                >
+                  {hasChildren ? (
+                    <button
+                      type="button"
+                      className="sidebar__dockItem"
+                      data-active={isActive}
+                      data-open={isOpen}
+                      aria-label={item.title}
+                      aria-expanded={isOpen}
+                      onClick={() => setDockOpenIndex((current) => (current === index ? null : index))}
+                    >
+                      <NavigationIcon name={item.icon} className="sidebar__icon" fallback />
+                    </button>
+                  ) : href === "#" ? (
+                    <button
+                      type="button"
+                      className="sidebar__dockItem"
+                      disabled
+                      title="Menu chưa có đường dẫn"
+                      aria-label={item.title}
+                    >
+                      <NavigationIcon name={item.icon} className="sidebar__icon" fallback />
+                    </button>
+                  ) : (
+                    <Link
+                      href={href}
+                      className="sidebar__dockItem"
+                      data-active={isActive}
+                      aria-label={item.title}
+                      aria-current={isActive ? "page" : undefined}
+                      onNavigate={(event) => {
+                        setDockOpenIndex(null);
+                        navigate(event, href, index);
+                      }}
+                    >
+                      <NavigationIcon name={item.icon} className="sidebar__icon" fallback />
+                    </Link>
+                  )}
+                  <div className="sidebar__dockPopup" data-open={isOpen} inert={!isOpen}>
+                    <div className="sidebar__dockPopupBody">
+                      <span className="sidebar__dockPopupTitle">{item.title}</span>
+                      {hasChildren && (
+                        <nav className="sidebar__dockPopupLinks" aria-label={item.title}>
+                          {renderSubitems(item, index)}
+                        </nav>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <span className="sidebar__dockDivider" aria-hidden="true" />
+          <button
+            type="button"
+            className="sidebar__dockExit"
+            onClick={() => {
+              setDockOpenIndex(null);
+              setFullscreen(false);
+            }}
+            aria-label="Thoát chế độ toàn màn hình"
+            title="Thoát toàn màn hình (Esc)"
+          >
+            <DcgSparkIcon />
+          </button>
         </div>
       )}
     </aside>

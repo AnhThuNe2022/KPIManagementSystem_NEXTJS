@@ -168,11 +168,11 @@ html.dark .pending-evaluations__statPill[data-variant="period"] {
 .pending-evaluations__page .pending-evaluations__table td { padding: 12px 10px; line-height: 1.55; }
 .pending-evaluations__employeeColumn { width: 175px; }
 .pending-evaluations__companyColumn { width: 165px; }
-.pending-evaluations__periodColumn { width: auto; min-width: 210px; }
+.pending-evaluations__periodColumn { width: auto; min-width: 170px; }
 .pending-evaluations__scoreColumn { width: 110px; text-align: center; }
-.pending-evaluations__dateColumn { width: 172px; }
+.pending-evaluations__dateColumn { width: 162px; }
 .pending-evaluations__statusColumn { width: 140px; }
-.pending-evaluations__actionsColumn { width: 164px; }
+.pending-evaluations__actionsColumn { width: 196px; }
 .pending-evaluations__page .pending-evaluations__employeeCell > div { align-items: center; gap: 11px; padding: 0; border: 0; }
 .pending-evaluations__page .pending-evaluations__employeeCell > div > span { width: 34px; height: 34px; border-radius: 10px; color: var(--pending-avatar); background: var(--pending-avatar-soft); box-shadow: none; }
 .pending-evaluations__employeeCell > div > span > svg { width: 55%; height: 55%; }
