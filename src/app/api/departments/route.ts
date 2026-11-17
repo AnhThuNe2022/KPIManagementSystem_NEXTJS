@@ -1,8 +1,12 @@
 import { proxyApiRequest } from "@/lib/api/proxy";
 
 export function GET(request: Request) {
-  const query = new URL(request.url).searchParams;
-  query.set("byunithrcompile", "true");
+  const source = new URL(request.url).searchParams;
+  const query = new URLSearchParams({ byunithrcompile: "true" });
+  const companyId = source.get("companyid")?.trim();
+  const name = source.get("name")?.trim();
+  if (companyId) query.set("Filters[companyid]", companyId);
+  if (name) query.set("Filters[name]", name);
   return proxyApiRequest(request, "/department/get-by-filter?" + query);
 }
 

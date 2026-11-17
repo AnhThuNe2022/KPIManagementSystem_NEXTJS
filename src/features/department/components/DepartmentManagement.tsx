@@ -132,9 +132,14 @@ export function DepartmentManagement() {
     return () => observer.disconnect();
   }, [status]);
 
-  const rows = useMemo(() => items
-    .filter(item => status === "all" || item.isActive === (status === "active"))
-    .sort((a, b) => a.name.localeCompare(b.name, "vi") * (descending ? -1 : 1)), [items, status, descending]);
+  const rows = useMemo(() => {
+    const keyword = applied.name.toLowerCase();
+    return items
+      .filter(item => (!applied.companyId || String(item.companyId) === applied.companyId)
+        && (!keyword || item.name.toLowerCase().includes(keyword) || (item.description ?? "").toLowerCase().includes(keyword))
+        && (status === "all" || item.isActive === (status === "active")))
+      .sort((a, b) => a.name.localeCompare(b.name, "vi") * (descending ? -1 : 1));
+  }, [items, applied.companyId, applied.name, status, descending]);
   const activeCount = items.filter(item => item.isActive).length;
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
   const currentPage = Math.min(page, totalPages);
