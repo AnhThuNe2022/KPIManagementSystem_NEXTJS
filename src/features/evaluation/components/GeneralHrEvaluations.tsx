@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEven
 import { ActivityLogIcon, ArrowRightIcon, CheckIcon, ClockIcon, ChevronDownIcon, Component1Icon, Cross2Icon, DotsHorizontalIcon, DownloadIcon, ExclamationTriangleIcon, EyeOpenIcon, FileTextIcon, MagnifyingGlassIcon, MixerHorizontalIcon, PersonIcon, ReloadIcon, ResetIcon, TrashIcon, UpdateIcon } from "@radix-ui/react-icons";
 import { notify } from "@/components/ui/Toaster";
 import { generalHrEvaluationApi as api } from "../services/generalHrEvaluationApi";
+import { exportEvaluations } from "../services/exportEvaluations";
 import { evaluationLookupApi } from "../services/evaluationLookupApi";
 import { generalHrStatusOptions, type ApprovalHistoryEntry, type EvaluationApprover, type EvaluationFilterOption, type EvaluationTypeOption, type GeneralHrEvaluationDto, type GeneralHrEvaluationRequest } from "@/features/evaluation/types";
 import { UserRoleSystem } from "@/features/auth/types";
@@ -43,7 +44,7 @@ export function GeneralHrEvaluations() {
   const [exportStatus, setExportStatus] = useState<"idle" | "loading" | "generating" | "complete">("idle");
   const [exportTotal, setExportTotal] = useState(0);
   const exporting = exportStatus !== "idle";
-  const exportLabel = exportStatus === "complete" ? "Đã tải Excel" : exportStatus === "generating" ? "Đang tạo Excel" : "Đang lấy dữ liệu";
+  const exportLabel = exportStatus === "complete" ? "Đã tải ZIP" : exportStatus === "generating" ? "Đang tạo ZIP" : "Đang lấy dữ liệu";
   const exportController = useRef<AbortController | null>(null);
   const exportButton = useRef<HTMLButtonElement>(null), exportCancelButton = useRef<HTMLButtonElement>(null);
   const [dialog, setDialog] = useState<{ mode: HrDialogMode; row: GeneralHrEvaluationDto } | null>(null);
@@ -133,7 +134,7 @@ export function GeneralHrEvaluations() {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) requestAnimationFrame(() => exportButton.current?.focus({ preventScroll: true }));
   }
 
-  async function exportExcel() {
+  async function exportZip() {
     if (!data?.total || exportController.current) return;
     const controller = new AbortController(); exportController.current = controller;
     setExportTotal(data.total); setExportStatus("loading");
@@ -143,13 +144,7 @@ export function GeneralHrEvaluations() {
       controller.signal.throwIfAborted();
       if (!result.total || result.items.length !== result.total) throw new Error("INCOMPLETE_EXPORT");
       setExportTotal(result.total); setExportStatus("generating");
-      const { createGeneralHrWorkbook } = await import("../generalHrExport");
-      controller.signal.throwIfAborted();
-      const blob = await createGeneralHrWorkbook(result.items);
-      controller.signal.throwIfAborted();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a"); link.href = url; link.download = `danh-gia-kpi-${new Date().toISOString().slice(0, 10)}.xlsx`; link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      await exportEvaluations(result.items.map(item => item.id), controller.signal);
       setExportStatus("complete");
       notify("success", `Đã xuất ${result.total} bản đánh giá.`);
       await new Promise<void>((resolve) => setTimeout(resolve, 900));
@@ -177,11 +172,11 @@ export function GeneralHrEvaluations() {
         <div className="general-hr-evaluations__heroActions">
           <div className="general-hr-evaluations__exportControl" data-active={exporting} data-state={exportStatus}>
             <span className="general-hr-evaluations__exportSurface" aria-hidden="true" onTransitionEnd={(event) => { if (event.propertyName === "clip-path" && !exportController.current) exportButton.current?.focus({ preventScroll: true }); }} />
-            <button ref={exportButton} type="button" className="general-hr-evaluations__exportButton" aria-label="Xuất Excel" aria-hidden={exporting || undefined} tabIndex={exporting ? -1 : 0} onClick={exportExcel} disabled={loading || !!error || !data?.total || exporting}><DownloadIcon aria-hidden="true" /><span>Xuất Excel{data?.total ? ` (${data.total})` : ""}</span></button>
+            <button ref={exportButton} type="button" className="general-hr-evaluations__exportButton" aria-label="Xuất ZIP" aria-hidden={exporting || undefined} tabIndex={exporting ? -1 : 0} onClick={exportZip} disabled={loading || !!error || !data?.total || exporting}><DownloadIcon aria-hidden="true" /><span>Xuất ZIP{data?.total ? ` (${data.total})` : ""}</span></button>
             <div className="general-hr-evaluations__exportProgress" aria-hidden={!exporting} inert={!exporting}>
               <span className="general-hr-evaluations__exportGlyph" aria-hidden="true"><DownloadIcon /><CheckIcon /></span>
-              <div><div className="general-hr-evaluations__exportProgressLabel"><span id="hr-export-label">{exportLabel}</span><strong>XLSX</strong></div><div className="general-hr-evaluations__exportTrack" role="progressbar" aria-labelledby="hr-export-label" aria-valuemin={0} aria-valuemax={100} aria-valuenow={exportStatus === "complete" ? 100 : undefined} aria-valuetext={exportLabel}><span /></div></div>
-              <button ref={exportCancelButton} type="button" className="general-hr-evaluations__exportCancel" aria-label={exportStatus === "complete" ? "Đóng thông báo tải Excel" : "Hủy xuất Excel"} onClick={cancelExport}><Cross2Icon aria-hidden="true" /></button>
+              <div><div className="general-hr-evaluations__exportProgressLabel"><span id="hr-export-label">{exportLabel}</span><strong>ZIP</strong></div><div className="general-hr-evaluations__exportTrack" role="progressbar" aria-labelledby="hr-export-label" aria-valuemin={0} aria-valuemax={100} aria-valuenow={exportStatus === "complete" ? 100 : undefined} aria-valuetext={exportLabel}><span /></div></div>
+              <button ref={exportCancelButton} type="button" className="general-hr-evaluations__exportCancel" aria-label={exportStatus === "complete" ? "Đóng thông báo tải ZIP" : "Hủy xuất ZIP"} onClick={cancelExport}><Cross2Icon aria-hidden="true" /></button>
             </div>
           </div>
           <span role="status">{exporting ? `${exportLabel} · ${exportTotal.toLocaleString("vi-VN")} hồ sơ` : ""}</span>
