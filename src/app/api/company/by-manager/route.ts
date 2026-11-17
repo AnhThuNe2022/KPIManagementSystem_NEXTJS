@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { apiClient } from "@/lib/api/client";
-import { getApiErrorStatus } from "@/lib/api/errors";
+import { proxyApiRequest } from "@/lib/api/proxy";
 
 export async function POST(request: Request) {
-  let body;
+  let body: unknown;
   try {
     body = await request.json();
   } catch {
@@ -12,16 +11,5 @@ export async function POST(request: Request) {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     return NextResponse.json({ message: "Invalid company filters" }, { status: 400 });
   }
-  try {
-    return NextResponse.json(
-      await apiClient("/company/by-manager", {
-        method: "POST",
-        body: JSON.stringify(body),
-        signal: request.signal,
-      }),
-    );
-  } catch (error) {
-    const status = getApiErrorStatus(error);
-    return NextResponse.json({ message: "Unable to load scoped companies" }, { status });
-  }
+  return proxyApiRequest(request, "/company/by-manager", { body: JSON.stringify(body) });
 }
