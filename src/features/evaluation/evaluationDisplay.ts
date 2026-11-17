@@ -16,12 +16,23 @@ export function formatEvaluationDate(value: string | null, fallback = "—") {
   return dateFormatter.format(date);
 }
 
+const TECHNICAL_ERROR_PATTERN = /SqlTransaction|no longer usable|InternalServerError|Object reference not set|API_ERROR_\d+/i;
+
+export function isTechnicalError(message: string) {
+  return TECHNICAL_ERROR_PATTERN.test(message);
+}
+
 export function requestMessage(cause: unknown, fallback: string) {
   if (cause instanceof Error && cause.message === "UNAUTHORIZED") {
     return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
   }
   if (cause instanceof Error && cause.message === "FORBIDDEN") {
-    return "Bạn chưa có quyền xem danh sách này.";
+    return "Bạn chưa có quyền thực hiện thao tác này.";
+  }
+  if (cause instanceof Error && isTechnicalError(cause.message)) {
+    return isTechnicalError(fallback)
+      ? "Không thể xử lý yêu cầu lúc này. Vui lòng thử lại."
+      : fallback;
   }
   return fallback;
 }
@@ -43,14 +54,36 @@ const labels: Record<string, string> = {
   ChairManReviewing: "Chủ tịch đang duyệt", Rejected: "Bị từ chối", SentHR: "QLCC đã duyệt",
   CompileHRList: "Đã đánh giá xong", DirectorReviewCompileHRList: "Giám đốc duyệt tổng hợp HR",
   CompileChiefOfStaffList: "Tổng hợp văn phòng", ChairManReviewCompile: "Chủ tịch duyệt tổng hợp",
-  DepartmentHeadReviewing: "Trưởng phòng đang duyệt", DirectorReviewing: "Giám đốc đang duyệt",
-  Imported: "Đã được import", DeputyDirector: "Phó giám đốc", DepartmentDirector: "Giám đốc bộ phận", Over: "Hoàn tất",
+  DepartmentHeadReviewing: "Trưởng phòng đang duyệt", DirectorReviewing: "Tổng giám đốc đang duyệt",
+  Imported: "Đã được import", DeputyDirector: "Phó giám đốc ban đang duyệt", DepartmentDirector: "Giám đốc ban đang duyệt",
+  Over: "Hoàn tất", HRDepartmentReviewing: "Phòng/Ban NS đang duyệt",
 };
 
-// The BE Status enum is numeric; preserve its values when rendering template transitions.
-const codes = Object.values(EvaluationStatus);
+// The BE Status enum is numeric; map known backend values explicitly so enum additions don't shift indices.
+const numericStatusKeys: Record<number, string> = {
+  0: EvaluationStatus.Unknown,
+  1: EvaluationStatus.Drafted,
+  2: EvaluationStatus.Submitted,
+  3: EvaluationStatus.DirectManagerReviewing,
+  4: EvaluationStatus.ManagerMidReviewing,
+  5: EvaluationStatus.HRReviewing,
+  6: EvaluationStatus.ManagerSeniorReviewing,
+  7: EvaluationStatus.ChairManReviewing,
+  8: EvaluationStatus.Rejected,
+  9: EvaluationStatus.SentHR,
+  10: EvaluationStatus.CompileHRList,
+  11: EvaluationStatus.DirectorReviewCompileHRList,
+  12: EvaluationStatus.CompileChiefOfStaffList,
+  13: EvaluationStatus.ChairManReviewCompile,
+  14: EvaluationStatus.DepartmentHeadReviewing,
+  15: EvaluationStatus.DirectorReviewing,
+  16: EvaluationStatus.Imported,
+  17: EvaluationStatus.DeputyDirector,
+  18: EvaluationStatus.DepartmentDirector,
+  21: EvaluationStatus.Over,
+};
 export function statusKey(value: string | number) {
-  return typeof value === "number" ? codes[value] ?? "Unknown" : value;
+  return typeof value === "number" ? numericStatusKeys[value] ?? "Unknown" : value;
 }
 export function hrStatusLabel(value: string | number) {
   const key = statusKey(value);

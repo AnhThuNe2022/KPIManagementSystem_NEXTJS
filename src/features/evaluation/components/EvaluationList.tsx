@@ -517,6 +517,9 @@ function convertStatusToDisplay(status: string) {
     case "imported":
       return "Đã được import";
 
+    case "hrdepartmentreviewing":
+      return "Phòng/Ban NS đang duyệt";
+
     default:
       return "Không xác định";
   }

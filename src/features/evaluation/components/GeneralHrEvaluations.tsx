@@ -11,7 +11,7 @@ import { evaluationLookupApi } from "../services/evaluationLookupApi";
 import { generalHrStatusOptions, type ApprovalHistoryEntry, type EvaluationApprover, type EvaluationFilterOption, type EvaluationTypeOption, type GeneralHrEvaluationDto, type GeneralHrEvaluationRequest } from "@/features/evaluation/types";
 import { UserRoleSystem } from "@/features/auth/types";
 import { type PagedResult } from "@/lib/api/types";
-import { formatEvaluationDate, requestMessage, companyOptions, periodOptions, evaluationTypeOptions, statusKey, hrStatusLabel } from "../evaluationDisplay";
+import { formatEvaluationDate, isTechnicalError, requestMessage, companyOptions, periodOptions, evaluationTypeOptions, statusKey, hrStatusLabel } from "../evaluationDisplay";
 import { Pagination } from "@/components/ui/Pagination";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import "./GeneralHrEvaluations.css";
@@ -349,8 +349,9 @@ export function GeneralHrEvaluationDialog({ mode, row, onClose, onModeChange, on
   const busyRef = useRef(false);
   const [history, setHistory] = useState<ApprovalHistoryEntry[]>([]);
   const [approvers, setApprovers] = useState<EvaluationApprover[]>([]);
-  const [statuses, setStatuses] = useState<number[]>([]);
+  const [statuses, setStatuses] = useState<{ status: number; key: string }[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
+  const selectedStatus = statuses.find((item) => item.status === selected) ?? null;
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(mode !== "delete"), [busy, setBusy] = useState(false);
   const [error, setError] = useState(""), [revision, setRevision] = useState(0);
@@ -373,7 +374,18 @@ export function GeneralHrEvaluationDialog({ mode, row, onClose, onModeChange, on
     let work: Promise<void>;
     if (mode === "history") work = api.getApprovalHistory(row.id, controller.signal).then((result) => { if (!controller.signal.aborted) setHistory([...result].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())); });
     else if (mode === "approvers") work = api.getApprovers(row.id, controller.signal).then((result) => { if (!controller.signal.aborted) setApprovers(result); });
-    else if (mode === "status" && row.templateId) work = api.getStatuses(row.templateId, controller.signal).then((result) => { if (!controller.signal.aborted) setStatuses([...new Set(result.map(item => item.status))].filter(status => status !== 1 && status !== 9)); });
+    else if (mode === "status" && row.templateId) work = api.getStatuses(row.templateId, controller.signal).then((result) => {
+      if (controller.signal.aborted) return;
+      const seen = new Set<number>();
+      const next: { status: number; key: string }[] = [];
+      for (const item of result) {
+        if (item.status === 1 || item.status === 9 || seen.has(item.status)) continue;
+        seen.add(item.status);
+        const step = item.stepStatus?.trim();
+        next.push({ status: item.status, key: step && !step.includes(";") ? step : statusKey(item.status) });
+      }
+      setStatuses(next);
+    });
     else { setLoading(false); return () => controller.abort(); }
     work.catch((cause: unknown) => { if (!controller.signal.aborted) setError(requestMessage(cause, "Chưa tải được thông tin hồ sơ. Vui lòng thử lại.")); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
@@ -382,7 +394,7 @@ export function GeneralHrEvaluationDialog({ mode, row, onClose, onModeChange, on
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busyRef.current || (mode === "status" && (selected === null || !statuses.includes(selected) || statusKey(selected) === row.status))) return;
+    if (busyRef.current || (mode === "status" && (!selectedStatus || selectedStatus.key === row.status || !reason.trim()))) return;
     busyRef.current = true; setBusy(true); setError("");
     try {
       if (mode === "delete") await api.remove(row.id);
@@ -391,7 +403,15 @@ export function GeneralHrEvaluationDialog({ mode, row, onClose, onModeChange, on
       notify("success", mode === "delete" ? `Đã xóa bản đánh giá #${row.id}.` : "Đã cập nhật trạng thái bản đánh giá.");
       onMutated();
     } catch (cause: unknown) {
-      const message = requestMessage(cause, mode === "delete" ? "Chưa xóa được hồ sơ. Vui lòng thử lại." : "Chưa cập nhật được trạng thái. Vui lòng thử lại.");
+      const raw = cause instanceof Error ? cause.message.trim() : "";
+      const statusMessage = raw === "UNAUTHORIZED" || raw === "FORBIDDEN"
+        ? requestMessage(cause, "")
+        : raw && isTechnicalError(raw)
+          ? "Không thể chuyển sang trạng thái này. Vui lòng thử lại."
+          : raw || "Chưa cập nhật được trạng thái. Vui lòng thử lại.";
+      const message = mode === "delete"
+        ? requestMessage(cause, "Chưa xóa được hồ sơ. Vui lòng thử lại.")
+        : statusMessage;
       setError(message);
       notify("error", message);
     }
@@ -458,19 +478,19 @@ export function GeneralHrEvaluationDialog({ mode, row, onClose, onModeChange, on
         <span className="general-hr-evaluations__contextRecord"><FileTextIcon aria-hidden="true" />Hồ sơ #{row.id}</span><RecordIdentity row={row} />
         <div className="general-hr-evaluations__contextCurrent"><span>Trạng thái hiện tại</span><HrStatus value={row.status} /></div>
         <dl><div><dt>Kỳ đánh giá</dt><dd>{row.period || "Chưa có kỳ đánh giá"}</dd></div><div><dt>Phòng ban</dt><dd>{row.departmentName || "Chưa có phòng ban"}</dd></div></dl>
-        <div className="general-hr-evaluations__contextDestination" data-selected={selected !== null}><ArrowRightIcon aria-hidden="true" /><span>Chuyển đến</span><strong>{selected !== null ? hrStatusLabel(selected) : "Chọn trạng thái mới"}</strong></div>
+        <div className="general-hr-evaluations__contextDestination" data-selected={selectedStatus !== null}><ArrowRightIcon aria-hidden="true" /><span>Chuyển đến</span><strong>{selectedStatus ? hrStatusLabel(selectedStatus.key) : "Chọn trạng thái mới"}</strong></div>
       </aside>
       <header className="general-hr-evaluations__transitionHeader"><div><h2 id="hr-dialog-title">Chuyển trạng thái</h2><p><span className="general-hr-evaluations__mobileRecordRef">Hồ sơ #{row.id} · </span>Chọn bước xử lý tiếp theo.</p></div>{closeButton}</header>
       <div className="general-hr-evaluations__transitionBody">
         {loading ? loadingState : error && !statuses.length ? null : <><fieldset className="general-hr-evaluations__targetFieldset" disabled={busy}><legend>Chuyển hồ sơ đến{statuses.length > 0 && <span className="general-hr-evaluations__targetCount">{statuses.length} lựa chọn</span>}</legend>
-          {!statuses.length && !error ? <div className="general-hr-evaluations__noTransitions"><UpdateIcon aria-hidden="true" /><strong>Chưa có bước chuyển khả dụng</strong><span>Mẫu đánh giá này chưa có trạng thái có thể chuyển.</span></div> : <div className="general-hr-evaluations__targetGrid">{statuses.map((status) => <label key={status} className="general-hr-evaluations__targetOption" data-selected={selected === status} data-tone={statusTone(status)} data-current={statusKey(status) === row.status}>
-            <input type="radio" name="target-status" value={status} checked={selected === status} disabled={statusKey(status) === row.status} onChange={() => setSelected(status)} />
-            <span className="general-hr-evaluations__targetIcon">{statusTone(status) === "danger" ? <Cross2Icon aria-hidden="true" /> : statusTone(status) === "success" ? <CheckIcon aria-hidden="true" /> : <UpdateIcon aria-hidden="true" />}</span>
-            <span><strong><HrStatus value={status} /></strong><small>{statusKey(status) === row.status ? "Trạng thái hiện tại" : statusTone(status) === "danger" ? "Trả lại hồ sơ để xử lý" : statusTone(status) === "success" ? "Ghi nhận bước hoàn thành" : "Chuyển sang bước xử lý này"}</small></span><span className="general-hr-evaluations__radioMark" aria-hidden="true">{selected === status && <CheckIcon />}</span>
+          {!statuses.length && !error ? <div className="general-hr-evaluations__noTransitions"><UpdateIcon aria-hidden="true" /><strong>Chưa có bước chuyển khả dụng</strong><span>Mẫu đánh giá này chưa có trạng thái có thể chuyển.</span></div> : <div className="general-hr-evaluations__targetGrid">{statuses.map(({ status, key }) => <label key={status} className="general-hr-evaluations__targetOption" data-selected={selected === status} data-tone={statusTone(key)} data-current={key === row.status}>
+            <input type="radio" name="target-status" value={status} checked={selected === status} disabled={key === row.status} onChange={() => setSelected(status)} />
+            <span className="general-hr-evaluations__targetIcon">{statusTone(key) === "danger" ? <Cross2Icon aria-hidden="true" /> : statusTone(key) === "success" ? <CheckIcon aria-hidden="true" /> : <UpdateIcon aria-hidden="true" />}</span>
+            <span><strong><HrStatus value={key} /></strong><small>{key === row.status ? "Trạng thái hiện tại" : statusTone(key) === "danger" ? "Trả lại hồ sơ để xử lý" : statusTone(key) === "success" ? "Ghi nhận bước hoàn thành" : "Chuyển sang bước xử lý này"}</small></span><span className="general-hr-evaluations__radioMark" aria-hidden="true">{selected === status && <CheckIcon />}</span>
           </label>)}</div>}
-        </fieldset>{statuses.length > 0 && <label className="general-hr-evaluations__reasonField"><span>Lý do thay đổi <small>Không bắt buộc</small></span><textarea rows={2} value={reason} disabled={busy} onChange={(event) => setReason(event.target.value)} placeholder="Ghi chú để các bên tiện theo dõi…" /></label>}</>}{failure}
+        </fieldset>{statuses.length > 0 && <label className="general-hr-evaluations__reasonField"><span>Lý do thay đổi <small>Bắt buộc</small></span><textarea rows={2} required value={reason} disabled={busy} onChange={(event) => setReason(event.target.value)} placeholder="Nhập lý do chuyển trạng thái…" /></label>}</>}{failure}
       </div>
-      <footer className="general-hr-evaluations__dialogFooter"><button type="button" className="general-hr-evaluations__button" disabled={busy} onClick={close}>Hủy thay đổi</button><button type="submit" className={"general-hr-evaluations__button" + " " + "general-hr-evaluations__primary"} disabled={loading || busy || selected === null || statusKey(selected) === row.status}>{busy ? "Đang cập nhật…" : "Xác nhận chuyển"}<ArrowRightIcon aria-hidden="true" /></button></footer>
+      <footer className="general-hr-evaluations__dialogFooter"><button type="button" className="general-hr-evaluations__button" disabled={busy} onClick={close}>Hủy thay đổi</button><button type="submit" className={"general-hr-evaluations__button" + " " + "general-hr-evaluations__primary"} disabled={loading || busy || !selectedStatus || selectedStatus.key === row.status || !reason.trim()}>{busy ? "Đang cập nhật…" : "Xác nhận chuyển"}<ArrowRightIcon aria-hidden="true" /></button></footer>
     </form>
     : <form className="general-hr-evaluations__deleteLayout" onSubmit={submit} aria-busy={busy}>
       <header className="general-hr-evaluations__deleteHeader">{closeButton}<span className="general-hr-evaluations__deleteSymbol"><TrashIcon aria-hidden="true" /></span><h2 id="hr-dialog-title">Xóa bản đánh giá?</h2><p id="hr-delete-description">Hồ sơ sẽ bị xóa khỏi danh sách.<br />Kiểm tra thông tin trước khi xác nhận.</p></header>

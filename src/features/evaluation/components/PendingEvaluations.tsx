@@ -120,12 +120,13 @@ export function PendingEvaluations({
       data.items.every((item) => selected.includes(`${item.id}:${item.stepId}`)),
   );
   const activeFilters = Object.values(applied).filter(Boolean).length;
-  const availablePeriods =
-    hr && typeId
+  const availablePeriods = hr
+    ? typeId
       ? (evaluationTypes.find((type) => type.id === typeId)?.periods ?? []).filter((period) =>
           periods.some((available) => available.id === period.id),
         )
-      : periods;
+      : []
+    : periods;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -350,7 +351,7 @@ export function PendingEvaluations({
           </div>}
           <div className="pending-evaluations__selectField">
             <span>Kỳ đánh giá{hr && typeId && " (bắt buộc)"}</span>
-            <SearchableSelect id="pending-period-filter" label="Kỳ đánh giá" value={filters.periodId} options={availablePeriods} placeholder={lookupsBusy ? "Đang tải…" : hr && typeId ? availablePeriods.length ? "Chọn kỳ đánh giá" : "Loại này chưa có kỳ phù hợp" : "Tất cả kỳ đánh giá"} disabled={lookupsBusy || !availablePeriods.length} required={hr && Boolean(typeId)} onChange={(periodId) => setFilters((value) => ({ ...value, periodId }))} />
+            <SearchableSelect id="pending-period-filter" label="Kỳ đánh giá" value={filters.periodId} options={availablePeriods} placeholder={lookupsBusy ? "Đang tải…" : hr && !typeId ? "Chọn loại đánh giá trước" : hr && typeId ? availablePeriods.length ? "Chọn kỳ đánh giá" : "Loại này chưa có kỳ phù hợp" : "Tất cả kỳ đánh giá"} disabled={lookupsBusy || (hr && !typeId) || !availablePeriods.length} required={hr && Boolean(typeId)} onChange={(periodId) => setFilters((value) => ({ ...value, periodId }))} />
           </div>
           {hr && typeId && !filters.periodId && <p className="pending-evaluations__filterHint" role="status">Chọn kỳ đánh giá để áp dụng loại đánh giá này.</p>}
         </div>

@@ -30,6 +30,7 @@ export enum EvaluationStatus {
   DeputyDirector = "DeputyDirector",
   DepartmentDirector = "DepartmentDirector",
   Over = "Over",
+  HRDepartmentReviewing = "HRDepartmentReviewing",
 }
 
 export interface PendingEvaluationDto {

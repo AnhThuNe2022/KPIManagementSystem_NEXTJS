@@ -27,7 +27,7 @@ export const generalHrEvaluationApi = {
     return request<EvaluationApprover[]>("/evaluation/" + id + "/steps", { signal });
   },
   getStatuses(templateId: number, signal?: AbortSignal) {
-    return request<{ status: number }[]>("/evaluation/statuses?templateid=" + templateId, { signal });
+    return request<{ status: number; stepStatus?: string | null }[]>("/evaluation/statuses?templateid=" + templateId, { signal });
   },
   changeStatus(body: GeneralHrStatusChange) {
     return request("/evaluation/change-status", { method: "POST", body: JSON.stringify(body) });
