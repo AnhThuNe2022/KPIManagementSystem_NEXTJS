@@ -10,9 +10,9 @@ export default async function MainLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const cookieStore = await cookies();
 
-  if (!cookieStore.has(appConfig.authCookieName)) {
-    redirect("/login");
-  }
+  // if (!cookieStore.has(appConfig.authCookieName)) {
+  //   redirect("/login");
+  // }
 
   const userName =
     cookieStore.get(appConfig.userNameCookieName)?.value ?? "Người dùng";
