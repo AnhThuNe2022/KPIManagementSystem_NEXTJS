@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
-import { ActivityLogIcon, ArrowLeftIcon, BarChartIcon, CalendarIcon, CheckCircledIcon, CheckIcon, ChevronDownIcon, ClockIcon, Component1Icon, CrossCircledIcon, DownloadIcon, FileTextIcon, LayersIcon, MagnifyingGlassIcon, MixerHorizontalIcon, PaperPlaneIcon, PersonIcon, PieChartIcon, ReloadIcon, ResetIcon } from "@radix-ui/react-icons";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { ActivityLogIcon, ArrowLeftIcon, CalendarIcon, CheckCircledIcon, CheckIcon, ClockIcon, Cross2Icon, CrossCircledIcon, DownloadIcon, FileTextIcon, LayersIcon, MagnifyingGlassIcon, PaperPlaneIcon, Pencil2Icon, PersonIcon, ReloadIcon, ResetIcon } from "@radix-ui/react-icons";
 import { Pagination } from "@/components/ui/Pagination";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { FloatingSelectionBar } from "@/components/ui/FloatingSelectionBar";
@@ -15,6 +15,7 @@ import { companyLogos } from "@/features/company/companyLogos";
 import { departmentApi } from "@/features/department/services/departmentApi";
 import { companyOptions, hrStatusLabel, requestMessage } from "@/features/evaluation/evaluationDisplay";
 import { EvaluationStatus, type EvaluationFilterOption } from "@/features/evaluation/types";
+import { exportEvaluations } from "@/features/evaluation/services/exportEvaluations";
 import type { PagedResult } from "@/lib/api/types";
 import { summaryApi } from "../services/summaryApi";
 import type { SummaryDetail, SummaryDetailFilters, SummaryMode } from "../types";
@@ -46,7 +47,7 @@ type Inspector = { row: SummaryDetail; mode: "history" | "approvers" };
 type Props = { mode: SummaryMode; periodId: number; companyId: number };
 
 export function SummaryListDetail({ mode, periodId, companyId }: Props) {
-  const initialFilters: SummaryDetailFilters = { status: "", keyword: "", companyId: String(companyId), departmentId: "-1" };
+  const initialFilters: SummaryDetailFilters = { status: "", keyword: "", companyId: companyId === 0 ? "-1" : String(companyId), departmentId: "-1" };
   const [filters, setFilters] = useState(initialFilters);
   const [search, setSearch] = useState("");
   const [companies, setCompanies] = useState<EvaluationFilterOption[]>([]);
@@ -63,26 +64,12 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
   const [selected, setSelected] = useState<SummaryDetail[]>([]);
   const [review, setReview] = useState<SummaryReviewTarget | null>(null);
   const [inspector, setInspector] = useState<Inspector | null>(null);
+  const [noteDraft, setNoteDraft] = useState<{ row: SummaryDetail; value: string } | null>(null);
+  const [noteBusy, setNoteBusy] = useState(false);
+  const savingNote = useRef(false);
+  const noteTrigger = useRef<HTMLButtonElement | null>(null);
   const [task, setTask] = useState<Task | null>(null);
   const [exportDone, setExportDone] = useState<Task | null>(null);
-  const [exportMenuOpen, setExportMenuOpen] = useState(false);
-  const exportMenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!exportMenuOpen) return;
-    function onPointerDown(event: PointerEvent) {
-      if (!exportMenuRef.current?.contains(event.target as Node)) setExportMenuOpen(false);
-    }
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setExportMenuOpen(false);
-    }
-    window.addEventListener("pointerdown", onPointerDown);
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.removeEventListener("pointerdown", onPointerDown);
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [exportMenuOpen]);
   const taskController = useRef<AbortController | null>(null);
   const selectPage = useRef<HTMLInputElement>(null);
 
@@ -93,7 +80,7 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
   const loading = !current;
   const selectedIds = new Set(selected.map(row => row.evalId));
   const pageSelected = data?.items.filter(row => selectedIds.has(row.evalId)).length ?? 0;
-  const locked = !!review || !!inspector || !!task;
+  const locked = !!review || !!inspector || !!task || !!noteDraft;
   const unavailable = loading || !data || !!error || locked || search.trim() !== filters.keyword;
   const filtered = !!(filters.keyword || filters.status) || filters.companyId !== String(companyId) || filters.departmentId !== "-1";
   const companyName = filters.companyId === "-1" ? "Tất cả công ty" : companies.find(item => item.id === filters.companyId)?.name || context?.companyName || "Công ty theo kỳ đánh giá";
@@ -190,51 +177,53 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
     setSelected(value => [...value.filter(row => !ids.has(row.evalId)), ...(checked ? rows : [])]);
   }
 
+  function closeNote() {
+    setNoteDraft(null);
+    requestAnimationFrame(() => noteTrigger.current?.focus());
+  }
+
+  async function saveNote(event: FormEvent) {
+    event.preventDefault();
+    if (!noteDraft || savingNote.current || noteDraft.value === (noteDraft.row.note ?? "")) return;
+    savingNote.current = true;
+    setNoteBusy(true);
+    const updated = { ...noteDraft.row, note: noteDraft.value };
+    try {
+      await summaryApi.updateNote(noteDraft.row, noteDraft.value);
+      setSnapshot(value => value?.data ? { ...value, data: { ...value.data, items: value.data.items.map(row => row.evalId === updated.evalId ? updated : row) } } : value);
+      setSelected(rows => rows.map(row => row.evalId === updated.evalId ? updated : row));
+      closeNote();
+      notify("success", "Đã lưu ý kiến Ban điều hành.");
+    } catch (cause) {
+      notify("error", requestMessage(cause, "Chưa lưu được ý kiến. Vui lòng thử lại."));
+    } finally {
+      savingNote.current = false;
+      setNoteBusy(false);
+    }
+  }
+
   async function prepare(kind: Task) {
     if (taskController.current || unavailable || !data?.total) return;
-    if ((kind === "export-selected" || kind === "export-detail-selected") && !selected.length) return;
+    const onlySelected = kind === "export-selected" || kind === "export-detail-selected";
+    if (onlySelected && !selected.length) return;
     const controller = new AbortController();
     taskController.current = controller;
     setTask(kind);
     setExportDone(null);
     try {
-      const detailed = kind === "export-detail-selected" || kind === "export-detail-all";
-      const onlySelected = kind === "export-selected" || kind === "export-detail-selected";
-      const result = kind === "export-detail-selected" && selected.length === 1
-        ? { items: selected, total: 1 }
-        : await summaryApi.getDetails(mode, periodId, 1, detailed ? data.total : 0, filters, controller.signal);
+      const result = onlySelected
+        ? { items: selected, total: selected.length }
+        : await summaryApi.getDetails(mode, periodId, 1, data.total, filters, controller.signal);
       controller.signal.throwIfAborted();
       if (result.items.length !== result.total) throw new Error("Chưa lấy đủ hồ sơ. Hãy làm mới danh sách rồi thử lại.");
       if (!result.items.length) { notify("info", "Không có hồ sơ theo bộ lọc hiện tại."); return; }
       if (kind === "select-all") { setSelected(result.items); return; }
       if (kind === "approve-all") { setReview({ kind: "approve", rows: result.items, all: true }); return; }
-      const rows = onlySelected ? result.items.filter(row => selectedIds.has(row.evalId)) : result.items;
-      if (onlySelected && rows.length !== selected.length) throw new Error("Danh sách đã thay đổi. Hãy làm mới và chọn lại hồ sơ cần xuất.");
-      if (detailed) {
-        const response = await summaryApi.getEvaluationsForExport(rows.map(row => row.evalId), controller.signal);
-        const { downloadEvaluationFile } = await import("../downloadEvaluationFile");
-        controller.signal.throwIfAborted();
-        await downloadEvaluationFile(response, rows.map(row => row.evalId), controller.signal);
-        setExportDone(kind);
-        notify("success", "Đã tải file đánh giá cho " + rows.length + " hồ sơ.");
-        return;
-      }
-      const [template, workbook] = await Promise.all([
-        fetch("/excel/danh_sach_tong_hop_hr_template.xlsx", { signal: controller.signal }),
-        import("../summaryExport"),
-      ]);
-      if (!template.ok) throw new Error("Chưa tải được mẫu Excel.");
-      const bytes = await template.arrayBuffer();
-      controller.signal.throwIfAborted();
-      const blob = workbook.createSummaryWorkbook(rows, bytes);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "tong-hop-" + (mode === "HrSummary" ? "hr" : "director") + "-" + (kind === "export-selected" ? "da-chon-" : "tat-ca-") + new Date().toISOString().slice(0, 10) + ".xlsx";
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      const detailed = kind === "export-detail-selected" || kind === "export-detail-all";
+      if (detailed) await exportEvaluations(result.items.map(row => row.evalId), controller.signal);
+      else await summaryApi.exportSummary(result.items, controller.signal);
       setExportDone(kind);
-      notify("success", "Đã xuất Excel tổng hợp " + rows.length + " hồ sơ.");
+      notify("success", "Đã xuất " + (detailed ? "Excel chi tiết" : "Excel tổng hợp") + " cho " + result.items.length + " hồ sơ.");
     } catch (cause) {
       if (!controller.signal.aborted) notify("error", requestMessage(cause, cause instanceof Error ? cause.message : "Chưa hoàn tất thao tác. Hãy thử lại."));
     } finally {
@@ -262,36 +251,18 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
         </div>
         <div className="summary-detail__heroRight">
           <div className="summary-detail__heroActions">
-            <div className="summary-detail__exportDropdown" ref={exportMenuRef}>
-              <button
-                type="button"
-                className="summary-detail__headAction summary-detail__heroBtn"
-                aria-expanded={exportMenuOpen}
-                aria-haspopup="menu"
-                disabled={unavailable || !data?.total}
-                onClick={() => setExportMenuOpen(open => !open)}
-              >
-                {task === "export-all" || task === "export-detail-all"
-                  ? <ReloadIcon className="summary-detail__spin" aria-hidden="true" />
-                  : exportDone === "export-all" || exportDone === "export-detail-all"
-                    ? <CheckIcon aria-hidden="true" />
-                    : <DownloadIcon aria-hidden="true" />}
-                <span>Xuất Excel</span>
-                <ChevronDownIcon className="summary-detail__chevron" aria-hidden="true" />
-              </button>
-              {exportMenuOpen && (
-                <div className="summary-detail__exportMenu" role="menu" aria-label="Tùy chọn xuất Excel tất cả">
-                  <button type="button" role="menuitem" disabled={unavailable || !data?.total} onClick={() => { setExportMenuOpen(false); prepare("export-all"); }}>
-                    <LayersIcon aria-hidden="true" />
-                    <span><strong>Tổng hợp tất cả</strong><small>1 file · {number.format(data?.total ?? 0)} hồ sơ</small></span>
-                  </button>
-                  <button type="button" role="menuitem" disabled={unavailable || !data?.total} onClick={() => { setExportMenuOpen(false); prepare("export-detail-all"); }}>
-                    <FileTextIcon aria-hidden="true" />
-                    <span><strong>Chi tiết tất cả</strong><small>Từng file · {number.format(data?.total ?? 0)} hồ sơ</small></span>
-                  </button>
-                </div>
-              )}
-            </div>
+            <button type="button" className="summary-detail__headAction summary-detail__heroBtn"
+              disabled={unavailable || !data?.total} onClick={() => prepare("export-all")}>
+              {task === "export-all" ? <ReloadIcon className="summary-detail__spin" aria-hidden="true" />
+                : exportDone === "export-all" ? <CheckIcon aria-hidden="true" /> : <DownloadIcon aria-hidden="true" />}
+              <span>Excel tổng hợp tất cả</span>
+            </button>
+            <button type="button" className="summary-detail__headAction summary-detail__heroBtn"
+              disabled={unavailable || !data?.total} onClick={() => prepare("export-detail-all")}>
+              {task === "export-detail-all" ? <ReloadIcon className="summary-detail__spin" aria-hidden="true" />
+                : exportDone === "export-detail-all" ? <CheckIcon aria-hidden="true" /> : <DownloadIcon aria-hidden="true" />}
+              <span>Excel chi tiết tất cả</span>
+            </button>
             <button
               type="button"
               className="summary-detail__headAction summary-detail__headAction--primary"
@@ -362,9 +333,9 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
             <table className="summary-detail__table" aria-label="Chi tiết bản đánh giá tổng hợp">
               <thead><tr>
                 <th scope="col"><span className="summary-detail__srOnly">Chọn hồ sơ</span></th>
-                <th scope="col">STT</th><th scope="col"><span className="summary-detail__columnLabel"><PersonIcon aria-hidden="true" />Nhân viên</span></th><th scope="col"><span className="summary-detail__columnLabel"><Component1Icon aria-hidden="true" />Chức danh / Đơn vị</span></th>
-                <th scope="col"><span className="summary-detail__columnLabel"><FileTextIcon aria-hidden="true" />Tự đánh giá</span></th><th scope="col"><span className="summary-detail__columnLabel"><CheckCircledIcon aria-hidden="true" />Quản lý</span></th><th scope="col"><span className="summary-detail__columnLabel"><BarChartIcon aria-hidden="true" />Hệ số HTCV</span></th>
-                <th scope="col"><span className="summary-detail__columnLabel"><PieChartIcon aria-hidden="true" />Tỷ lệ chi</span></th><th scope="col"><span className="summary-detail__columnLabel"><ActivityLogIcon aria-hidden="true" />Trạng thái</span></th><th scope="col"><span className="summary-detail__columnLabel"><MixerHorizontalIcon aria-hidden="true" />Thao tác</span></th>
+                <th scope="col">STT</th><th scope="col">Nhân viên</th><th scope="col">Chức danh / Đơn vị</th>
+                <th scope="col">Tự đánh giá</th><th scope="col">Quản lý</th><th scope="col">Hệ số HTCV</th>
+                <th scope="col">Tỷ lệ chi</th><th scope="col"><span title="Ban điều hành có ý kiến khác">Ý kiến BĐH</span></th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th>
               </tr></thead>
               <tbody>{data?.items.map((row, index) => {
                 const rejected = row.isReject || row.status === "Rejected";
@@ -389,7 +360,24 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
                     <td className="summary-detail__completion" data-label="Hệ số HTCV"><strong>{scoreLabel(row.rPercent)}</strong>
                       <span className="summary-detail__track" aria-hidden="true"><span style={{ width: completionPercent(row.rPercent) + "%" }} /></span>
                     </td>
-                    <td className="summary-detail__band" data-label="Tỷ lệ chi">{row.band ? <span className="summary-detail__bandBadge" data-tone={bandTone(row.band)}>{row.band}</span> : <span>—</span>}{row.note && <span title={row.note}>{row.note}</span>}</td>
+                    <td className="summary-detail__band" data-label="Tỷ lệ chi">{row.band ? <span className="summary-detail__bandBadge" data-tone={bandTone(row.band)}>{row.band}</span> : <span>—</span>}</td>
+                    <td className="summary-detail__note" data-label="Ý kiến Ban điều hành">
+                      {noteDraft?.row.evalId === row.evalId ? <form className="summary-detail__noteEditor" onSubmit={saveNote} aria-busy={noteBusy}
+                        onKeyDown={event => { if (event.key === "Escape" && !savingNote.current) { event.preventDefault(); closeNote(); } }}>
+                        <label className="summary-detail__srOnly" htmlFor={"summary-note-" + row.evalId}>Ý kiến Ban điều hành cho {row.userName}</label>
+                        <input id={"summary-note-" + row.evalId} type="text" autoFocus value={noteDraft.value} disabled={noteBusy}
+                          placeholder="Nhập ý kiến…" onChange={event => setNoteDraft({ ...noteDraft, value: event.target.value })} />
+                        <button type="submit" className="summary-detail__iconButton summary-detail__noteSave" title="Lưu ý kiến"
+                          aria-label="Lưu ý kiến" disabled={noteBusy || noteDraft.value === (row.note ?? "")}>
+                          {noteBusy ? <ReloadIcon className="summary-detail__spin" aria-hidden="true" /> : <CheckIcon aria-hidden="true" />}
+                        </button>
+                        <button type="button" className="summary-detail__iconButton" title="Hủy" aria-label="Hủy sửa ý kiến"
+                          disabled={noteBusy} onClick={closeNote}><Cross2Icon aria-hidden="true" /></button>
+                      </form> : <div className="summary-detail__noteView"><span>{row.note || "Chưa có ý kiến"}</span>
+                        <button type="button" className="summary-detail__iconButton" disabled={unavailable} aria-label={"Sửa ý kiến Ban điều hành cho " + row.userName}
+                          title="Sửa ý kiến" onClick={event => { noteTrigger.current = event.currentTarget; setNoteDraft({ row, value: row.note ?? "" }); }}><Pencil2Icon aria-hidden="true" /></button>
+                      </div>}
+                    </td>
                     <td className="summary-detail__process"><span className="summary-detail__status" data-tone={rejected ? "danger" : complete ? "success" : waiting ? "waiting" : "progress"}>
                       {rejected ? <CrossCircledIcon aria-hidden="true" /> : complete ? <CheckCircledIcon aria-hidden="true" /> : <ClockIcon aria-hidden="true" />}{row.statusDisplay}
                     </span>{row.userDoing && <span className="summary-detail__reviewer"><PersonIcon aria-hidden="true" />{row.userDoing}</span>}
@@ -428,14 +416,14 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
           },
           {
             key: "export-selected",
-            label: "Xuất Excel",
+            label: "Excel tổng hợp",
             icon: <DownloadIcon aria-hidden="true" />,
             disabled: unavailable,
             onClick: () => prepare("export-selected"),
           },
           {
             key: "export-detail-selected",
-            label: "Xuất chi tiết",
+            label: "Excel chi tiết",
             icon: <FileTextIcon aria-hidden="true" />,
             disabled: unavailable,
             onClick: () => prepare("export-detail-selected"),
@@ -450,7 +438,7 @@ export function SummaryListDetail({ mode, periodId, companyId }: Props) {
           },
         ]}
       />
-      {task && <div className="summary-detail__taskStatus" role="status"><ReloadIcon className="summary-detail__spin" aria-hidden="true" />{task.startsWith("export") ? "Đang chuẩn bị file Excel…" : "Đang lấy toàn bộ hồ sơ theo bộ lọc…"}</div>}
+      {task && <div className="summary-detail__taskStatus" role="status"><ReloadIcon className="summary-detail__spin" aria-hidden="true" />{task.startsWith("export") ? "Đang chuẩn bị file xuất…" : "Đang lấy toàn bộ hồ sơ theo bộ lọc…"}</div>}
       {review && <SummaryReviewDialog target={review} level={level} onClose={() => setReview(null)} onProcessed={ids => {
         setSelected(rows => rows.filter(row => !ids.includes(row.evalId)));
         setRevision(value => value + 1);

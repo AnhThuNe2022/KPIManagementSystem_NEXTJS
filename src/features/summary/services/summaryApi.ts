@@ -1,14 +1,11 @@
 import { downloadFile, request } from "@/lib/api/request";
 import type { PagedResult } from "@/lib/api/types";
-import type { EvaluationExport } from "../evaluationExport";
 import type { SummaryDetail, SummaryDetailFilters, SummaryFilters, SummaryMode, SummaryRequest, SummaryRow } from "../types";
 
 export const summaryApi = {
-  getEvaluationsForExport(listIds: number[], signal?: AbortSignal) {
-    return request<EvaluationExport[]>("/summary/evaluations-for-export", {
-      method: "POST",
-      body: JSON.stringify(listIds),
-      signal,
+  updateNote(row: SummaryDetail, note: string) {
+    return request("/evaluation/" + row.evalId, {
+      method: "PATCH", body: JSON.stringify({ ...row, note }),
     });
   },
   exportSummary(items: SummaryDetail[], signal?: AbortSignal) {
@@ -29,7 +26,7 @@ export const summaryApi = {
           typeScreen: "Summary",
           keyword: filters.keyword.trim(),
           departmentId: filters.departmentId === "-1" ? "" : filters.departmentId,
-          companyid: filters.companyId === "-1" ? "" : filters.companyId,
+          companyid: filters.companyId === "-1" || filters.companyId === "0" ? "" : filters.companyId,
         },
       }),
       signal,

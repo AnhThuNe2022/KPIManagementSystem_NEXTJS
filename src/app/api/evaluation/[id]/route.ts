@@ -6,3 +6,9 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
   if (!/^[1-9]\d*$/.test(id)) return NextResponse.json({ message: "Invalid evaluation ID" }, { status: 400 });
   return proxyApiRequest(request, "/KPIEvaluation/" + id);
 }
+
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+  if (!/^[1-9]\d*$/.test(id)) return NextResponse.json({ message: "Invalid evaluation ID" }, { status: 400 });
+  return proxyApiRequest(request, "/KPIEvaluation/" + id);
+}
