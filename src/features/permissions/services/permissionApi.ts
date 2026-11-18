@@ -16,10 +16,19 @@ export const permissionApi = {
   remove(permissionId: number) {
     return request("/permission/" + encodeURIComponent(permissionId), { method: "DELETE" });
   },
-  assignments(permissionId: string, tab: AssignmentTab, search: string, page: number, pageSize: number, signal?: AbortSignal) {
+  async assignments(permissionId: string, tab: AssignmentTab, search: string, page: number, pageSize: number, signal?: AbortSignal) {
     const query = tab === "users" ? new URLSearchParams({ Page: String(page), PageSize: String(pageSize), "Filters[keyword]": search, "Filters[sortBy]": "IsAssigned", "Filters[sortOrder]": "desc" }) : new URLSearchParams({ search });
     const endpoint = "/permission/" + encodeURIComponent(permissionId) + "/" + tab + "?" + query;
-    return request<PermissionPage<Assignment>>(endpoint, { signal });
+    const response = await request<PermissionPage<Assignment & Record<string, unknown>>>(endpoint, { signal });
+    return {
+      ...response,
+      items: response.items.map((item) => ({
+        ...item,
+        isAssigned: Boolean(
+          item.isAssigned ?? item.IsAssigned ?? item.assigned ?? item.isGranted ?? item.isSelected ?? item.isChecked ?? false,
+        ),
+      })),
+    };
   },
   assign(permissionId: string, tab: AssignmentTab, targetId: number | string, assigned: boolean) {
     return request("/permission/" + encodeURIComponent(permissionId) + "/" + tab + "/" + encodeURIComponent(targetId), { method: assigned ? "POST" : "DELETE" });

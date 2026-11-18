@@ -5,7 +5,7 @@ type Context = { params: Promise<{ segments?: string[] }> };
 
 async function handle(request: Request, context: Context) {
   const { segments = [] } = await context.params;
-  if (segments.length > 3 || segments.some(value => !/^[a-zA-Z0-9_.-]+$/.test(value) || value === "." || value === "..")) {
+  if (segments.length > 3 || segments.some(value => !/^[a-zA-Z0-9_.@-]+$/.test(value) || value === "." || value === "..")) {
     return NextResponse.json({ message: "Invalid permission path" }, { status: 400 });
   }
   if (segments.length > 1 && !["menus", "roles", "users"].includes(segments[1])) {

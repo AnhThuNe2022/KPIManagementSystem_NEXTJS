@@ -17,6 +17,7 @@ const headerPages: Record<string, readonly [string, string]> = {
   "/notifications": ["", "Thông báo"],
   "/manager/pending": ["Quản lý", "Danh sách NS chờ đánh giá"],
   "/manager/reviewed": ["Quản lý", "Danh sách NS đã đánh giá"],
+  "/manager/kpi-evaluation-periods": ["Quản lý", "Danh sách kỳ đánh giá KPI"],
   "/hr/pending": ["Quản lý Nhân sự", "Danh sách chờ nhận xét"],
   "/hr/reviewed": ["Quản lý Nhân sự", "Đã nhận xét"],
   "/admin/evaluationList": ["HR tổng hợp", "Danh sách đánh giá"],

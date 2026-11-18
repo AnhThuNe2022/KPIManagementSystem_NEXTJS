@@ -27,6 +27,10 @@ function assignmentLabel(target: Assignment) {
   return "userName" in target ? target.userName : target.name;
 }
 
+function sortAssignedFirst(items: Assignment[]): Assignment[] {
+  return [...items].sort((a, b) => Number(b.isAssigned) - Number(a.isAssigned));
+}
+
 export function Permissions() {
   const router = useRouter(), pathname = usePathname(), params = useSearchParams();
   const selectedId = params.get("permission") ?? "";
@@ -110,7 +114,12 @@ export function Permissions() {
     if (!current || creating || tab === "detail" || assignmentRequests.current.has(assignmentKey)) return;
     const controller = new AbortController(), kind = tab;
     assignmentRequests.current.set(assignmentKey, controller);
-    setAssignments(value => ({ ...value, [assignmentKey]: { tab: kind } }));
+    setAssignments(value => ({
+      ...value,
+      [assignmentKey]: value[assignmentKey]?.tab === kind && value[assignmentKey]?.data
+        ? { tab: kind, data: value[assignmentKey].data }
+        : { tab: kind },
+    }));
     void (async () => {
       try {
         let data: PermissionPage<Assignment>, version: number;
@@ -118,7 +127,10 @@ export function Permissions() {
           version = assignmentVersion.current;
           data = await permissionApi.assignments(selectedId, kind, search, userPage, userSize, controller.signal);
         } while (!controller.signal.aborted && version !== assignmentVersion.current);
-        if (!controller.signal.aborted) setAssignments(value => ({ ...value, [assignmentKey]: { tab: kind, data } }));
+        if (!controller.signal.aborted) {
+          const sortedData = kind === "users" ? { ...data, items: sortAssignedFirst(data.items) } : data;
+          setAssignments(value => ({ ...value, [assignmentKey]: { tab: kind, data: sortedData } }));
+        }
       } catch (error) {
         if (!controller.signal.aborted) setAssignments(value => ({ ...value, [assignmentKey]: { tab: kind, error: permissionError(error) } }));
       }
@@ -177,8 +189,23 @@ export function Permissions() {
       await permissionApi.assign(selectedId, tab, target.id, assigned);
       assignmentVersion.current++;
       if (selectedIdRef.current === selectedId) {
-        setAssignments(value => Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, entry.tab === tab && entry.data ? { ...entry, data: { ...entry.data, items: entry.data.items.map(item => item.id === target.id ? { ...item, isAssigned: assigned } : item) } } : entry])));
+        setAssignments(value => Object.fromEntries(Object.entries(value).map(([entryKey, entry]) => {
+          if (entry.tab !== tab || !entry.data) return [entryKey, entry];
+          const updatedItems = entry.data.items.map(item => item.id === target.id ? { ...item, isAssigned: assigned } : item);
+          return [
+            entryKey,
+            {
+              ...entry,
+              data: {
+                ...entry.data,
+                items: tab === "users" ? sortAssignedFirst(updatedItems) : updatedItems,
+              },
+            },
+          ];
+        })));
         setCounts(value => value[tab] == null ? value : { ...value, [tab]: Math.max(0, value[tab]! + (assigned ? 1 : -1)) });
+        assignmentRequests.current.clear();
+        setAssignmentRevision(value => value + 1);
       }
       notify("success", `${assigned ? "Đã cấp" : "Đã thu hồi"} quyền ${current.code} ${assigned ? "cho" : "của"} ${assignmentLabel(target)}.`, key);
     } catch (error) {
@@ -280,7 +307,7 @@ export function Permissions() {
               <form className="permissions__search" role="search" onSubmit={event => { event.preventDefault(); updateQuery({ search: tabSearch.trim(), userPage: null }); }}><MagnifyingGlassIcon aria-hidden="true" /><input aria-label={`Tìm ${tabs.find(item => item.id === tab)?.label.toLowerCase()}`} name="search" placeholder="Tìm trong danh sách…" value={tabSearch} onChange={event => setTabSearch(event.target.value)} disabled={Boolean(busy)} autoComplete="off" />{tabSearch && <button type="button" disabled={Boolean(busy)} aria-label="Xóa tìm kiếm đối tượng" onClick={() => { setTabSearch(""); updateQuery({ search: null, userPage: null }); }}><Cross2Icon /></button>}<button type="submit" disabled={Boolean(busy)} aria-label="Tìm đối tượng"><ArrowRightIcon /></button></form>
             </div>
             {assignmentError ? <Empty error title="Chưa tải được đối tượng phân quyền" text={assignmentError} onRetry={() => { assignmentRequests.current.delete(assignmentKey); setAssignmentRevision(value => value + 1); }} /> : !assignmentData ? <Loading /> : !assignmentData.items.length ? <Empty title="Chưa có đối tượng phù hợp" text={search ? "Thử tên hoặc mã khác để tìm đối tượng cần phân quyền." : "Danh sách hiện chưa có dữ liệu để gán quyền."} /> : <div className="permissions__assignmentList" data-kind={tab}>
-              <div className="permissions__assignmentHead"><span>{(tab === "users" ? assignmentData.total : assignmentData.items.length).toLocaleString("vi-VN")} {tab === "users" ? "người dùng" : tab === "roles" ? "vai trò" : "màn hình"}</span><span>Thay đổi được lưu ngay</span></div>
+              <div className="permissions__assignmentHead"><span>{(tab === "users" ? assignmentData.total : assignmentData.items.length).toLocaleString("vi-VN")} {tab === "users" ? `người dùng${counts.users != null ? ` · Đã cấp: ${counts.users.toLocaleString("vi-VN")}` : ""}` : tab === "roles" ? "vai trò" : "màn hình"}</span><span>Thay đổi được lưu ngay</span></div>
               {assignmentData.items.map(target => {
                 const name = assignmentLabel(target);
                 const info = "userName" in target ? [target.systemCode, target.email].filter(Boolean).join(" / ") : "";
