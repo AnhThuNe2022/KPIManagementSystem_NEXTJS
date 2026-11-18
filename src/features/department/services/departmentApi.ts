@@ -26,7 +26,7 @@ export const departmentApi = {
     );
   },
   async list(companyId: string, name: string, signal?: AbortSignal) {
-    const query = new URLSearchParams({ byunithrcompile: "true", companyid: companyId, name });
+    const query = new URLSearchParams({ companyid: companyId, name });
     const response = await request<Department[] | { data: Department[] }>("/departments?" + query, { signal });
     return Array.isArray(response) ? response : response.data;
   },

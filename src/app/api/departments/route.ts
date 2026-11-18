@@ -2,7 +2,7 @@ import { proxyApiRequest } from "@/lib/api/proxy";
 
 export function GET(request: Request) {
   const source = new URL(request.url).searchParams;
-  const query = new URLSearchParams({ byunithrcompile: "true" });
+  const query = new URLSearchParams({ "Filters[byunithrcompile]": "true" });
   const companyId = source.get("companyid")?.trim();
   const name = source.get("name")?.trim();
   if (companyId) query.set("Filters[companyid]", companyId);
