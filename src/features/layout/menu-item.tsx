@@ -1,3 +1,7 @@
+export {};
+
+// Tạm thời comment vì dự án chưa cài @mui/icons-material (không còn file nào import menu-item.tsx)
+/*
 "use client";
 
 import { useState } from "react";
@@ -85,7 +89,6 @@ export function MenuItem({ menu }: MenuItemProps) {
   if (children.length > 0) {
     return (
       <div className="mb-1.5 select-none">
-        {/* Click vào parent để thu nhỏ / mở rộng */}
         <div
           onClick={() => setIsOpen(!isOpen)}
           className={`
@@ -118,7 +121,6 @@ export function MenuItem({ menu }: MenuItemProps) {
           />
         </div>
 
-        {/* Danh sách children với hiệu ứng thu nhỏ / mở rộng mượt mà */}
         <div
           className={`
             grid transition-all duration-300 ease-in-out
@@ -168,3 +170,4 @@ export function MenuItem({ menu }: MenuItemProps) {
     </Link>
   );
 }
+*/

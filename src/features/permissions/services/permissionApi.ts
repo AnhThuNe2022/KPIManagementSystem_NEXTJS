@@ -17,7 +17,7 @@ export const permissionApi = {
     return request("/permission/" + encodeURIComponent(permissionId), { method: "DELETE" });
   },
   async assignments(permissionId: string, tab: AssignmentTab, search: string, page: number, pageSize: number, signal?: AbortSignal) {
-    const query = tab === "users" ? new URLSearchParams({ Page: String(page), PageSize: String(pageSize), "Filters[keyword]": search, "Filters[sortBy]": "IsAssigned", "Filters[sortOrder]": "desc" }) : new URLSearchParams({ search });
+    const query = tab === "users" ? new URLSearchParams({ Page: String(page), PageSize: String(pageSize), "Filters[permissionId]": permissionId, "Filters[keyword]": search, "Filters[sortBy]": "IsAssigned", "Filters[sortOrder]": "desc" }) : new URLSearchParams({ search });
     const endpoint = "/permission/" + encodeURIComponent(permissionId) + "/" + tab + "?" + query;
     const response = await request<PermissionPage<Assignment & Record<string, unknown>>>(endpoint, { signal });
     return {

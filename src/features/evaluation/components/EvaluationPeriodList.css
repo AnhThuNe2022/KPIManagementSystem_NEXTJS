@@ -874,3 +874,62 @@ html.dark .period-workspace {
     padding-left: 16px;
   }
 }
+
+/* Modal open / close animation */
+.period-editor-dialog[open] {
+  animation: period-dialog-in 240ms cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.period-editor-dialog[open]::backdrop {
+  animation: period-backdrop-in 220ms ease-out both;
+}
+
+.period-editor-dialog[data-closing="true"] {
+  pointer-events: none;
+  animation: period-dialog-out 180ms cubic-bezier(.4, 0, 1, 1) forwards;
+}
+
+.period-editor-dialog[data-closing="true"]::backdrop {
+  animation: period-backdrop-out 180ms ease-in forwards;
+}
+
+@keyframes period-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(.965);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes period-dialog-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(.97);
+  }
+}
+
+@keyframes period-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes period-backdrop-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .period-editor-dialog[open],
+  .period-editor-dialog[open]::backdrop,
+  .period-editor-dialog[data-closing="true"],
+  .period-editor-dialog[data-closing="true"]::backdrop {
+    animation: none !important;
+  }
+}

@@ -96,7 +96,9 @@ type Props = { period?: EvaluationPeriod; onClose: () => void; onSaved: () => vo
 export function EvaluationPeriodEditor({ period, onClose, onSaved }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
   const saving = useRef(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [busy, setBusy] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
   const [options, setOptions] = useState<{
@@ -122,6 +124,7 @@ export function EvaluationPeriodEditor({ period, onClose, onSaved }: Props) {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
       element?.close();
       document.body.style.overflow = previousOverflow;
     };
@@ -198,10 +201,23 @@ export function EvaluationPeriodEditor({ period, onClose, onSaved }: Props) {
     setDraft((current) => ({ ...current, ...fields }));
   }
 
+  function finishClose(done: () => void) {
+    if (closing) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      dialog.current?.close();
+      done();
+      return;
+    }
+    setClosing(true);
+    closeTimer.current = setTimeout(() => {
+      dialog.current?.close();
+      done();
+    }, 180);
+  }
+
   function close() {
-    if (saving.current || (dirty && !window.confirm("Bỏ các thay đổi chưa lưu?"))) return;
-    dialog.current?.close();
-    onClose();
+    if (saving.current || closing || (dirty && !window.confirm("Bỏ các thay đổi chưa lưu?"))) return;
+    finishClose(onClose);
   }
 
   async function save(event: FormEvent<HTMLFormElement>) {
@@ -241,16 +257,16 @@ export function EvaluationPeriodEditor({ period, onClose, onSaved }: Props) {
       saving.current = false;
       setBusy(false);
     }
-    dialog.current?.close();
     notify("success", editing ? "Đã cập nhật kỳ đánh giá." : "Đã tạo kỳ đánh giá.");
-    onSaved();
+    finishClose(onSaved);
   }
 
   return (
     <dialog
       ref={dialog}
+      data-closing={closing ? "true" : undefined}
       aria-labelledby="evaluation-period-editor-title"
-      className="m-auto max-h-[calc(100dvh-1.5rem)] w-[calc(100%-2rem)] max-w-6xl overflow-hidden rounded-2xl border border-[rgb(var(--color-border)/0.85)] bg-[rgb(var(--color-surface))] p-0 text-[rgb(var(--color-text))] shadow-[var(--shadow-card)] backdrop:bg-slate-950/70"
+      className="period-editor-dialog m-auto max-h-[calc(100dvh-1.5rem)] w-[calc(100%-2rem)] max-w-6xl overflow-hidden rounded-2xl border border-[rgb(var(--color-border)/0.85)] bg-[rgb(var(--color-surface))] p-0 text-[rgb(var(--color-text))] shadow-[var(--shadow-card)] backdrop:bg-slate-950/70"
       onCancel={(event) => {
         event.preventDefault();
         close();
