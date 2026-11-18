@@ -15,36 +15,15 @@ import dynamic from "next/dynamic";
 import { HamburgerMenuIcon, ChevronDownIcon } from "@radix-ui/react-icons";
 import { usePathname, useRouter } from "next/navigation";
 import type { MenuDto } from "@/features/menus/types";
-import { menuApi, MENUS_CHANGED } from "@/features/menus/services/menuApi";
-import { notify } from "@/components/ui/Toaster";
+import { menuHref, useMyMenus } from "@/features/menus/components/MenuAccessGuard";
 import "./Sidebar.css";
 
 const NavigationIcon = dynamic(() => import("@/features/menus/components/MenuIcon").then(module => module.MenuIcon), {
   loading: () => <HamburgerMenuIcon className="sidebar__icon" aria-hidden="true" />,
 });
 
-// These backend URLs predate the Next.js routes.
-const legacyRoutes: Record<string, string> = {
-  "/user/infor": "/user-infor", "/my/evaluation": "/my-evaluation",
-  "/permissions": "/admin/permission", "/menus": "/admin/menu",
-};
-
-function menuHref(url?: string | null) {
-  if (!url?.startsWith("/")) return "#";
-  try {
-    const target = new URL(url, "https://kpi.local");
-    return target.origin === "https://kpi.local"
-      ? (legacyRoutes[target.pathname] ?? target.pathname) + target.search + target.hash : "#";
-  } catch { return "#"; }
-}
-
 function containsPath(menu: MenuDto, pathname: string): boolean {
   return menuHref(menu.url).split(/[?#]/)[0] === pathname || menu.children?.some(child => containsPath(child, pathname));
-}
-
-function sortMenus(menus: MenuDto[]): MenuDto[] {
-  return [...menus].sort((a, b) => a.orderNo - b.orderNo)
-    .map(menu => ({ ...menu, children: sortMenus(menu.children ?? []) }));
 }
 
 function DcgSparkIcon() {
@@ -58,10 +37,7 @@ function DcgSparkIcon() {
 }
 
 export function Sidebar() {
-  const [navigation, setNavigation] = useState<MenuDto[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [menuRevision, setMenuRevision] = useState(0);
+  const { navigation, loading, error, reload } = useMyMenus();
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const pathname = usePathname();
   const router = useRouter();
@@ -93,22 +69,10 @@ export function Sidebar() {
   const flyoutItem = visiblyCollapsed && !visiblyFullscreen ? navigation[flyoutIndex ?? lastFlyoutIndex] : null;
 
   useEffect(() => {
-    const controller = new AbortController();
-    const refresh = () => setMenuRevision(value => value + 1);
-    setLoading(true); setError("");
-    menuApi.my(controller.signal).then(menus => {
-      if (controller.signal.aborted) return;
-      setNavigation(sortMenus(menus));
-      setHoveredIndex(null); setFocusedIndex(null); setLastFlyoutIndex(0);
-    }).catch(cause => {
-      if (controller.signal.aborted) return;
-      const message = cause instanceof Error && cause.message === "UNAUTHORIZED"
-        ? "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại." : "Chưa tải được menu. Vui lòng thử lại.";
-      setNavigation([]); setError(message); notify("error", message, "sidebar-menus");
-    }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
-    window.addEventListener(MENUS_CHANGED, refresh);
-    return () => { controller.abort(); window.removeEventListener(MENUS_CHANGED, refresh); };
-  }, [menuRevision]);
+    setHoveredIndex(null);
+    setFocusedIndex(null);
+    setLastFlyoutIndex(0);
+  }, [navigation]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -390,7 +354,7 @@ export function Sidebar() {
           >
             {!navigation.length && <div className="sidebar__menuStatus" role={error ? "alert" : "status"}>
               <p>{error || (loading ? "Đang tải menu…" : "Tài khoản chưa có menu được cấp.")}</p>
-              {error && <button type="button" onClick={() => setMenuRevision(value => value + 1)}>Thử lại</button>}
+              {error && <button type="button" onClick={reload}>Thử lại</button>}
             </div>}
             {!!navigation.length && <div className="sidebar__indicator" aria-hidden="true">
               <span className="sidebar__cutout">
