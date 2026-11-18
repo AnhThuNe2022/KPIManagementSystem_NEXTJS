@@ -76,7 +76,7 @@ if (!response.ok) {
 }
   }
   return (
-    <form className="login-form" onSubmit={submit} noValidate aria-label="Đăng nhập hệ thống KPI" aria-busy={loading}>
+    <form className="login-form" method="post" onSubmit={submit} noValidate aria-label="Đăng nhập hệ thống KPI" aria-busy={loading}>
       <TextField id="username" name="username" label="Tài khoản" value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" autoCapitalize="none" autoCorrect="off" enterKeyHint="next" spellCheck={false} placeholder="Email hoặc tên đăng nhập" className="login-input" error={errors.username} aria-invalid={Boolean(errors.username)} aria-describedby={errors.username ? "username-error" : undefined} disabled={loading} />
       <TextField id="password" name="password" label="Mật khẩu" type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" enterKeyHint="done" placeholder="Nhập mật khẩu" className="login-input" error={errors.password} aria-invalid={Boolean(errors.password)} aria-describedby={errors.password ? "password-error" : undefined} disabled={loading} endAdornment={
         <button type="button" onClick={() => setShowPassword(!showPassword)} className="login-password-toggle" aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} aria-pressed={showPassword} disabled={loading}>
