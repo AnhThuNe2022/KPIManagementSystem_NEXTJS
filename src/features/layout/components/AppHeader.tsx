@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -7,32 +8,56 @@ import { ChevronRightIcon, HomeIcon } from "@radix-ui/react-icons";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { HeaderSnowman } from "@/components/ui/HeaderSnowman";
 import { UserMenu } from "@/features/auth/components/UserMenu";
+import { menuHref, useMyMenus } from "@/features/menus/components/MenuAccessGuard";
+import type { MenuDto } from "@/features/menus/types";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 import "./AppHeader.css";
 
-const headerPages: Record<string, readonly [string, string]> = {
-  "/dashboard": ["", "Dashboard"],
+// Only for routes not directly listed in /api/menus/my or dynamic detail pages.
+const fallbackPages: Record<string, readonly string[]> = {
+  "/dashboard": ["Dashboard"],
   "/user-infor": ["Thông tin chung", "Thông tin tài khoản cá nhân"],
   "/my-evaluation": ["Đánh giá", "Bản đánh giá của tôi"],
-  "/notifications": ["", "Thông báo"],
-  "/manager/pending": ["Quản lý", "Danh sách NS chờ đánh giá"],
-  "/manager/reviewed": ["Quản lý", "Danh sách NS đã đánh giá"],
-  "/manager/kpi-evaluation-periods": ["Quản lý", "Danh sách kỳ đánh giá KPI"],
-  "/hr/pending": ["Quản lý Nhân sự", "Danh sách chờ nhận xét"],
-  "/hr/reviewed": ["Quản lý Nhân sự", "Đã nhận xét"],
-  "/admin/evaluationList": ["HR tổng hợp", "Danh sách đánh giá"],
-  "/admin/permission": ["Cấu hình", "Quản lý quyền"],
-  "/admin/menu": ["Cấu hình", "Quản lý menu"],
-  "/departments": ["HR tổng hợp", "Quản lý phòng ban"],
-  "/summary/summary-list/HrSummary": ["HR tổng hợp", "Danh sách tổng hợp"],
+  "/notifications": ["Thông báo"],
   "/summary/summary-list-detail/HrSummary": ["HR tổng hợp", "Chi tiết tổng hợp"],
-  "/summary/summary-list/SummaryDirector": ["Tổng hợp cấp cao", "Danh sách tổng hợp"],
   "/summary/summary-list-detail/SummaryDirector": ["Tổng hợp cấp cao", "Chi tiết tổng hợp"],
 };
 
+function cleanRoutePath(path: string): string {
+  return (path.split(/[?#]/)[0].replace(/\/+$/, "") || "/").toLowerCase();
+}
+
+function findMenuTrail(menus: MenuDto[], targetPath: string): string[] | null {
+  for (const menu of menus) {
+    const href = menuHref(menu.url);
+    if (href !== "#" && cleanRoutePath(href) === targetPath) {
+      return [menu.title];
+    }
+    if (menu.children?.length) {
+      const childTrail = findMenuTrail(menu.children, targetPath);
+      if (childTrail) return [menu.title, ...childTrail];
+    }
+  }
+  return null;
+}
+
+function findFallbackTrail(targetPath: string): readonly string[] | null {
+  for (const [path, trail] of Object.entries(fallbackPages)) {
+    const clean = cleanRoutePath(path);
+    if (targetPath === clean || targetPath.startsWith(clean + "/")) {
+      return trail;
+    }
+  }
+  return null;
+}
+
 export function AppHeader({ userName }: { userName: string }) {
   const pathname = usePathname();
-  const page = headerPages[pathname] ?? Object.entries(headerPages).find(([path]) => pathname.startsWith(path + "/"))?.[1];
+  const { navigation } = useMyMenus();
+  const trail = useMemo(() => {
+    const target = cleanRoutePath(pathname);
+    return findMenuTrail(navigation, target) ?? findFallbackTrail(target);
+  }, [navigation, pathname]);
   return (
     <header className="app-header__header">
       <Link href="/dashboard" className="app-header__brand" aria-label="Đèo Cả KPI — Trang tổng quan">
@@ -63,11 +88,22 @@ export function AppHeader({ userName }: { userName: string }) {
         </span>
       </Link>
 
-      {page && <nav className="app-header__breadcrumbs" aria-label="Đường dẫn trang"><ol>
-        <li><Link href="/dashboard" aria-label="Trang tổng quan"><HomeIcon aria-hidden="true" /></Link></li>
-        {page[0] && <li><ChevronRightIcon aria-hidden="true" /><span>{page[0]}</span></li>}
-        <li aria-current="page"><ChevronRightIcon aria-hidden="true" /><span title={page[1]}>{page[1]}</span></li>
-      </ol></nav>}
+      {trail && trail.length > 0 && (
+        <nav className="app-header__breadcrumbs" aria-label="Đường dẫn trang">
+          <ol>
+            <li><Link href="/dashboard" aria-label="Trang tổng quan"><HomeIcon aria-hidden="true" /></Link></li>
+            {trail.map((label, index) => {
+              const isLast = index === trail.length - 1;
+              return (
+                <li key={`${index}-${label}`} aria-current={isLast ? "page" : undefined}>
+                  <ChevronRightIcon aria-hidden="true" />
+                  <span title={isLast ? label : undefined}>{label}</span>
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
+      )}
 
       <div className="app-header__actions">
         <HeaderSnowman />
@@ -78,12 +114,6 @@ export function AppHeader({ userName }: { userName: string }) {
         <div className="app-header__account">
           <UserMenu userName={userName} />
         </div>
-      </div>
-
-      <div className="app-header__xmasLights" aria-hidden="true">
-        {Array.from({ length: 14 }, (_, index) => (
-          <span key={index} style={{ animationDelay: `${(index % 4) * 0.65}s` }} />
-        ))}
       </div>
     </header>
   );

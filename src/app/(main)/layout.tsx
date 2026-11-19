@@ -16,9 +16,8 @@ export default async function MainLayout({
 
   return (
     <div className="min-h-screen flow-root bg-[rgb(var(--color-page))] text-[rgb(var(--color-text))]">
-      <AppHeader userName={userName} />
-
       <MenuProvider>
+        <AppHeader userName={userName} />
         <div className="flex">
           <Sidebar />
           <main className="min-w-0 flex-1 px-4 py-6 sm:p-6 lg:p-8">

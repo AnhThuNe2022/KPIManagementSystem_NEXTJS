@@ -154,40 +154,6 @@
   padding-left: 20px;
   border-left: 1px solid rgb(var(--color-border) / .7);
 }
-.app-header__xmasLights {
-  position: absolute;
-  inset: auto 24px -3px;
-  z-index: 1;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  pointer-events: none;
-}
-.app-header__xmasLights::before {
-  content: "";
-  position: absolute;
-  inset: 2px 0 auto;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgb(148 163 184 / .28) 10%, rgb(148 163 184 / .28) 90%, transparent);
-}
-.app-header__xmasLights span {
-  position: relative;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  animation: app-header-twinkle 2.8s ease-in-out infinite;
-}
-.app-header__xmasLights span:nth-child(4n+1) { background: #fbbf24; color: #fbbf24; }
-.app-header__xmasLights span:nth-child(4n+2) { background: #fb7185; color: #fb7185; }
-.app-header__xmasLights span:nth-child(4n+3) { background: #34d399; color: #34d399; }
-.app-header__xmasLights span:nth-child(4n+4) { background: #60a5fa; color: #60a5fa; }
-@keyframes app-header-twinkle {
-  0%, 100% { opacity: .45; transform: scale(.88); box-shadow: 0 0 2px currentColor; }
-  50% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 9px currentColor, 0 0 14px currentColor; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .app-header__xmasLights span { animation: none; opacity: .8; }
-}
 @media (hover: hover) and (pointer: fine) {
   .app-header__tools > button:hover,
   .app-header__tools > div > button:hover {
