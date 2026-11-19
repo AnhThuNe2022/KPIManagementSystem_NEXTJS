@@ -2,13 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import {
-  ArrowRightIcon,
   CheckIcon,
   Cross2Icon,
   ExclamationTriangleIcon,
-  LayersIcon,
-  MixerHorizontalIcon,
-  PersonIcon,
   ReloadIcon,
 } from "@radix-ui/react-icons";
 import { SearchableSelect, type SearchableSelectOption } from "@/components/ui/SearchableSelect";
@@ -127,7 +123,6 @@ export function ConditionAssignmentEditor({
     };
   }, []);
 
-  // Load full assignable user list via GET /employeeInfor/get-user-by-filter
   useEffect(() => {
     const controller = new AbortController();
     setUsersLoading(true);
@@ -138,16 +133,13 @@ export function ConditionAssignmentEditor({
           setEditorUsers(rows);
         }
       })
-      .catch(() => {
-        // Keep fallbackUsers if directory fetch fails
-      })
+      .catch(() => {})
       .finally(() => {
         if (!controller.signal.aborted) setUsersLoading(false);
       });
     return () => controller.abort();
   }, []);
 
-  // If editing a Department-scoped row without companyId from BE, infer companyId from departments list
   useEffect(() => {
     if (
       !editing ||
@@ -235,16 +227,6 @@ export function ConditionAssignmentEditor({
     ];
   }, [departments, draft.scopeType, draft.idValue, item?.departmentName, item?.scopeValue]);
 
-  const conditionMeta = getConditionMeta(draft.statusCondition);
-  const previewScope =
-    draft.scopeValue ||
-    (draft.scopeType === AssignmentScopeType.Company
-      ? companyOptions.find((c) => c.id === draft.companyId)?.name
-      : effectiveDepartments.find((d) => d.id === draft.idValue)?.name) ||
-    "Chưa chọn phạm vi";
-  const previewUser =
-    userOptions.find((u) => u.id === draft.userId)?.name || "Chưa chọn người phụ trách";
-
   function patch(fields: Partial<ConditionAssignmentDraft>) {
     setError("");
     setDraft((current) => ({ ...current, ...fields }));
@@ -253,6 +235,11 @@ export function ConditionAssignmentEditor({
   function close() {
     if (busy || closing) return;
     if (dirty && !window.confirm("Bạn muốn bỏ các thay đổi chưa lưu?")) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      dialog.current?.close();
+      onClose();
+      return;
+    }
     setClosing(true);
   }
 
@@ -294,7 +281,12 @@ export function ConditionAssignmentEditor({
       await conditionAssignmentApi.save(draft, item?.id);
       notify("success", editing ? "Đã cập nhật phân công xử lý điều kiện." : "Đã thêm phân công mới.");
       onSaved();
-      setClosing(true);
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        dialog.current?.close();
+        onClose();
+      } else {
+        setClosing(true);
+      }
     } catch (cause) {
       setError(requestMessage(cause, "Không thể lưu phân công. Vui lòng thử lại."));
     } finally {
@@ -306,9 +298,9 @@ export function ConditionAssignmentEditor({
   return (
     <dialog
       ref={dialog}
-      className="ca-drawer"
+      className="ca-modal"
       data-closing={closing}
-      aria-labelledby="ca-drawer-title"
+      aria-labelledby="ca-modal-title"
       onAnimationEnd={(event) => {
         if (event.target === event.currentTarget && closing) {
           dialog.current?.close();
@@ -323,268 +315,208 @@ export function ConditionAssignmentEditor({
         if (event.target === event.currentTarget) close();
       }}
     >
-      <form onSubmit={save} className="ca-drawer-core" inert={closing}>
-        <header className="ca-drawer-head">
+      <form onSubmit={save} className="ca-modal-form" inert={closing}>
+        <header className="ca-modal-head">
           <div>
-            <span className="ca-eyebrow">
-              <MixerHorizontalIcon aria-hidden="true" />
-              {editing ? "Cập nhật luồng phân công" : "Tạo luồng phân công"}
-            </span>
-            <h2 id="ca-drawer-title">
+            <h2 id="ca-modal-title">
               {editing ? "Chỉnh sửa phân công điều kiện" : "Thêm phân công mới"}
             </h2>
             <p>
               {editing
-                ? "Điều chỉnh điều kiện, phạm vi hoặc người phụ trách."
-                : "Chọn điều kiện, phạm vi đơn vị và gán người phụ trách xử lý."}
+                ? "Cập nhật điều kiện, phạm vi áp dụng hoặc người phụ trách."
+                : "Thiết lập điều kiện xử lý, phạm vi đơn vị và người phụ trách."}
             </p>
           </div>
           <button
             type="button"
-            className="ca-icon-btn"
+            className="ca-action-btn"
             disabled={busy}
-            aria-label="Đóng bảng phân công"
+            aria-label="Đóng"
             onClick={close}
           >
             <Cross2Icon aria-hidden="true" />
           </button>
         </header>
 
-        <div className="ca-drawer-body">
-          <div className="ca-preview" aria-label="Xem trước quy tắc phân công">
-            <div className="ca-preview-title">
-              <span>Xem trước luồng xử lý</span>
-              <span className="ca-status" data-active={draft.isActive}>
-                <span className="ca-status-dot" aria-hidden="true" />
-                {draft.isActive ? "Hoạt động" : "Tạm ngưng"}
-              </span>
-            </div>
-            <div className="ca-preview-flow">
-              <span className="ca-badge" data-tone={conditionMeta.tone}>
-                <span className="ca-badge-dot" aria-hidden="true" />
-                {draft.statusCondition ? conditionMeta.label : "Chọn điều kiện"}
-              </span>
-              <ArrowRightIcon aria-hidden="true" className="opacity-50" />
-              <span className="ca-preview-node">
-                {draft.scopeType === AssignmentScopeType.Department ? (
-                  <DepartmentScopeIcon aria-hidden="true" />
-                ) : (
-                  <CompanyScopeIcon aria-hidden="true" />
-                )}
-                <span>{previewScope}</span>
-              </span>
-              <ArrowRightIcon aria-hidden="true" className="opacity-50" />
-              <span className="ca-preview-node">
-                <PersonIcon aria-hidden="true" />
-                <span>{previewUser}</span>
-              </span>
+        <div className="ca-modal-body">
+          <div className="ca-field">
+            <label htmlFor="ca-editor-condition">
+              Điều kiện xử lý<span className="ca-req" aria-hidden="true">*</span>
+            </label>
+            <SearchableSelect
+              id="ca-editor-condition"
+              label="Điều kiện xử lý"
+              placeholder="Chọn điều kiện"
+              required
+              options={effectiveConditions}
+              value={draft.statusCondition}
+              disabled={busy}
+              onChange={(statusCondition) => patch({ statusCondition })}
+            />
+          </div>
+
+          <div className="ca-field">
+            <span>
+              Loại phạm vi<span className="ca-req" aria-hidden="true">*</span>
+            </span>
+            <div className="ca-segmented" role="group" aria-label="Loại phạm vi">
+              <button
+                type="button"
+                aria-pressed={draft.scopeType === AssignmentScopeType.Company}
+                disabled={busy}
+                onClick={() =>
+                  patch({
+                    scopeType: AssignmentScopeType.Company,
+                    idValue: draft.companyId,
+                    scopeValue:
+                      companyOptions.find((option) => option.id === draft.companyId)?.name ?? "",
+                  })
+                }
+              >
+                <CompanyScopeIcon aria-hidden="true" />
+                <span>Công ty</span>
+              </button>
+              <button
+                type="button"
+                aria-pressed={draft.scopeType === AssignmentScopeType.Department}
+                disabled={busy}
+                onClick={() =>
+                  patch({
+                    scopeType: AssignmentScopeType.Department,
+                    idValue: "",
+                    scopeValue: "",
+                  })
+                }
+              >
+                <DepartmentScopeIcon aria-hidden="true" />
+                <span>Phòng ban</span>
+              </button>
             </div>
           </div>
 
-          <div className="ca-drawer-cols">
-            <div className="ca-drawer-col">
-              <div className="ca-field">
-                <label htmlFor="ca-editor-condition">
-                  <MixerHorizontalIcon aria-hidden="true" />
-                  Điều kiện xử lý *
-                </label>
-                <SearchableSelect
-                  id="ca-editor-condition"
-                  label="Điều kiện xử lý"
-                  placeholder="Chọn điều kiện"
-                  required
-                  options={effectiveConditions}
-                  value={draft.statusCondition}
-                  disabled={busy}
-                  onChange={(statusCondition) => patch({ statusCondition })}
-                />
-              </div>
+          <div className="ca-field">
+            <label htmlFor="ca-editor-company">
+              Công ty<span className="ca-req" aria-hidden="true">*</span>
+            </label>
+            <SearchableSelect
+              id="ca-editor-company"
+              label="Công ty"
+              placeholder="Chọn công ty"
+              required
+              options={companyOptions}
+              value={draft.companyId}
+              disabled={busy}
+              onChange={(companyId) => {
+                const companyName = companyOptions.find((option) => option.id === companyId)?.name ?? "";
+                patch({
+                  companyId,
+                  idValue: draft.scopeType === AssignmentScopeType.Company ? companyId : "",
+                  scopeValue: draft.scopeType === AssignmentScopeType.Company ? companyName : "",
+                });
+              }}
+            />
+          </div>
 
-              <div className="ca-field">
-                <span>
-                  <LayersIcon aria-hidden="true" />
-                  Loại phạm vi *
-                </span>
-                <div className="ca-scope-cards" role="group" aria-label="Loại phạm vi">
-                  <button
-                    type="button"
-                    className="ca-scope-card"
-                    aria-pressed={draft.scopeType === AssignmentScopeType.Company}
-                    disabled={busy}
-                    onClick={() =>
-                      patch({
-                        scopeType: AssignmentScopeType.Company,
-                        idValue: draft.companyId,
-                        scopeValue:
-                          companyOptions.find((option) => option.id === draft.companyId)?.name ?? "",
-                      })
-                    }
-                  >
-                    <span className="ca-scope-card-orb">
-                      <CompanyScopeIcon aria-hidden="true" />
-                    </span>
-                    <span>
-                      <strong>Công ty</strong>
-                      <small>Áp dụng toàn đơn vị</small>
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className="ca-scope-card"
-                    aria-pressed={draft.scopeType === AssignmentScopeType.Department}
-                    disabled={busy}
-                    onClick={() =>
-                      patch({
-                        scopeType: AssignmentScopeType.Department,
-                        idValue: "",
-                        scopeValue: "",
-                      })
-                    }
-                  >
-                    <span className="ca-scope-card-orb">
-                      <DepartmentScopeIcon aria-hidden="true" />
-                    </span>
-                    <span>
-                      <strong>Phòng ban</strong>
-                      <small>Áp dụng theo phòng/ban</small>
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="ca-field">
-                <label htmlFor="ca-editor-company">
-                  <CompanyScopeIcon aria-hidden="true" />
-                  Công ty *
-                </label>
-                <SearchableSelect
-                  id="ca-editor-company"
-                  label="Công ty"
-                  placeholder="Chọn công ty"
-                  required
-                  options={companyOptions}
-                  value={draft.companyId}
-                  disabled={busy}
-                  onChange={(companyId) => {
-                    const companyName = companyOptions.find((option) => option.id === companyId)?.name ?? "";
-                    patch({
-                      companyId,
-                      idValue: draft.scopeType === AssignmentScopeType.Company ? companyId : "",
-                      scopeValue: draft.scopeType === AssignmentScopeType.Company ? companyName : "",
-                    });
-                  }}
-                />
-              </div>
-
-              {draft.scopeType === AssignmentScopeType.Department && (
-                <div className="ca-field ca-cascade">
-                  <label htmlFor="ca-editor-department">
-                    <DepartmentScopeIcon aria-hidden="true" />
-                    Phòng ban *
-                  </label>
-                  <SearchableSelect
-                    id="ca-editor-department"
-                    label="Phòng ban"
-                    placeholder={draft.companyId ? "Chọn phòng ban" : "Chọn công ty trước"}
-                    required
-                    options={effectiveDepartments}
-                    value={draft.idValue}
-                    disabled={busy || (!draft.companyId && !effectiveDepartments.length)}
-                    loading={deptLoading}
-                    onChange={(departmentId) => {
-                      const deptName =
-                        effectiveDepartments.find((option) => option.id === departmentId)?.name ?? "";
-                      patch({ idValue: departmentId, scopeValue: deptName });
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="ca-drawer-col">
-              <div className="ca-field">
-                <label htmlFor="ca-editor-user">
-                  <PersonIcon aria-hidden="true" />
-                  Người phụ trách *
-                </label>
-                <SearchableSelect
-                  id="ca-editor-user"
-                  label="Người phụ trách"
-                  placeholder="Tìm tên hoặc mã nhân sự"
-                  required
-                  options={userOptions}
-                  value={draft.userId}
-                  disabled={busy}
-                  loading={usersLoading}
-                  onChange={(userId) => {
-                    const picked = editorUsers.find((user) => user.id === userId);
-                    patch({
-                      userId,
-                      fullName: picked?.fullName ?? item?.fullName ?? "",
-                      systemCodeUser: picked?.systemCode ?? item?.systemCodeUser ?? "",
-                    });
-                  }}
-                />
-              </div>
-
-              {editing && (
-                <div className="ca-field">
-                  <label htmlFor="ca-editor-description">Mô tả / Ghi chú</label>
-                  <textarea
-                    id="ca-editor-description"
-                    className="ca-textarea"
-                    placeholder="Ghi chú thêm về phân công (không bắt buộc)…"
-                    value={draft.description ?? ""}
-                    disabled={busy}
-                    onChange={(event) => patch({ description: event.target.value })}
-                  />
-                </div>
-              )}
-
-              <label className="ca-switch-card" data-active={draft.isActive}>
-                <span>
-                  <strong>Trạng thái hoạt động</strong>
-                  <small>
-                    {draft.isActive
-                      ? "Phân công đang kích hoạt trong luồng xử lý."
-                      : "Phân công đang tạm ngưng áp dụng."}
-                  </small>
-                </span>
-                <input
-                  type="checkbox"
-                  role="switch"
-                  className="sr-only"
-                  checked={draft.isActive}
-                  onChange={(event) => patch({ isActive: event.target.checked })}
-                  disabled={busy}
-                />
-                <span className="ca-toggle" aria-hidden="true" />
+          {draft.scopeType === AssignmentScopeType.Department && (
+            <div className="ca-field">
+              <label htmlFor="ca-editor-department">
+                Phòng ban<span className="ca-req" aria-hidden="true">*</span>
               </label>
+              <SearchableSelect
+                id="ca-editor-department"
+                label="Phòng ban"
+                placeholder={draft.companyId ? "Chọn phòng ban" : "Chọn công ty trước"}
+                required
+                options={effectiveDepartments}
+                value={draft.idValue}
+                disabled={busy || (!draft.companyId && !effectiveDepartments.length)}
+                loading={deptLoading}
+                onChange={(departmentId) => {
+                  const deptName =
+                    effectiveDepartments.find((option) => option.id === departmentId)?.name ?? "";
+                  patch({ idValue: departmentId, scopeValue: deptName });
+                }}
+              />
             </div>
+          )}
+
+          <div className="ca-field">
+            <label htmlFor="ca-editor-user">
+              Người phụ trách<span className="ca-req" aria-hidden="true">*</span>
+            </label>
+            <SearchableSelect
+              id="ca-editor-user"
+              label="Người phụ trách"
+              placeholder="Tìm tên hoặc mã nhân sự"
+              required
+              options={userOptions}
+              value={draft.userId}
+              disabled={busy}
+              loading={usersLoading}
+              onChange={(userId) => {
+                const picked = editorUsers.find((user) => user.id === userId);
+                patch({
+                  userId,
+                  fullName: picked?.fullName ?? item?.fullName ?? "",
+                  systemCodeUser: picked?.systemCode ?? item?.systemCodeUser ?? "",
+                });
+              }}
+            />
           </div>
+
+          {editing && (
+            <div className="ca-field">
+              <label htmlFor="ca-editor-description">Mô tả / Ghi chú</label>
+              <textarea
+                id="ca-editor-description"
+                className="ca-textarea"
+                placeholder="Ghi chú thêm (không bắt buộc)…"
+                value={draft.description ?? ""}
+                disabled={busy}
+                onChange={(event) => patch({ description: event.target.value })}
+              />
+            </div>
+          )}
+
+          <label className="ca-switch-row">
+            <span>
+              <strong>Trạng thái hoạt động</strong>
+              <small>
+                {draft.isActive
+                  ? "Đang áp dụng trong luồng xử lý."
+                  : "Đang tạm ngưng áp dụng."}
+              </small>
+            </span>
+            <input
+              type="checkbox"
+              role="switch"
+              className="sr-only"
+              checked={draft.isActive}
+              onChange={(event) => patch({ isActive: event.target.checked })}
+              disabled={busy}
+            />
+            <span className="ca-switch-track" aria-hidden="true" />
+          </label>
 
           {error && (
-            <div className="ca-notice" data-kind="error" role="alert">
+            <div className="ca-form-error" role="alert">
               <ExclamationTriangleIcon aria-hidden="true" />
               <span>{error}</span>
             </div>
           )}
         </div>
 
-        <footer className="ca-drawer-foot">
-          <button type="button" className="ca-btn-ghost" onClick={close} disabled={busy}>
+        <footer className="ca-modal-foot">
+          <button type="button" className="ca-btn" onClick={close} disabled={busy}>
             Hủy
           </button>
           <button
             type="submit"
-            className="ca-cta-pill"
+            className="ca-btn ca-btn--primary"
             disabled={busy || (editing && !dirty)}
           >
+            {busy ? <ReloadIcon className="ca-spin" aria-hidden="true" /> : <CheckIcon aria-hidden="true" />}
             <span>{busy ? "Đang lưu…" : editing ? "Lưu thay đổi" : "Thêm phân công"}</span>
-            <span className="ca-cta-orb" aria-hidden="true">
-              {busy ? <ReloadIcon className="ca-spin" /> : <CheckIcon />}
-            </span>
           </button>
         </footer>
       </form>

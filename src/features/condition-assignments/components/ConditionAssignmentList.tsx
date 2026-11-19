@@ -1,21 +1,14 @@
 "use client";
 
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-  type FormEvent,
-  type KeyboardEvent,
-} from "react";
-import {
-  ArrowRightIcon,
   CheckCircledIcon,
+  ChevronDownIcon,
   Cross2Icon,
   DashboardIcon,
   ExclamationTriangleIcon,
+  GearIcon,
+  GlobeIcon,
   LayersIcon,
   MagnifyingGlassIcon,
   MixerHorizontalIcon,
@@ -49,14 +42,13 @@ import {
   inferScopeType,
   type ConditionAssignmentDto,
   type ConditionAssignmentFilters,
-  type ConditionTone,
 } from "../types";
 import { ConditionAssignmentEditor } from "./ConditionAssignmentEditor";
 import { CompanyScopeIcon, DepartmentScopeIcon } from "./ScopeIcons";
 import "./ConditionAssignmentList.css";
 
-type StatusTab = "all" | "active" | "inactive";
-type ViewMode = "flow" | "cluster";
+type ViewMode = "table" | "cluster";
+const VIEW_STORAGE_KEY = "condition-assignment-view-v2";
 
 const EMPTY_FILTERS: ConditionAssignmentFilters = {
   keyword: "",
@@ -68,8 +60,11 @@ const EMPTY_FILTERS: ConditionAssignmentFilters = {
   isActive: "",
 };
 
-const GAUGE_RADIUS = 32;
-const GAUGE_CIRCUMFERENCE = 2 * Math.PI * GAUGE_RADIUS;
+const STATUS_FILTER_OPTIONS: Array<{ id: ConditionAssignmentFilters["isActive"]; name: string }> = [
+  { id: "", name: "Tất cả" },
+  { id: "true", name: "Đang hoạt động" },
+  { id: "false", name: "Tạm ngưng" },
+];
 
 function getInitials(name?: string | null): string {
   const clean = (name ?? "").trim();
@@ -112,7 +107,28 @@ export function ConditionAssignmentList() {
   const [pageSize, setPageSize] = useState(20);
   const [revision, setRevision] = useState(0);
   const [descending, setDescending] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [view, setView] = useState<ViewMode>("table");
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(VIEW_STORAGE_KEY);
+      if (saved === "table" || saved === "cluster") {
+        setView(saved);
+      }
+    } catch {
+      // Ignore storage access errors
+    }
+  }, []);
+
+  function switchView(next: ViewMode) {
+    setView(next);
+    try {
+      window.localStorage.setItem(VIEW_STORAGE_KEY, next);
+    } catch {
+      // Ignore storage access errors
+    }
+  }
 
   const [companies, setCompanies] = useState<CompanyDto[]>([]);
   const [scopeDepartmentNames, setScopeDepartmentNames] = useState<Map<string, string> | null>(null);
@@ -124,16 +140,10 @@ export function ConditionAssignmentList() {
     pageResult?: PagedResult<ConditionAssignmentDto>;
     error?: string;
   }>();
-  const [view, setView] = useState<ViewMode>("flow");
   const [editor, setEditor] = useState<ConditionAssignmentDto | "new" | null>(null);
   const [deleting, setDeleting] = useState<ConditionAssignmentDto | null>(null);
 
   const searchRef = useRef<HTMLInputElement>(null);
-  const segmentRef = useRef<HTMLDivElement>(null);
-  const [thumb, setThumb] = useState<{ left: number; width: number } | null>(null);
-
-  const statusTab: StatusTab =
-    applied.isActive === "true" ? "active" : applied.isActive === "false" ? "inactive" : "all";
 
   const requestKey = JSON.stringify({ page, pageSize, applied, revision });
   const current = result?.key === requestKey ? result : undefined;
@@ -143,17 +153,12 @@ export function ConditionAssignmentList() {
   const showSkeleton = loading && !pageData;
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("condition-assignment-view-v2");
-    if (saved === "flow" || saved === "cluster") setView(saved);
-  }, []);
-
-  useEffect(() => {
     const nextKeyword = filters.keyword.trim();
     if (nextKeyword === applied.keyword) return;
     const timer = window.setTimeout(() => {
       setApplied((prev) => (prev.keyword === nextKeyword ? prev : { ...prev, keyword: nextKeyword }));
       setPage(1);
-    }, 350);
+    }, 300);
     return () => window.clearTimeout(timer);
   }, [filters.keyword, applied.keyword]);
 
@@ -223,10 +228,7 @@ export function ConditionAssignmentList() {
           setPage(lastPage);
           return;
         }
-        setResult({
-          key: requestKey,
-          pageResult: response,
-        });
+        setResult({ key: requestKey, pageResult: response });
       })
       .catch((cause) => {
         if (!controller.signal.aborted) {
@@ -240,22 +242,6 @@ export function ConditionAssignmentList() {
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestKey]);
-
-  useLayoutEffect(() => {
-    const container = segmentRef.current;
-    const activeButton = container?.querySelector<HTMLButtonElement>('[aria-selected="true"]');
-    if (!container || !activeButton) return;
-    const update = () => {
-      const left = activeButton.offsetLeft;
-      const width = activeButton.offsetWidth;
-      setThumb((prev) => (prev?.left === left && prev.width === width ? prev : { left, width }));
-    };
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(container);
-    observer.observe(activeButton);
-    return () => observer.disconnect();
-  }, [statusTab, pageData?.total]);
 
   const companyOptions = useMemo<SearchableSelectOption[]>(
     () => companies.map((company) => ({ id: String(company.id), name: company.companyName })),
@@ -287,11 +273,6 @@ export function ConditionAssignmentList() {
       .sort((a, b) => a.name.localeCompare(b.name, "vi"));
   }, [filterUsers]);
 
-  const statusFilterOptions: SearchableSelectOption[] = [
-    { id: "true", name: "Đang hoạt động" },
-    { id: "false", name: "Tạm ngưng" },
-  ];
-
   const pageItems = useMemo(() => pageData?.items ?? [], [pageData?.items]);
   const needsDepartmentNames = pageItems.some((item) => {
     const { isDepartment, id, name } = getScopeTarget(item);
@@ -301,7 +282,8 @@ export function ConditionAssignmentList() {
   useEffect(() => {
     if (!needsDepartmentNames || scopeDepartmentNames !== null) return;
     const controller = new AbortController();
-    departmentApi.list("", "", controller.signal)
+    departmentApi
+      .list("", "", controller.signal)
       .then((rows) => {
         if (!controller.signal.aborted) {
           setScopeDepartmentNames(new Map(rows.map(({ id, name }) => [String(id), name])));
@@ -329,47 +311,44 @@ export function ConditionAssignmentList() {
   }, [pageItems, descending]);
 
   const groupedClusters = useMemo(() => {
-    const map = new Map<string, { label: string; tone: ConditionTone; rows: ConditionAssignmentDto[] }>();
+    const groups = new Map<
+      string,
+      { label: string; tone: ReturnType<typeof getConditionMeta>["tone"]; rows: ConditionAssignmentDto[] }
+    >();
     for (const item of visible) {
       const meta = getConditionMeta(item.conditionName ?? item.statusCondition);
-      const bucket = map.get(meta.label) ?? { label: meta.label, tone: meta.tone, rows: [] };
-      bucket.rows.push(item);
-      map.set(meta.label, bucket);
+      const existing = groups.get(meta.label);
+      if (existing) {
+        existing.rows.push(item);
+      } else {
+        groups.set(meta.label, { label: meta.label, tone: meta.tone, rows: [item] });
+      }
     }
-    return Array.from(map.values()).sort((a, b) => b.rows.length - a.rows.length);
+    return Array.from(groups.values());
   }, [visible]);
 
   const totalAll = pageData?.total ?? 0;
-  const activeOnPage = pageItems.filter((item) => item.isActive === true).length;
-  const inactiveOnPage = pageItems.filter((item) => item.isActive === false).length;
-  const companyScopeOnPage = pageItems.filter(
-    (item) => inferScopeType(item) === AssignmentScopeType.Company,
-  ).length;
-  const deptScopeOnPage = Math.max(0, pageItems.length - companyScopeOnPage);
-  const activeRate = pageItems.length ? Math.round((activeOnPage / pageItems.length) * 100) : 0;
-  const gaugeOffset = GAUGE_CIRCUMFERENCE * (1 - activeRate / 100);
-
   const advancedFilterCount = [
     applied.userId,
     applied.statusCondition,
     applied.scopeType,
     applied.companyId,
     applied.departmentId,
-    applied.isActive,
   ].filter(Boolean).length;
+  const hasFilters = Boolean(applied.keyword || advancedFilterCount > 0 || applied.isActive);
+  const showDepartmentFilter = filters.scopeType === String(AssignmentScopeType.Department);
 
-  const hasFilters = Boolean(applied.keyword || advancedFilterCount > 0);
-  const num = (value: number) => (showSkeleton ? "—" : value.toLocaleString("vi-VN"));
-
-  function changeView(next: ViewMode) {
-    setView(next);
-    window.localStorage.setItem("condition-assignment-view-v2", next);
+  function updateAndApply(patch: Partial<ConditionAssignmentFilters>) {
+    setFilters((prev) => ({ ...prev, ...patch }));
+    setApplied((prev) => ({ ...prev, ...patch }));
+    setPage(1);
   }
 
   function applyFilters(event: FormEvent) {
     event.preventDefault();
     setApplied({ ...filters, keyword: filters.keyword.trim() });
     setPage(1);
+    setRevision((v) => v + 1);
   }
 
   function resetFilters() {
@@ -378,650 +357,563 @@ export function ConditionAssignmentList() {
     setPage(1);
   }
 
-  function selectStatusTab(next: StatusTab) {
-    const nextIsActive = next === "active" ? "true" : next === "inactive" ? "false" : "";
-    setFilters((prev) => ({ ...prev, isActive: nextIsActive }));
-    setApplied((prev) => ({ ...prev, isActive: nextIsActive }));
-    setPage(1);
-  }
-
-  function navigateSegment(event: KeyboardEvent<HTMLDivElement>) {
-    const keys: StatusTab[] = ["all", "active", "inactive"];
-    let index = keys.indexOf(statusTab);
-    if (event.key === "ArrowRight") index = (index + 1) % keys.length;
-    else if (event.key === "ArrowLeft") index = (index + keys.length - 1) % keys.length;
-    else if (event.key === "Home") index = 0;
-    else if (event.key === "End") index = keys.length - 1;
-    else return;
-    event.preventDefault();
-    selectStatusTab(keys[index]);
-    document.getElementById("ca-seg-" + keys[index])?.focus();
-  }
-
   function removeFilterChip(key: keyof ConditionAssignmentFilters) {
     if (key === "scopeType") {
-      setFilters((prev) => ({ ...prev, scopeType: "", departmentId: "" }));
-      setApplied((prev) => ({ ...prev, scopeType: "", departmentId: "" }));
+      updateAndApply({ scopeType: "", departmentId: "" });
     } else if (key === "companyId") {
-      setFilters((prev) => ({ ...prev, companyId: "", departmentId: "" }));
-      setApplied((prev) => ({ ...prev, companyId: "", departmentId: "" }));
+      updateAndApply({ companyId: "", departmentId: "" });
     } else {
-      setFilters((prev) => ({ ...prev, [key]: "" }));
-      setApplied((prev) => ({ ...prev, [key]: "" }));
+      updateAndApply({ [key]: "" });
     }
-    setPage(1);
   }
 
-  const showDepartmentFilter = filters.scopeType === String(AssignmentScopeType.Department);
-
   return (
-    <div className="ca-studio">
-      {/* Editorial Split Header */}
-      <section className="ca-stage" aria-label="Tổng quan phân công điều kiện">
-        <div className="ca-bezel">
-          <div className="ca-bezel-core ca-stage-editorial">
-            <div className="ca-headline-group">
-              <span className="ca-eyebrow">
-                <span className="ca-eyebrow-pulse" aria-hidden="true" />
-                Quản lý phân công điều kiện
+    <div className="ca-page">
+      <header className="ca-header">
+        <div className="ca-header-copy">
+          <div className="ca-title-row">
+            <h1>Phân công xử lý điều kiện</h1>
+            <span className="ca-total-badge" title="Số phân công phù hợp bộ lọc">
+              {showSkeleton ? "—" : totalAll.toLocaleString("vi-VN")}
+            </span>
+          </div>
+          <p>Quản lý người phụ trách theo điều kiện và phạm vi áp dụng</p>
+        </div>
+
+        <div className="ca-header-actions">
+          <button
+            type="button"
+            className="ca-btn ca-btn--icon"
+            title="Làm mới dữ liệu"
+            aria-label="Làm mới dữ liệu"
+            disabled={loading}
+            onClick={() => setRevision((v) => v + 1)}
+          >
+            <ReloadIcon className={loading ? "ca-spin" : undefined} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="ca-btn ca-btn--primary"
+            aria-haspopup="dialog"
+            aria-keyshortcuts="n"
+            onClick={() => setEditor("new")}
+          >
+            <PlusIcon aria-hidden="true" />
+            <span>Thêm phân công</span>
+            <kbd>N</kbd>
+          </button>
+        </div>
+      </header>
+
+      <div className="ca-workspace">
+      <section className="ca-table-card" aria-labelledby="ca-list-title">
+        <header className="ca-list-head">
+          <div className="ca-list-head-main">
+            <div className="ca-list-title">
+              <h2 id="ca-list-title">Danh sách phân công</h2>
+              <span className="ca-list-count" aria-live="polite">
+                {loading ? "Đang cập nhật…" : totalAll.toLocaleString("vi-VN") + " phân công"}
               </span>
-              <h1>Phân công xử lý điều kiện</h1>
-              <p>Quản lý người phụ trách theo điều kiện và phạm vi áp dụng</p>
             </div>
-
-            <div className="ca-hero-ornament" aria-hidden="true">
-              <div className="ca-orn-row">
-                <span className="ca-orn-dot" />
-                <span className="ca-orn-bar is-brand" style={{ width: "74%" }} />
-              </div>
-              <div className="ca-orn-split">
-                <span className="ca-orn-bar" />
-                <span className="ca-orn-bar is-accent" />
-              </div>
-              <div className="ca-orn-row">
-                <span className="ca-orn-dot is-blue" />
-                <span className="ca-orn-bar" style={{ width: "42%" }} />
-                <span className="ca-orn-dot is-green" style={{ marginLeft: "auto" }} />
-              </div>
+            <div className="ca-status-tabs" role="group" aria-label="Lọc phân công theo trạng thái">
+              {STATUS_FILTER_OPTIONS.map((option) => (
+                <button
+                  key={option.id || "all"}
+                  type="button"
+                  data-status={option.id}
+                  aria-pressed={applied.isActive === option.id}
+                  aria-controls="ca-assignment-results"
+                  onClick={() => updateAndApply({ isActive: option.id })}
+                >
+                  {option.name}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
 
-        <div className="ca-bezel">
-          <div className="ca-bezel-core ca-stage-pod">
-            <div className="ca-pod-top">
-              <div className="ca-gauge" aria-label={`Tỷ lệ hoạt động trên trang ${activeRate}%`}>
-                <svg viewBox="0 0 80 80" aria-hidden="true">
-                  <defs>
-                    <linearGradient id="ca-gauge-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" className="ca-gauge-stop-start" />
-                      <stop offset="100%" className="ca-gauge-stop-end" />
-                    </linearGradient>
-                  </defs>
-                  <circle cx="40" cy="40" r={GAUGE_RADIUS} className="ca-gauge-track" />
-                  <circle
-                    cx="40"
-                    cy="40"
-                    r={GAUGE_RADIUS}
-                    className="ca-gauge-arc"
-                    strokeDasharray={GAUGE_CIRCUMFERENCE}
-                    strokeDashoffset={showSkeleton ? GAUGE_CIRCUMFERENCE : gaugeOffset}
-                  />
-                </svg>
-                <div className="ca-gauge-center">
-                  <strong>{showSkeleton ? "—" : `${activeRate}%`}</strong>
-                  <small>Hiệu lực</small>
-                </div>
-              </div>
-
-              <div className="ca-pod-metrics">
-                <div className="ca-mini-metric">
-                  <strong>{num(totalAll)}</strong>
-                  <span>Tổng bản ghi</span>
-                </div>
-                <div className="ca-mini-metric">
-                  <strong>{num(companyScopeOnPage)}</strong>
-                  <span>Công ty (trang)</span>
-                </div>
-                <div className="ca-mini-metric">
-                  <strong>{num(deptScopeOnPage)}</strong>
-                  <span>Phòng ban (trang)</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="ca-pod-foot">
-              <div className="ca-pod-ratio">
-                <span>Trên trang hiện tại</span>
-                <strong>
-                  {num(activeOnPage)} hoạt động · {num(inactiveOnPage)} tạm ngưng
-                </strong>
-              </div>
-
-              <button
-                type="button"
-                className="ca-cta-pill"
-                aria-haspopup="dialog"
-                onClick={() => setEditor("new")}
-              >
-                <span>Thêm phân công</span>
-                <kbd>N</kbd>
-                <span className="ca-cta-orb" aria-hidden="true">
-                  <PlusIcon />
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Command & Filter Dock */}
-      <section className="ca-bezel ca-dock" aria-label="Tìm kiếm và lọc phân công">
-        <form className="ca-bezel-core" onSubmit={applyFilters}>
-          <div className="ca-dock-bar">
-            <div className="ca-search-wrap">
+          <div className="ca-toolbar-controls">
+            <form className="ca-search-box ca-toolbar-search" onSubmit={applyFilters} role="search">
               <MagnifyingGlassIcon className="ca-search-icon" aria-hidden="true" />
               <input
                 ref={searchRef}
+                id="ca-keyword"
+                name="keyword"
                 type="search"
                 autoComplete="off"
                 className="ca-search-input"
                 aria-label="Tìm kiếm phân công"
-                placeholder="Nhập từ khóa tìm kiếm…"
+                placeholder="Tìm tên hoặc mã… (/)"
                 value={filters.keyword}
                 onChange={(event) =>
                   setFilters((current) => ({ ...current, keyword: event.target.value }))
                 }
               />
-              <kbd className="ca-search-kbd" aria-hidden="true">
-                /
-              </kbd>
-            </div>
-
-            <div
-              ref={segmentRef}
-              className="ca-segment"
-              role="tablist"
-              aria-label="Lọc nhanh trạng thái"
-              onKeyDown={navigateSegment}
-            >
-              {thumb && (
-                <span
-                  className="ca-segment-thumb"
-                  aria-hidden="true"
-                  style={{
-                    width: thumb.width,
-                    transform: `translateX(${thumb.left}px)`,
-                  }}
-                />
+              {filters.keyword && (
+                <button
+                  type="button"
+                  className="ca-search-clear"
+                  aria-label="Xóa từ khóa"
+                  onClick={() => updateAndApply({ keyword: "" })}
+                >
+                  <Cross2Icon aria-hidden="true" />
+                </button>
               )}
-              {([
-                ["all", "Tất cả", statusTab === "all" ? totalAll : null],
-                ["active", "Hoạt động", statusTab === "active" ? totalAll : null],
-                ["inactive", "Tạm ngưng", statusTab === "inactive" ? totalAll : null],
-              ] as const).map(([key, label, count]) => (
-                <button
-                  key={key}
-                  id={"ca-seg-" + key}
-                  type="button"
-                  role="tab"
-                  tabIndex={statusTab === key ? 0 : -1}
-                  aria-selected={statusTab === key}
-                  aria-controls="ca-stage-panel"
-                  onClick={() => selectStatusTab(key)}
-                >
-                  <span>{label}</span>
-                  {count !== null && (
-                    <span className="ca-segment-count">{num(count)}</span>
-                  )}
-                </button>
-              ))}
-            </div>
+            </form>
 
-            <div className="ca-dock-tools">
-              <div className="ca-segment" role="group" aria-label="Chế độ hiển thị">
-                <button
-                  type="button"
-                  aria-pressed={view === "flow"}
-                  title="Dạng luồng phân công"
-                  onClick={() => changeView("flow")}
-                >
-                  <RowsIcon aria-hidden="true" />
-                  <span>Luồng</span>
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={view === "cluster"}
-                  title="Nhóm theo điều kiện"
-                  onClick={() => changeView("cluster")}
-                >
-                  <DashboardIcon aria-hidden="true" />
-                  <span>Nhóm</span>
-                </button>
-              </div>
+            <button
+              type="button"
+              className="ca-filter-toggle ca-btn"
+              data-expanded={filtersExpanded}
+              aria-expanded={filtersExpanded}
+              aria-controls="ca-filter-panel"
+              onClick={() => setFiltersExpanded((value) => !value)}
+            >
+              <MixerHorizontalIcon aria-hidden="true" />
+              <span>Bộ lọc</span>
+              {advancedFilterCount > 0 && (
+                <span className="ca-filter-badge" aria-label={`${advancedFilterCount} bộ lọc đang bật`}>
+                  {advancedFilterCount}
+                </span>
+              )}
+              <ChevronDownIcon className="ca-filter-chevron" aria-hidden="true" />
+            </button>
 
+            <div className="ca-view-toggle" data-view={view} role="group" aria-label="Kiểu hiển thị">
               <button
                 type="button"
-                className="ca-tool-pill"
-                data-active={filtersOpen || advancedFilterCount > 0}
-                aria-expanded={filtersOpen}
-                onClick={() => setFiltersOpen((open) => !open)}
+                className="ca-view-btn"
+                aria-pressed={view === "table"}
+                onClick={() => switchView("table")}
               >
-                <MixerHorizontalIcon aria-hidden="true" />
-                <span>Bộ lọc</span>
-                {advancedFilterCount > 0 && (
-                  <span className="ca-tool-badge">{advancedFilterCount}</span>
-                )}
+                <RowsIcon aria-hidden="true" />
+                <span>Bảng</span>
               </button>
-
               <button
                 type="button"
-                className="ca-icon-btn"
-                title="Làm mới dữ liệu"
-                aria-label="Làm mới dữ liệu"
-                disabled={loading}
-                onClick={() => setRevision((value) => value + 1)}
+                className="ca-view-btn"
+                aria-pressed={view === "cluster"}
+                onClick={() => switchView("cluster")}
               >
-                <ReloadIcon className={loading ? "ca-spin" : undefined} aria-hidden="true" />
+                <DashboardIcon aria-hidden="true" />
+                <span>Nhóm</span>
               </button>
             </div>
           </div>
+        </header>
 
-          {filtersOpen && (
-            <div className="ca-filter-tray">
-              <div className="ca-field">
-                <label htmlFor="ca-filter-user">
-                  <PersonIcon aria-hidden="true" />
-                  Người phụ trách
-                </label>
-                <SearchableSelect
-                  id="ca-filter-user"
-                  label="Người phụ trách"
-                  placeholder="Tất cả người phụ trách"
-                  value={filters.userId}
-                  options={userOptions}
-                  onChange={(userId) => setFilters((current) => ({ ...current, userId }))}
-                />
-              </div>
-
-              <div className="ca-field">
-                <label htmlFor="ca-filter-condition">
-                  <MixerHorizontalIcon aria-hidden="true" />
-                  Điều kiện
-                </label>
-                <SearchableSelect
-                  id="ca-filter-condition"
-                  label="Điều kiện"
-                  placeholder="Tất cả điều kiện"
-                  value={filters.statusCondition}
-                  options={conditionOptions}
-                  onChange={(statusCondition) =>
-                    setFilters((current) => ({ ...current, statusCondition }))
-                  }
-                />
-              </div>
-
-              <div className="ca-field">
-                <label htmlFor="ca-filter-scope">
-                  <LayersIcon aria-hidden="true" />
-                  Phạm vi
-                </label>
-                <SearchableSelect
-                  id="ca-filter-scope"
-                  label="Phạm vi"
-                  placeholder="Tất cả phạm vi"
-                  value={filters.scopeType}
-                  options={SCOPE_TYPE_OPTIONS}
-                  onChange={(scopeType) =>
-                    setFilters((current) => ({
-                      ...current,
-                      scopeType,
-                      departmentId:
-                        scopeType === String(AssignmentScopeType.Department)
-                          ? current.departmentId
-                          : "",
-                    }))
-                  }
-                />
-              </div>
-
-              <div className="ca-field">
-                <label htmlFor="ca-filter-company">
-                  <CompanyScopeIcon aria-hidden="true" />
-                  Công ty
-                </label>
-                <SearchableSelect
-                  id="ca-filter-company"
-                  label="Công ty"
-                  placeholder="Tất cả công ty"
-                  value={filters.companyId}
-                  options={companyOptions}
-                  onChange={(companyId) =>
-                    setFilters((current) => ({ ...current, companyId, departmentId: "" }))
-                  }
-                />
-              </div>
-
-              {showDepartmentFilter && (
-                <div className="ca-field ca-cascade">
-                  <label htmlFor="ca-filter-department">
-                    <DepartmentScopeIcon aria-hidden="true" />
-                    Phòng ban
-                  </label>
+        <div className="ca-filters-collapse" data-expanded={filtersExpanded} aria-hidden={!filtersExpanded}>
+          <div className="ca-filters-collapse-inner">
+            <form
+              id="ca-filter-panel"
+              className="ca-filters-panel"
+              onSubmit={applyFilters}
+              aria-label="Bộ lọc phân công"
+            >
+              <div className="ca-filters-grid">
+                <div className="ca-filter-field">
+                  <label htmlFor="ca-filter-user">Người phụ trách</label>
                   <SearchableSelect
-                    id="ca-filter-department"
-                    label="Phòng ban"
-                    placeholder={filters.companyId ? "Tất cả phòng ban" : "Chọn công ty trước"}
-                    value={filters.departmentId}
-                    options={filterDepartments}
-                    disabled={!filters.companyId}
-                    loading={deptFilterLoading}
-                    onChange={(departmentId) =>
-                      setFilters((current) => ({ ...current, departmentId }))
+                    id="ca-filter-user"
+                    label="Người phụ trách"
+                    placeholder="Người phụ trách"
+                    value={filters.userId}
+                    options={userOptions}
+                    onChange={(userId) => updateAndApply({ userId })}
+                  />
+                </div>
+
+                <div className="ca-filter-field">
+                  <label htmlFor="ca-filter-condition">Điều kiện xử lý</label>
+                  <SearchableSelect
+                    id="ca-filter-condition"
+                    label="Điều kiện"
+                    placeholder="Điều kiện"
+                    value={filters.statusCondition}
+                    options={conditionOptions}
+                    onChange={(statusCondition) => updateAndApply({ statusCondition })}
+                  />
+                </div>
+
+                <div className="ca-filter-field">
+                  <label htmlFor="ca-filter-scope">Loại phạm vi</label>
+                  <SearchableSelect
+                    id="ca-filter-scope"
+                    label="Phạm vi"
+                    placeholder="Phạm vi"
+                    value={filters.scopeType}
+                    options={SCOPE_TYPE_OPTIONS}
+                    onChange={(scopeType) =>
+                      updateAndApply({
+                        scopeType,
+                        departmentId:
+                          scopeType === String(AssignmentScopeType.Department) ? filters.departmentId : "",
+                      })
                     }
                   />
                 </div>
-              )}
 
-              <div className="ca-field">
-                <label htmlFor="ca-filter-status">
-                  <CheckCircledIcon aria-hidden="true" />
-                  Trạng thái
-                </label>
-                <SearchableSelect
-                  id="ca-filter-status"
-                  label="Trạng thái"
-                  placeholder="Tất cả trạng thái"
-                  value={filters.isActive}
-                  options={statusFilterOptions}
-                  onChange={(isActive) =>
-                    setFilters((current) => ({
-                      ...current,
-                      isActive: (isActive === "true" || isActive === "false" ? isActive : "") as
-                        | ""
-                        | "true"
-                        | "false",
-                    }))
-                  }
-                />
-              </div>
+                <div className="ca-filter-field">
+                  <label htmlFor="ca-filter-company">Công ty</label>
+                  <SearchableSelect
+                    id="ca-filter-company"
+                    label="Công ty"
+                    placeholder="Công ty"
+                    value={filters.companyId}
+                    options={companyOptions}
+                    onChange={(companyId) => updateAndApply({ companyId, departmentId: "" })}
+                  />
+                </div>
 
-              <div className="ca-filter-btns">
-                <button type="submit" className="ca-btn-apply">
-                  <MagnifyingGlassIcon aria-hidden="true" />
-                  Lọc
-                </button>
-                <button type="button" className="ca-btn-ghost" onClick={resetFilters}>
-                  <ResetIcon aria-hidden="true" />
-                  Đặt lại
-                </button>
-              </div>
-            </div>
-          )}
+                {showDepartmentFilter && (
+                  <div className="ca-filter-field">
+                    <label htmlFor="ca-filter-department">Phòng ban</label>
+                    <SearchableSelect
+                      id="ca-filter-department"
+                      label="Phòng ban"
+                      placeholder={filters.companyId ? "Phòng ban" : "Chọn công ty trước"}
+                      value={filters.departmentId}
+                      options={filterDepartments}
+                      disabled={!filters.companyId}
+                      loading={deptFilterLoading}
+                      onChange={(departmentId) => updateAndApply({ departmentId })}
+                    />
+                  </div>
+                )}
 
-          {hasFilters && (
-            <div className="ca-chips" aria-label="Bộ lọc đang áp dụng">
-              <span>Đang lọc:</span>
-              {applied.keyword && (
-                <button type="button" className="ca-chip" onClick={() => removeFilterChip("keyword")}>
-                  “{applied.keyword}”
-                  <Cross2Icon aria-hidden="true" />
-                </button>
-              )}
-              {applied.userId && (
-                <button type="button" className="ca-chip" onClick={() => removeFilterChip("userId")}>
-                  {userOptions.find((u) => u.id === applied.userId)?.name || applied.userId}
-                  <Cross2Icon aria-hidden="true" />
-                </button>
-              )}
-              {applied.statusCondition && (
-                <button
-                  type="button"
-                  className="ca-chip"
-                  onClick={() => removeFilterChip("statusCondition")}
-                >
-                  {conditionOptions.find((c) => c.id === applied.statusCondition)?.name ||
-                    getConditionMeta(applied.statusCondition).label}
-                  <Cross2Icon aria-hidden="true" />
-                </button>
-              )}
-              {applied.scopeType && (
-                <button type="button" className="ca-chip" onClick={() => removeFilterChip("scopeType")}>
-                  {SCOPE_TYPE_OPTIONS.find((s) => s.id === applied.scopeType)?.name || applied.scopeType}
-                  <Cross2Icon aria-hidden="true" />
-                </button>
-              )}
-              {applied.companyId && (
-                <button type="button" className="ca-chip" onClick={() => removeFilterChip("companyId")}>
-                  {companyOptions.find((c) => c.id === applied.companyId)?.name || "Công ty"}
-                  <Cross2Icon aria-hidden="true" />
-                </button>
-              )}
-              {applied.departmentId && (
-                <button
-                  type="button"
-                  className="ca-chip"
-                  onClick={() => removeFilterChip("departmentId")}
-                >
-                  {filterDepartments.find((d) => d.id === applied.departmentId)?.name ||
-                    `Phòng ban #${applied.departmentId}`}
-                  <Cross2Icon aria-hidden="true" />
-                </button>
-              )}
-              {applied.isActive && (
-                <button type="button" className="ca-chip" onClick={() => removeFilterChip("isActive")}>
-                  {applied.isActive === "true" ? "Đang hoạt động" : "Tạm ngưng"}
-                  <Cross2Icon aria-hidden="true" />
-                </button>
-              )}
-              <button type="button" className="ca-chip-clear" onClick={resetFilters}>
-                Xóa tất cả
-              </button>
-            </div>
-          )}
-        </form>
-      </section>
-
-      {/* Main Content Stage */}
-      <section className="ca-bezel ca-stage-list" aria-label="Danh sách quy tắc phân công">
-        <div className="ca-bezel-core">
-          {error && (
-            <div className="ca-alert-banner mt-3.5" role="alert">
-              <ExclamationTriangleIcon aria-hidden="true" />
-              <span>{error}</span>
-              <button type="button" onClick={() => setRevision((value) => value + 1)}>
-                Thử lại
-              </button>
-            </div>
-          )}
-
-          <div
-            id="ca-stage-panel"
-            role="tabpanel"
-            aria-labelledby={"ca-seg-" + statusTab}
-            aria-busy={loading}
-            className="ca-stage-body"
-            data-loading={loading && !!pageData}
-          >
-            {showSkeleton ? (
-              <div className="ca-flow-list" aria-hidden="true">
-                {Array.from({ length: 7 }, (_, index) => (
-                  <div key={index} className="ca-skeleton-row" />
-                ))}
-              </div>
-            ) : !visible.length ? (
-              <div className="ca-empty">
-                <span className="ca-empty-orb">
-                  <MixerHorizontalIcon className="size-6" aria-hidden="true" />
-                </span>
-                <h2>
-                  {error
-                    ? "Chưa thể tải danh sách phân công"
-                    : hasFilters
-                      ? "Không có phân công khớp bộ lọc"
-                      : "Chưa có phân công nào"}
-                </h2>
-                <p>
-                  {error
-                    ? "Kiểm tra kết nối hoặc tải lại để đồng bộ danh sách từ hệ thống."
-                    : hasFilters
-                      ? "Thử điều chỉnh điều kiện, công ty hoặc xóa bộ lọc đang áp dụng."
-                      : "Bắt đầu bằng cách thêm quy tắc phân công xử lý điều kiện đầu tiên."}
-                </p>
-                <button
-                  type="button"
-                  className="ca-btn-ghost"
-                  onClick={
-                    error
-                      ? () => setRevision((value) => value + 1)
-                      : hasFilters
-                        ? resetFilters
-                        : () => setEditor("new")
-                  }
-                >
-                  {error ? "Tải lại" : hasFilters ? "Đặt lại bộ lọc" : "Thêm phân công"}
-                </button>
-              </div>
-            ) : view === "flow" ? (
-              <>
-                <div className="ca-flow-header">
+                <div className="ca-filter-actions">
+                  <button type="submit" className="ca-btn ca-btn--primary">
+                    <MagnifyingGlassIcon aria-hidden="true" />
+                    <span>Lọc</span>
+                  </button>
                   <button
                     type="button"
-                    className="ca-sort-btn"
-                    onClick={() => setDescending((v) => !v)}
+                    className="ca-btn"
+                    onClick={resetFilters}
+                    disabled={!hasFilters && !filters.keyword}
                   >
-                    <span>Điều kiện</span>
-                    <span>{descending ? "↓" : "↑"}</span>
+                    <ResetIcon aria-hidden="true" />
+                    <span>Đặt lại</span>
                   </button>
-                  <span aria-hidden="true" />
-                  <span>Phạm vi áp dụng</span>
-                  <span>Người phụ trách</span>
-                  <span>Trạng thái</span>
-                  <span className="text-right">Thao tác</span>
                 </div>
-                <ul className="ca-flow-list">
-                  {visible.map((item, index) => {
-                    const meta = getConditionMeta(item.conditionName ?? item.statusCondition);
-                    const scope = inferScopeType(item);
-                    const isDepartment = scope === AssignmentScopeType.Department;
-                    const scopeName = getScopeName(item) || "—";
-                    const assigneeName = item.fullName?.trim() || item.userId || "Chưa gán";
-                    return (
-                      <li
-                        key={rowKeyOf(item, index)}
-                        className="ca-flow-row"
-                        data-tone={meta.tone}
-                        data-inactive={item.isActive === false}
-                        style={{ "--i": Math.min(index, 10) } as CSSProperties}
-                      >
-                        <span className="ca-badge" data-tone={meta.tone}>
-                          <span className="ca-badge-dot" aria-hidden="true" />
-                          {meta.label}
-                        </span>
+              </div>
+            </form>
+          </div>
+        </div>
 
-                        <span className="ca-flow-arrow" aria-hidden="true">
-                          <ArrowRightIcon />
-                        </span>
+        {hasFilters && (
+          <div className="ca-chips" aria-label="Bộ lọc đang áp dụng">
+            <span>Đang lọc:</span>
+            {applied.keyword && (
+              <button type="button" className="ca-chip" onClick={() => removeFilterChip("keyword")}>
+                “{applied.keyword}”
+                <Cross2Icon aria-hidden="true" />
+              </button>
+            )}
+            {applied.userId && (
+              <button type="button" className="ca-chip" onClick={() => removeFilterChip("userId")}>
+                {userOptions.find((u) => u.id === applied.userId)?.name || applied.userId}
+                <Cross2Icon aria-hidden="true" />
+              </button>
+            )}
+            {applied.statusCondition && (
+              <button
+                type="button"
+                className="ca-chip"
+                onClick={() => removeFilterChip("statusCondition")}
+              >
+                {conditionOptions.find((c) => c.id === applied.statusCondition)?.name ||
+                  getConditionMeta(applied.statusCondition).label}
+                <Cross2Icon aria-hidden="true" />
+              </button>
+            )}
+            {applied.scopeType && (
+              <button type="button" className="ca-chip" onClick={() => removeFilterChip("scopeType")}>
+                {SCOPE_TYPE_OPTIONS.find((s) => s.id === applied.scopeType)?.name || applied.scopeType}
+                <Cross2Icon aria-hidden="true" />
+              </button>
+            )}
+            {applied.companyId && (
+              <button type="button" className="ca-chip" onClick={() => removeFilterChip("companyId")}>
+                {companyOptions.find((c) => c.id === applied.companyId)?.name || "Công ty"}
+                <Cross2Icon aria-hidden="true" />
+              </button>
+            )}
+            {applied.departmentId && (
+              <button
+                type="button"
+                className="ca-chip"
+                onClick={() => removeFilterChip("departmentId")}
+              >
+                {filterDepartments.find((d) => d.id === applied.departmentId)?.name ||
+                  `Phòng ban #${applied.departmentId}`}
+                <Cross2Icon aria-hidden="true" />
+              </button>
+            )}
+            {applied.isActive && (
+              <button type="button" className="ca-chip" onClick={() => removeFilterChip("isActive")}>
+                {applied.isActive === "true" ? "Đang hoạt động" : "Tạm ngưng"}
+                <Cross2Icon aria-hidden="true" />
+              </button>
+            )}
+            <button type="button" className="ca-chip-clear" onClick={resetFilters}>
+              Xóa tất cả
+            </button>
+          </div>
+        )}
+        {error && (
+          <div className="ca-alert" role="alert">
+            <ExclamationTriangleIcon aria-hidden="true" />
+            <span>{error}</span>
+            <button type="button" onClick={() => setRevision((v) => v + 1)}>
+              Thử lại
+            </button>
+          </div>
+        )}
 
-                        <div className="ca-scope">
-                          <span
-                            className="ca-scope-glyph"
-                            data-scope={isDepartment ? "department" : "company"}
-                          >
-                            {isDepartment ? (
-                              <DepartmentScopeIcon aria-hidden="true" />
-                            ) : (
-                              <CompanyScopeIcon aria-hidden="true" />
-                            )}
-                          </span>
-                          <div className="ca-scope-text">
-                            <strong title={scopeName}>{scopeName}</strong>
-                            <small>{isDepartment ? "Phòng ban" : "Công ty"}</small>
-                          </div>
-                        </div>
-
-                        <div className="ca-person">
-                          <span className="ca-avatar" aria-hidden="true">
-                            {getInitials(assigneeName)}
-                          </span>
-                          <div className="ca-person-copy">
-                            <button
-                              type="button"
-                              className="ca-person-btn"
-                              title={assigneeName}
-                              onClick={() => setEditor(item)}
-                            >
-                              {assigneeName}
-                            </button>
-                            {item.systemCodeUser && <small>{item.systemCodeUser}</small>}
-                          </div>
-                        </div>
-
-                        <div>
-                          {item.isActive != null ? (
-                            <span className="ca-status" data-active={item.isActive}>
-                              <span className="ca-status-dot" aria-hidden="true" />
-                              {item.isActive ? "Hoạt động" : "Tạm ngưng"}
-                            </span>
-                          ) : (
-                            "—"
-                          )}
-                        </div>
-
-                        <div className="ca-row-actions">
-                          <button
-                            type="button"
-                            className="ca-icon-btn"
-                            title="Chỉnh sửa"
-                            aria-label={`Chỉnh sửa phân công của ${assigneeName}`}
-                            onClick={() => setEditor(item)}
-                          >
-                            <Pencil2Icon aria-hidden="true" />
-                          </button>
-                          <button
-                            type="button"
-                            className="ca-icon-btn"
-                            data-danger="true"
-                            disabled={item.id == null}
-                            title="Xóa phân công"
-                            aria-label={`Xóa phân công của ${assigneeName}`}
-                            onClick={() => setDeleting(item)}
-                          >
-                            <TrashIcon aria-hidden="true" />
-                          </button>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </>
-            ) : (
-              <div className="ca-clusters">
-                {groupedClusters.map((cluster, clusterIndex) => (
-                  <article
-                    key={cluster.label}
-                    className="ca-cluster"
-                    style={{ "--i": Math.min(clusterIndex, 8) } as CSSProperties}
-                  >
-                    <div className="ca-cluster-core">
+        <div className="ca-table-wrap" id="ca-assignment-results" data-loading={loading && !!pageData} aria-busy={loading}>
+          {!showSkeleton && !visible.length ? (
+            <div className="ca-empty">
+              <span className="ca-empty-icon" aria-hidden="true">
+                <MixerHorizontalIcon />
+              </span>
+              <h2>
+                {error
+                  ? "Chưa thể tải danh sách phân công"
+                  : hasFilters
+                    ? "Không tìm thấy phân công phù hợp"
+                    : "Chưa có phân công nào"}
+              </h2>
+              <p>
+                {error
+                  ? "Kiểm tra kết nối hoặc tải lại để đồng bộ danh sách."
+                  : hasFilters
+                    ? "Thử điều chỉnh bộ lọc hoặc đặt lại về mặc định."
+                    : "Thêm phân công đầu tiên để cấu hình người phụ trách xử lý."}
+              </p>
+              <button
+                type="button"
+                className="ca-btn"
+                onClick={
+                  error
+                    ? () => setRevision((v) => v + 1)
+                    : hasFilters
+                      ? resetFilters
+                      : () => setEditor("new")
+                }
+              >
+                {error ? "Tải lại" : hasFilters ? "Đặt lại bộ lọc" : "Thêm phân công"}
+              </button>
+            </div>
+          ) : view === "cluster" ? (
+            <div className="ca-clusters">
+              {showSkeleton
+                ? Array.from({ length: 4 }, (_, index) => (
+                    <article key={index} className="ca-cluster-card ca-cluster-card--skeleton" aria-hidden="true">
                       <header className="ca-cluster-head">
-                        <span className="ca-badge" data-tone={cluster.tone}>
-                          <span className="ca-badge-dot" aria-hidden="true" />
-                          {cluster.label}
-                        </span>
-                        <span className="ca-cluster-count">{cluster.rows.length}</span>
+                        <span className="ca-skeleton-bar ca-skeleton-bar--sm" />
                       </header>
-                      <div className="ca-cluster-items">
-                        {cluster.rows.map((item, rowIndex) => {
+                      <div className="ca-cluster-list">
+                        <div className="ca-cluster-row"><span className="ca-skeleton-bar" /></div>
+                        <div className="ca-cluster-row"><span className="ca-skeleton-bar" /></div>
+                      </div>
+                    </article>
+                  ))
+                : groupedClusters.map((group) => (
+                    <article key={group.label} className="ca-cluster-card">
+                      <header className="ca-cluster-head">
+                        <span className="ca-condition-tag" data-tone={group.tone}>
+                          {group.label}
+                        </span>
+                        <span className="ca-cluster-count">{group.rows.length}</span>
+                      </header>
+                      <div className="ca-cluster-list">
+                        {group.rows.map((item, index) => {
                           const isDepartment = inferScopeType(item) === AssignmentScopeType.Department;
                           const scopeName = getScopeName(item) || "—";
                           const assigneeName = item.fullName?.trim() || item.userId || "Chưa gán";
                           return (
-                            <div key={rowKeyOf(item, rowIndex)} className="ca-cluster-row">
+                            <div
+                              key={rowKeyOf(item, index)}
+                              className="ca-cluster-row"
+                              data-inactive={item.isActive === false}
+                            >
+                              <div className="ca-cluster-main">
+                                <div className="ca-scope-cell">
+                                  <span
+                                    className="ca-scope-icon"
+                                    data-scope={isDepartment ? "department" : "company"}
+                                    aria-hidden="true"
+                                  >
+                                    {isDepartment ? <DepartmentScopeIcon /> : <CompanyScopeIcon />}
+                                  </span>
+                                  <div className="ca-scope-text">
+                                    <span className="ca-scope-type">
+                                      {isDepartment ? "Phòng ban" : "Công ty"}
+                                    </span>
+                                    <span className="ca-scope-name" title={scopeName}>
+                                      {scopeName}
+                                    </span>
+                                    {isDepartment && (item.companyName || item.companyCode) && (
+                                      <span className="ca-scope-parent">
+                                        {item.companyName || item.companyCode}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="ca-person-cell">
+                                  <span className="ca-avatar" aria-hidden="true">
+                                    {getInitials(assigneeName)}
+                                  </span>
+                                  <div className="ca-person-meta">
+                                    <button
+                                      type="button"
+                                      className="ca-person-btn"
+                                      title={assigneeName}
+                                      onClick={() => setEditor(item)}
+                                    >
+                                      {assigneeName}
+                                    </button>
+                                    {item.systemCodeUser && (
+                                      <span className="ca-person-code">{item.systemCodeUser}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="ca-cluster-side">
+                                {item.isActive != null && (
+                                  <span
+                                    className="ca-status"
+                                    data-active={item.isActive}
+                                    role="img"
+                                    aria-label={item.isActive ? "Hoạt động" : "Tạm ngưng"}
+                                    title={item.isActive ? "Hoạt động" : "Tạm ngưng"}
+                                  />
+                                )}
+                                <div className="ca-row-actions">
+                                <button
+                                  type="button"
+                                  className="ca-action-btn"
+                                  title="Chỉnh sửa"
+                                  aria-label={`Chỉnh sửa phân công của ${assigneeName}`}
+                                  onClick={() => setEditor(item)}
+                                >
+                                  <Pencil2Icon aria-hidden="true" />
+                                  <span>Sửa</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="ca-action-btn ca-action-btn--danger"
+                                  disabled={item.id == null}
+                                  title="Xóa"
+                                  aria-label={`Xóa phân công của ${assigneeName}`}
+                                  onClick={() => setDeleting(item)}
+                                >
+                                  <TrashIcon aria-hidden="true" />
+                                </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </article>
+                  ))}
+            </div>
+          ) : (
+            <table className="ca-table">
+              <thead>
+                <tr>
+                  <th scope="col">
+                    <button
+                      type="button"
+                      className="ca-sort-btn"
+                      onClick={() => setDescending((v) => !v)}
+                    >
+                      <LayersIcon className="ca-th-icon" aria-hidden="true" />
+                      <span>Điều kiện</span>
+                      <span aria-hidden="true">{descending ? "↓" : "↑"}</span>
+                    </button>
+                  </th>
+                  <th scope="col">
+                    <span className="ca-th-label">
+                      <GlobeIcon className="ca-th-icon" aria-hidden="true" />
+                      <span>Phạm vi</span>
+                    </span>
+                  </th>
+                  <th scope="col">
+                    <span className="ca-th-label">
+                      <PersonIcon className="ca-th-icon" aria-hidden="true" />
+                      <span>Người phụ trách</span>
+                    </span>
+                  </th>
+                  <th scope="col">
+                    <span className="ca-th-label">
+                      <CheckCircledIcon className="ca-th-icon" aria-hidden="true" />
+                      <span>Trạng thái</span>
+                    </span>
+                  </th>
+                  <th scope="col">
+                    <span className="ca-th-label">
+                      <GearIcon className="ca-th-icon" aria-hidden="true" />
+                      <span>Thao tác</span>
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {showSkeleton
+                  ? Array.from({ length: 8 }, (_, index) => (
+                      <tr key={index} aria-hidden="true">
+                        <td><span className="ca-skeleton-bar ca-skeleton-bar--sm" /></td>
+                        <td><span className="ca-skeleton-bar" /></td>
+                        <td><span className="ca-skeleton-bar ca-skeleton-bar--sm" /></td>
+                        <td><span className="ca-skeleton-dot" /></td>
+                        <td><span className="ca-skeleton-bar ca-skeleton-bar--sm" /></td>
+                      </tr>
+                    ))
+                  : visible.map((item, index) => {
+                      const meta = getConditionMeta(item.conditionName ?? item.statusCondition);
+                      const isDepartment = inferScopeType(item) === AssignmentScopeType.Department;
+                      const scopeName = getScopeName(item) || "—";
+                      const assigneeName = item.fullName?.trim() || item.userId || "Chưa gán";
+                      return (
+                        <tr key={rowKeyOf(item, index)} data-inactive={item.isActive === false}>
+                          <td className="ca-condition-cell" data-label="Điều kiện">
+                            <span className="ca-condition-tag" data-tone={meta.tone} title={meta.label}>
+                              {meta.label}
+                            </span>
+                            {item.description && <p className="ca-condition-description">{item.description}</p>}
+                          </td>
+                          <td className="ca-scope-column" data-label="Phạm vi">
+                            <div className="ca-scope-cell">
+                              <span
+                                className="ca-scope-icon"
+                                data-scope={isDepartment ? "department" : "company"}
+                                aria-hidden="true"
+                              >
+                                {isDepartment ? <DepartmentScopeIcon /> : <CompanyScopeIcon />}
+                              </span>
+                              <div className="ca-scope-text">
+                                <span className="ca-scope-type">{isDepartment ? "Phòng ban" : "Công ty"}</span>
+                                <span className="ca-scope-name" title={scopeName}>
+                                  {scopeName}
+                                </span>
+                                {isDepartment && (item.companyName || item.companyCode) && (
+                                  <span className="ca-scope-parent">
+                                    {item.companyName || item.companyCode}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="ca-person-column" data-label="Người phụ trách">
+                            <div className="ca-person-cell">
                               <span className="ca-avatar" aria-hidden="true">
                                 {getInitials(assigneeName)}
                               </span>
-                              <div className="ca-cluster-meta">
+                              <div className="ca-person-meta">
                                 <button
                                   type="button"
                                   className="ca-person-btn"
@@ -1030,64 +922,71 @@ export function ConditionAssignmentList() {
                                 >
                                   {assigneeName}
                                 </button>
-                                <span className="ca-cluster-scope" title={scopeName}>
-                                  {isDepartment ? (
-                                    <DepartmentScopeIcon aria-hidden="true" />
-                                  ) : (
-                                    <CompanyScopeIcon aria-hidden="true" />
-                                  )}
-                                  {scopeName}
-                                </span>
-                              </div>
-                              <div className="ca-row-actions">
-                                <button
-                                  type="button"
-                                  className="ca-icon-btn"
-                                  title="Chỉnh sửa"
-                                  aria-label={`Chỉnh sửa phân công của ${assigneeName}`}
-                                  onClick={() => setEditor(item)}
-                                >
-                                  <Pencil2Icon aria-hidden="true" />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="ca-icon-btn"
-                                  data-danger="true"
-                                  disabled={item.id == null}
-                                  title="Xóa"
-                                  aria-label={`Xóa phân công của ${assigneeName}`}
-                                  onClick={() => setDeleting(item)}
-                                >
-                                  <TrashIcon aria-hidden="true" />
-                                </button>
+                                {item.systemCodeUser && (
+                                  <span className="ca-person-code">{item.systemCodeUser}</span>
+                                )}
                               </div>
                             </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <Pagination
-            itemLabel="bản ghi"
-            page={page}
-            pageSize={pageSize}
-            total={pageData?.total ?? null}
-            loading={loading}
-            error={!!error}
-            pageSizeOptions={[10, 20, 50, 100]}
-            onPageChange={setPage}
-            onPageSizeChange={(size) => {
-              setPageSize(size);
-              setPage(1);
-            }}
-          />
+                          </td>
+                          <td className="ca-status-column" data-label="Trạng thái">
+                            {item.isActive != null ? (
+                              <span
+                                className="ca-status"
+                                data-active={item.isActive}
+                                role="img"
+                                aria-label={item.isActive ? "Hoạt động" : "Tạm ngưng"}
+                                title={item.isActive ? "Hoạt động" : "Tạm ngưng"}
+                              />
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                          <td className="ca-actions-cell" data-label="Thao tác">
+                            <div className="ca-row-actions">
+                              <button
+                                type="button"
+                                className="ca-action-btn"
+                                title="Chỉnh sửa"
+                                aria-label={`Chỉnh sửa phân công của ${assigneeName}`}
+                                onClick={() => setEditor(item)}
+                              >
+                                <Pencil2Icon aria-hidden="true" /><span>Sửa</span>
+                              </button>
+                              <button
+                                type="button"
+                                className="ca-action-btn ca-action-btn--danger"
+                                disabled={item.id == null}
+                                title="Xóa"
+                                aria-label={`Xóa phân công của ${assigneeName}`}
+                                onClick={() => setDeleting(item)}
+                              >
+                                <TrashIcon aria-hidden="true" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+              </tbody>
+            </table>
+          )}
         </div>
+
+        <Pagination
+          itemLabel="phân công"
+          page={page}
+          pageSize={pageSize}
+          total={pageData?.total ?? null}
+          loading={loading}
+          error={Boolean(error)}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+        />
       </section>
+      </div>
 
       {editor && (
         <ConditionAssignmentEditor
@@ -1097,25 +996,16 @@ export function ConditionAssignmentList() {
           companyOptions={companyOptions}
           fallbackUsers={filterUsers}
           onClose={() => setEditor(null)}
-          onSaved={() => {
-            const isNew = editor === "new";
-            setEditor(null);
-            if (isNew) setPage(1);
-            setRevision((value) => value + 1);
-          }}
+          onSaved={() => setRevision((v) => v + 1)}
         />
       )}
 
       {deleting && (
         <DeleteAssignmentDialog
-          key={rowKeyOf(deleting, 0)}
           item={deleting}
           scopeName={getScopeName(deleting)}
           onClose={() => setDeleting(null)}
-          onDeleted={() => {
-            setDeleting(null);
-            setRevision((value) => value + 1);
-          }}
+          onDeleted={() => setRevision((v) => v + 1)}
         />
       )}
     </div>
@@ -1137,29 +1027,24 @@ function DeleteAssignmentDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const meta = getConditionMeta(item.conditionName ?? item.statusCondition);
-  const targetLabel = [item.fullName || item.userId, meta.label, scopeName]
-    .filter(Boolean)
-    .join(" — ");
-
   useEffect(() => {
     const element = dialog.current;
     element?.showModal();
     return () => element?.close();
   }, []);
 
+  const conditionLabel = getConditionMeta(item.conditionName ?? item.statusCondition).label;
+  const targetLabel = [item.fullName, conditionLabel, scopeName].filter(Boolean).join(" · ");
+
   async function remove() {
-    if (busy) return;
-    if (item.id == null || String(item.id).trim() === "") {
-      setError("Bản ghi chưa có mã ID để xóa.");
-      return;
-    }
+    if (busy || item.id == null) return;
     setBusy(true);
     setError("");
     try {
       await conditionAssignmentApi.remove(item.id);
-      notify("success", `Đã xóa phân công ${item.fullName || item.userId || ""}.`.trim());
+      notify("success", "Đã xóa phân công xử lý điều kiện.");
       onDeleted();
+      onClose();
     } catch (cause) {
       setError(requestMessage(cause, "Không thể xóa phân công. Vui lòng thử lại."));
     } finally {
@@ -1170,7 +1055,7 @@ function DeleteAssignmentDialog({
   return (
     <dialog
       ref={dialog}
-      className="ca-dialog"
+      className="ca-modal ca-modal--sm"
       aria-labelledby="ca-delete-title"
       aria-describedby="ca-delete-description"
       onCancel={(event) => {
@@ -1181,33 +1066,29 @@ function DeleteAssignmentDialog({
         if (!busy && event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="ca-dialog-core">
-        <span className="ca-dialog-orb">
-          <TrashIcon className="size-5" aria-hidden="true" />
-        </span>
+      <div className="ca-delete-body">
         <h2 id="ca-delete-title">Xóa phân công xử lý điều kiện?</h2>
         <p id="ca-delete-description">
           Bạn đang xóa phân công <strong>{targetLabel || "này"}</strong>. Thao tác này không thể
           hoàn tác.
         </p>
-
         {error && (
-          <div className="ca-notice" data-kind="error" role="alert">
+          <div className="ca-form-error mt-3" role="alert">
             <ExclamationTriangleIcon aria-hidden="true" />
             <span>{error}</span>
           </div>
         )}
-
-        <footer className="ca-dialog-foot">
-          <button autoFocus type="button" className="ca-btn-ghost" onClick={onClose} disabled={busy}>
-            Giữ lại
-          </button>
-          <button type="button" className="ca-btn-danger" onClick={remove} disabled={busy}>
-            {busy ? <ReloadIcon className="ca-spin" aria-hidden="true" /> : <TrashIcon aria-hidden="true" />}
-            <span>{busy ? "Đang xóa…" : "Xóa phân công"}</span>
-          </button>
-        </footer>
       </div>
+
+      <footer className="ca-modal-foot">
+        <button autoFocus type="button" className="ca-btn" onClick={onClose} disabled={busy}>
+          Hủy
+        </button>
+        <button type="button" className="ca-btn ca-btn--danger" onClick={remove} disabled={busy}>
+          {busy ? <ReloadIcon className="ca-spin" aria-hidden="true" /> : <TrashIcon aria-hidden="true" />}
+          <span>{busy ? "Đang xóa…" : "Xóa"}</span>
+        </button>
+      </footer>
     </dialog>
   );
 }
