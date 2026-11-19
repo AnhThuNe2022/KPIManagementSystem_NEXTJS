@@ -19,6 +19,7 @@ const fallbackPages: Record<string, readonly string[]> = {
   "/user-infor": ["Thông tin chung", "Thông tin tài khoản cá nhân"],
   "/my-evaluation": ["Đánh giá", "Bản đánh giá của tôi"],
   "/notifications": ["Thông báo"],
+  "/condition-assignments": ["Quản lý", "Phân công xử lý điều kiện"],
   "/summary/summary-list-detail/HrSummary": ["HR tổng hợp", "Chi tiết tổng hợp"],
   "/summary/summary-list-detail/SummaryDirector": ["Tổng hợp cấp cao", "Chi tiết tổng hợp"],
 };
