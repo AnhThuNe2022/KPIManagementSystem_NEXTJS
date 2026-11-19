@@ -120,10 +120,9 @@ html.dark .general-hr-evaluations__glassCard {
 .general-hr-evaluations__heroActions { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
 .general-hr-evaluations__heroActions > span { max-width: 300px; min-height: 21px; font-size: var(--text-body); color: var(--hr-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .general-hr-evaluations__exportControl { position: relative; width: 300px; height: 44px; }
-.general-hr-evaluations__exportSurface { position: absolute; right: 0; top: -8px; width: 300px; height: 60px; border-radius: 12px; background: rgb(var(--color-surface)); box-shadow: 0 4px 12px rgb(4 12 43 / .25), inset 0 1px 0 rgb(255 255 255 / .7); clip-path: inset(8px 0 8px calc(100% - 128px) round 9px); transition: clip-path 280ms var(--ease-out), background-color 200ms ease, box-shadow 200ms ease; pointer-events: none; }
+.general-hr-evaluations__exportSurface { position: absolute; right: 0; top: -8px; width: 300px; height: 60px; border-radius: 12px; background: rgb(var(--color-surface)); box-shadow: 0 4px 12px rgb(4 12 43 / .25), inset 0 1px 0 rgb(255 255 255 / .7); clip-path: inset(8px 0 8px calc(100% - 128px) round 11px); transition: clip-path 280ms var(--ease-out), background-color 200ms ease, box-shadow 200ms ease; pointer-events: none; }
 html.dark .general-hr-evaluations__exportSurface { box-shadow: 0 4px 12px rgb(0 0 0 / .45), inset 0 1px 0 rgb(255 255 255 / .08); }
-.general-hr-evaluations__exportButton { position: absolute; right: 0; top: 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 136px; min-height: 44px; padding: 10px 14px; border: 1px solid rgb(24 156 111 / .34); border-radius: 9px; background: rgb(var(--color-surface)); box-shadow: inset 0 1px 0 rgb(255 255 255 / .35), 0 6px 14px -6px rgb(var(--panel-shadow) / .35), 0 2px 4px -1px rgb(var(--panel-shadow) / .14); color: #0f7a53; font-size: var(--text-body) !important; font-weight: 750 !important; white-space: nowrap; }
-html.dark .general-hr-evaluations__exportButton { border-color: rgb(52 211 153 / .36); background: linear-gradient(rgb(16 185 129 / .16), rgb(16 185 129 / .16)), rgb(var(--color-surface)); color: #6ee7b7; }
+.general-hr-evaluations__exportButton { position: absolute; right: 0; top: 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 136px; min-height: 44px; padding: 10px 17px; border: 0; border-radius: 11px; background: var(--accent) linear-gradient(135deg, transparent, var(--accent-hover)); box-shadow: 0 10px 22px -10px rgb(var(--deoca-accent-rgb) / .6); color: #fff; font-size: var(--text-body) !important; font-weight: 650 !important; white-space: nowrap; }
 .general-hr-evaluations__hero .general-hr-evaluations__exportButton { transition: opacity 140ms var(--ease-out) 120ms, visibility 0s 120ms, background-color 160ms; }
 .general-hr-evaluations__exportButton svg { width: var(--icon-control); height: var(--icon-control); color: currentColor; transition: transform 160ms var(--ease-out); }
 .general-hr-evaluations__exportButton:active { transform: scale(.97); }
@@ -565,7 +564,7 @@ html.dark .general-hr-evaluations__dangerButton { background: #ffafba; color: #3
   .general-hr-evaluations__button:not(:disabled):hover, .general-hr-evaluations__iconButton:not(:disabled):hover, .general-hr-evaluations__quietButton:not(:disabled):hover, .general-hr-evaluations__textButton:hover, .general-hr-evaluations__trackButton:hover, .general-hr-evaluations__actionMenu button:not(:disabled):hover, .general-hr-evaluations__dialogClose:not(:disabled):hover { background: var(--hr-soft); color: var(--hr-action); }
   .general-hr-evaluations__primary:not(:disabled):hover { background: rgb(var(--color-brand-strong)); color: var(--hr-on-action); }
   .general-hr-evaluations__filterActions > .general-hr-evaluations__primary:not(:disabled):hover { background: var(--accent-hover); color: #fff; }
-  .general-hr-evaluations__exportButton:not(:disabled):hover { background: #e5ecff; }
+  .general-hr-evaluations__exportButton:not(:disabled):hover { background-color: var(--accent-hover); }
   .general-hr-evaluations__exportCancel:not(:disabled):hover { background: #354c8c; }
   .general-hr-evaluations__table tbody tr:hover { background: var(--hr-soft); }
   .general-hr-evaluations__reviewerLink:hover { text-decoration: underline; text-underline-offset: 3px; }
@@ -621,8 +620,8 @@ html.dark .general-hr-evaluations__dangerButton { background: #ffafba; color: #3
   .general-hr-evaluations__hero > div:first-child { transition: opacity 160ms var(--ease-out); }
   .general-hr-evaluations__hero[data-exporting="true"] > div:first-child { opacity: 0; }
   .general-hr-evaluations__exportSurface, .general-hr-evaluations__exportProgress { width: min(300px, calc(100cqw - 40px)); }
-  .general-hr-evaluations__exportSurface { clip-path: inset(8px 0 8px calc(100% - 44px) round 9px); }
-  .general-hr-evaluations__exportButton { width: 44px; padding: 10px; }
+  .general-hr-evaluations__exportSurface { clip-path: inset(8px 0 8px calc(100% - 44px) round 11px); }
+  .general-hr-evaluations__exportButton { min-width: 44px; padding: 10px; }
   .general-hr-evaluations__exportButton > span { display: none; }
   .general-hr-evaluations__inputWrap input, .general-hr-evaluations__selectWrap select { font-size: 16px !important; }
   .general-hr-evaluations__recordsHeader { padding: 12px 20px; }

@@ -44,21 +44,31 @@ export const summaryApi = {
       body: JSON.stringify({ Comment: comment, Action: 2, Level: level }),
     });
   },
-  detail(mode: SummaryMode, periodIds: number[], companyIds: string[], signal?: AbortSignal) {
-    return request<PagedResult<SummaryDetail>>("/summary/detail", {
-      method: "POST",
-      body: JSON.stringify({
-        Page: 1,
-        PageSize: 0,
-        Filters: {
-          listperiodtemplateid: [...new Set(periodIds)].join(";"),
-          typeScreenRole: mode === "HrSummary" ? "HrSummary" : "Director",
-          typeScreen: "Summary",
-          companyids: companyIds.join(";"),
-        },
-      }),
-      signal,
-    });
+  async detail(mode: SummaryMode, periodIds: number[], companyIds: string[], pageSize: number, signal?: AbortSignal): Promise<PagedResult<SummaryDetail>> {
+    const body = {
+      PageSize: pageSize,
+      Filters: {
+        listperiodtemplateid: [...new Set(periodIds)].join(";"),
+        companyids: companyIds.join(";"),
+        typeScreenRole: mode === "HrSummary" ? "HrSummary" : "Director",
+        typeScreen: "Summary",
+      },
+    };
+    const items = new Map<number, SummaryDetail>();
+    let total = 0;
+    for (let page = 1; page === 1 || items.size < total; page++) {
+      const result = await request<PagedResult<SummaryDetail>>("/summary/detail", {
+        method: "POST", body: JSON.stringify({ Page: page, ...body }), signal,
+      });
+      signal?.throwIfAborted();
+      if (page === 1) total = result.total;
+      const before = items.size;
+      for (const row of result.items) items.set(row.evalId, row);
+      if (result.total !== total || items.size > total || (items.size < total && items.size === before)) {
+        throw new Error("Chưa lấy đủ hồ sơ tổng hợp. Vui lòng làm mới và xuất lại.");
+      }
+    }
+    return { items: [...items.values()], total };
   },
   list(mode: SummaryMode, page: number, pageSize: number, filters: SummaryFilters, signal?: AbortSignal) {
     const body: SummaryRequest = {

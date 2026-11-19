@@ -126,7 +126,12 @@ export function SummaryList({ mode }: { mode: SummaryMode }) {
       if (!groups.items.length || groups.items.length !== groups.total) {
         throw new Error("Chưa lấy đủ nhóm tổng hợp. Vui lòng làm mới và xuất lại.");
       }
-      const result = await summaryApi.detail(mode, groups.items.map(row => row.periodId), filters.companyIds, controller.signal);
+      const total = groups.items.reduce((sum, row) => sum + row.totalEval, 0);
+      if (!total) {
+        notify("info", "Không có bản đánh giá chi tiết để xuất.");
+        return;
+      }
+      const result = await summaryApi.detail(mode, groups.items.map(row => row.periodId), filters.companyIds, total, controller.signal);
       controller.signal.throwIfAborted();
       if (!result.total) {
         notify("info", "Không có bản đánh giá chi tiết để xuất.");

@@ -5,7 +5,7 @@ import type {
 import type {
   PagedResult,
 } from "@/lib/api/types";
-import { request } from "@/lib/api/request";
+import { downloadFile, request } from "@/lib/api/request";
 
 export const generalHrEvaluationApi = {
   async getPaged(body: GeneralHrEvaluationRequest, signal?: AbortSignal) {
@@ -15,6 +15,11 @@ export const generalHrEvaluationApi = {
       signal,
     });
     return response.data;
+  },
+  exportExcel(items: GeneralHrEvaluationDto[], signal?: AbortSignal) {
+    return downloadFile("/export-file/list-evaluations", {
+      method: "POST", body: JSON.stringify(items), signal,
+    }, "danh-sach-danh-gia.xlsx");
   },
   getReviewers(signal?: AbortSignal) {
     const query = new URLSearchParams({ "Filters[userapprove]": "1" });
