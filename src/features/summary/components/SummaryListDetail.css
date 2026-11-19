@@ -60,8 +60,8 @@ html.dark :is(.summary-detail__page, .summary-detail__dialog) {
 .summary-detail__tableHeading h2 > span { min-width: 26px; padding: 2px 7px; border-radius: 5px; background: var(--detail-wash); color: var(--detail-blue); font-size: var(--text-meta); text-align: center; font-variant-numeric: tabular-nums; }
 .summary-detail__tableHeading > div { display: flex; align-items: center; gap: 12px; }
 .summary-detail__tableWrap { overflow-x: auto; scrollbar-width: thin; scrollbar-color: rgb(var(--color-brand) / .3) transparent; }
-.summary-detail__table { width: 100%; min-width: 1050px; border-collapse: collapse; table-layout: fixed; }
-.summary-detail__table td { padding: 16px 8px; border-top: 1px solid var(--detail-line); vertical-align: middle; overflow-wrap: anywhere; }
+.summary-detail__table { width: 100%; min-width: 1360px; border-collapse: collapse; table-layout: fixed; }
+.summary-detail__table td { padding: 16px 8px; border-top: 1px solid var(--detail-line); vertical-align: middle; overflow-wrap: break-word; }
 .summary-detail__table tbody tr { transition: background-color 150ms ease; }
 .summary-detail__tableWrap[aria-busy="false"] tbody tr { animation: summary-detail-row 220ms cubic-bezier(.23, 1, .32, 1) backwards; }
 .summary-detail__table tbody tr:hover { background: rgb(var(--color-brand) / .025); }
@@ -70,6 +70,7 @@ html.dark :is(.summary-detail__page, .summary-detail__dialog) {
 .summary-detail__table input[type="checkbox"] { display: block; width: 16px; height: 16px; margin: 0; accent-color: var(--detail-blue); cursor: pointer; }
 .summary-detail__table input:disabled { cursor: default; opacity: .4; }
 .summary-detail__identity { display: flex; align-items: center; gap: 11px; }
+.summary-detail__identity > div { min-width: 0; }
 .summary-detail__avatar { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 40px; border-radius: 11px; background: rgb(var(--color-brand) / .075); color: var(--detail-blue); }
 .summary-detail__avatar > svg { width: 20px; height: 20px; }
 .summary-detail__identity strong { display: block; font-size: var(--text-body); font-weight: 700; }
@@ -92,8 +93,8 @@ html.dark .summary-detail__status[data-tone="waiting"] { color: #fbbf24; backgro
 .summary-detail__completion > strong { display: block; font-size: var(--text-body); font-weight: 700; }
 .summary-detail__track { display: block; width: 54px; height: 5px; margin: 8px auto 0; overflow: hidden; border-radius: 4px; background: rgb(var(--color-brand) / .1); }
 .summary-detail__track > span { display: block; height: 100%; border-radius: inherit; background: var(--detail-blue); animation: summary-detail-fill 400ms cubic-bezier(.23, 1, .32, 1) both; }
-.summary-detail__table .summary-detail__actions { position: sticky; right: 0; z-index: 1; padding-inline: 20px; background: var(--detail-surface); white-space: nowrap; text-align: right; }
-.summary-detail__table th:last-child { position: sticky; right: 0; z-index: 2; padding-inline: 20px; background: var(--detail-surface); text-align: center; box-shadow: inset 100vw 0 0 var(--detail-wash); }
+.summary-detail__table .summary-detail__actions { position: sticky; right: 0; z-index: 1; padding-inline: 20px; border-left: 1px solid rgb(var(--color-border) / .55); background: var(--detail-surface); white-space: nowrap; text-align: right; }
+.summary-detail__table th:last-child { position: sticky; right: 0; z-index: 2; padding-inline: 20px; border-left: 1px solid rgb(var(--color-border) / .55); background: var(--detail-surface); text-align: center; box-shadow: inset 100vw 0 0 var(--detail-wash); }
 .summary-detail__table tbody tr:hover .summary-detail__actions { box-shadow: inset 100vw 0 0 rgb(var(--color-brand) / .025); }
 .summary-detail__table tr[data-selected="true"] .summary-detail__actions { box-shadow: inset 100vw 0 0 rgb(var(--color-brand) / .065); }
 .summary-detail__actions .summary-detail__iconButton { width: 32px; height: 34px; }
@@ -181,12 +182,14 @@ html.dark .summary-detail__heroBtn { background: rgb(17 28 50 / .78); }
 .summary-detail__table th { padding: 13px 8px; background: var(--detail-wash); color: var(--detail-muted); text-align: left; font-size: var(--text-label); font-weight: 700; white-space: nowrap; }
 .summary-detail__table th:nth-child(1) { width: 42px; }
 .summary-detail__table th:nth-child(2) { width: 38px; }
+.summary-detail__table th:nth-child(3) { width: 220px; }
+.summary-detail__table th:nth-child(4) { width: 230px; }
 .summary-detail__table th:nth-child(5) { width: 92px; text-align: center; }
 .summary-detail__table th:nth-child(6) { width: 80px; text-align: center; }
 .summary-detail__table th:nth-child(7) { width: 102px; text-align: center; }
 .summary-detail__table th:nth-child(8) { width: 84px; text-align: center; }
 .summary-detail__table th:nth-child(9) { width: 165px; }
-.summary-detail__table th:nth-child(10) { width: 155px; }
+.summary-detail__table th:nth-child(10) { width: 175px; }
 .summary-detail__table th:nth-child(11) { width: 132px; }
 .summary-detail__table .summary-detail__choose { padding-left: 14px; padding-right: 0; }
 .summary-detail__choose label { display: grid; place-items: center; width: 28px; min-height: 36px; border-radius: 6px; cursor: pointer; }
@@ -296,7 +299,7 @@ html.dark .summary-detail__bandBadge[data-tone="warning"] { color: #fbbf24; back
   .summary-detail__band > button { margin-left: 0; }
   .summary-detail__process { grid-column: 2 / -1; }
   .summary-detail__status { font-size: var(--text-meta); }
-  .summary-detail__table .summary-detail__actions { position: static; grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 9px; margin-top: -3px; padding: 0; background: transparent; box-shadow: none; }
+  .summary-detail__table .summary-detail__actions { position: static; grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 9px; margin-top: -3px; padding: 0; border-left: 0; background: transparent; box-shadow: none; }
   .summary-detail__actions > button { min-height: 40px; padding: 8px 12px; border-color: var(--detail-line); font-size: var(--text-body); }
   .summary-detail__page[data-has-selection="true"] { padding-bottom: 88px; }
   .summary-detail__search input, .summary-detail__field textarea,
