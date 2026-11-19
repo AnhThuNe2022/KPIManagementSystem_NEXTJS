@@ -24,7 +24,7 @@ export type PeriodTone = "neutral" | "sky" | "violet" | "brand" | "crimson";
 
 type Template = { id: number; templateCode: string | null; templateName: string | null };
 
-export const PERIOD_ENUM_NAMES = ["None", "Month", "Year", "Quarter", "HaftYear", "Unknown"] as const;
+const PERIOD_ENUM_NAMES = ["None", "Month", "Year", "Quarter", "HaftYear", "Unknown"] as const;
 
 export const PERIOD_TYPE_OPTIONS = [
   { id: "None", name: "Không định kỳ" },
@@ -32,20 +32,14 @@ export const PERIOD_TYPE_OPTIONS = [
   { id: "Quarter", name: "Quý" },
   { id: "HaftYear", name: "Nửa năm" },
   { id: "Year", name: "Năm" },
+  { id: "Unknown", name: "Không xác định" },
 ] as const;
 
 const periodTypeMetaMap: Record<string, { label: string; tone: PeriodTone }> = {
-  "0": { label: "Không định kỳ", tone: "neutral" },
-  "1": { label: "Tháng", tone: "sky" },
-  "2": { label: "Năm", tone: "crimson" },
-  "3": { label: "Quý", tone: "violet" },
-  "4": { label: "Nửa năm", tone: "brand" },
-  "5": { label: "Không xác định", tone: "neutral" },
   None: { label: "Không định kỳ", tone: "neutral" },
   Month: { label: "Tháng", tone: "sky" },
   Quarter: { label: "Quý", tone: "violet" },
   HaftYear: { label: "Nửa năm", tone: "brand" },
-  HalfYear: { label: "Nửa năm", tone: "brand" },
   Year: { label: "Năm", tone: "crimson" },
   Unknown: { label: "Không xác định", tone: "neutral" },
 };
@@ -72,8 +66,8 @@ export const periodToneAccentClasses: Record<PeriodTone, string> = {
 };
 
 export function getPeriodTypeMeta(raw: number | string | null | undefined) {
-  if (raw === null || raw === undefined || String(raw).trim() === "") return null;
-  const key = String(raw).trim();
+  const key = normalizePeriodType(raw);
+  if (!key) return null;
   return periodTypeMetaMap[key] ?? { label: key, tone: "neutral" as const };
 }
 
@@ -82,7 +76,14 @@ export function normalizePeriodType(raw: number | string | null | undefined): st
   const trimmed = String(raw).trim();
   if (!trimmed) return null;
   if (/^\d+$/.test(trimmed)) return PERIOD_ENUM_NAMES[Number(trimmed)] ?? trimmed;
+  if (trimmed === "Unknow") return "Unknown";
   return trimmed === "HalfYear" ? "HaftYear" : trimmed;
+}
+
+export function getPeriodTypeCode(raw: EvaluationPeriod["periodType"]): number | null {
+  const name = normalizePeriodType(raw);
+  const code = PERIOD_ENUM_NAMES.findIndex((item) => item === name);
+  return code === -1 ? null : code;
 }
 
 export const evaluationPeriodApi = {
@@ -124,7 +125,7 @@ export const evaluationPeriodApi = {
     return data;
   },
 
-  async save(period: Omit<EvaluationPeriod, "listTemplateId">, templateIds: number[]) {
+  async save(period: Omit<EvaluationPeriod, "listTemplateId"> & { periodType: number; statusPeriod: number }, templateIds: number[]) {
     if (period.id == null) {
       await request("/kpi-evaluation-periods/create", {
         method: "POST",

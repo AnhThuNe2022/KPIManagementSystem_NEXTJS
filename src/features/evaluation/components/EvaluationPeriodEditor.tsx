@@ -17,6 +17,7 @@ import { isTechnicalError, requestMessage } from "../evaluationDisplay";
 import { evaluationLookupApi } from "../services/evaluationLookupApi";
 import {
   evaluationPeriodApi,
+  getPeriodTypeCode,
   getPeriodTypeMeta,
   normalizePeriodType,
   PERIOD_TYPE_OPTIONS,
@@ -26,6 +27,13 @@ import {
 const inputClass =
   "mt-1 min-h-10 w-full rounded-[10px] border border-[rgb(var(--color-border)/0.45)] bg-[var(--panel-well)] px-3.5 text-sm text-[rgb(var(--color-text))] [box-shadow:var(--panel-recess)] transition placeholder:text-[var(--panel-muted)] focus:border-[rgb(var(--color-brand))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-brand)/0.2)] disabled:cursor-not-allowed disabled:opacity-60";
 const labelClass = "block text-[13px] font-semibold text-[rgb(var(--color-text))]";
+
+const periodStatusOptions = [
+  { name: "None", value: 0, label: "Không xác định" },
+  { name: "Open", value: 1, label: "Mở" },
+  { name: "Locked", value: 2, label: "Khóa" },
+  { name: "Closed", value: 3, label: "Đóng" },
+];
 
 const dateInputValue = (date: string | null) =>
   date && !date.startsWith("0001-") ? date.slice(0, 10) : "";
@@ -74,6 +82,7 @@ function extractPeriodState(source?: EvaluationPeriod) {
     startDate: null,
     endDate: null,
     isActive: true,
+    statusPeriod: 0,
     evaluationTypeId: null,
   };
   const kind = normalizePeriodType(original.periodType);
@@ -186,15 +195,14 @@ export function EvaluationPeriodEditor({ period, onClose, onSaved }: Props) {
       ? [...types, { id: String(initialTypeId), name: `Loại đánh giá #${initialTypeId}` }]
       : types;
   const kind = draft.periodType ?? "";
-  const typeMeta = getPeriodTypeMeta(kind);
-  const periodTypeOptions: SearchableSelectOption[] =
-    kind && !PERIOD_TYPE_OPTIONS.some((option) => option.id === kind)
-      ? [...PERIOD_TYPE_OPTIONS, { id: kind, name: typeMeta?.label ?? kind }]
-      : [...PERIOD_TYPE_OPTIONS];
+  const periodTypeCode = getPeriodTypeCode(kind);
+  const typeMeta = getPeriodTypeMeta(periodTypeCode);
   const startValue = dateInputValue(draft.startDate);
   const endValue = dateInputValue(draft.endDate);
   const rangeSummary = durationLabel(startValue, endValue);
   const invalidRange = Boolean(startValue && endValue && endValue < startValue);
+  const rawStatus = String(draft.statusPeriod ?? 0);
+  const statusPeriod = periodStatusOptions.find(({ name, value }) => name === rawStatus || String(value) === rawStatus)?.value;
 
   function patch(fields: Partial<typeof draft>) {
     setError("");
@@ -228,8 +236,12 @@ export function EvaluationPeriodEditor({ period, onClose, onSaved }: Props) {
       setError("Vui lòng nhập tên kỳ đánh giá.");
       return;
     }
-    if (!kind) {
+    if (periodTypeCode == null) {
       setError("Vui lòng chọn loại kỳ.");
+      return;
+    }
+    if (statusPeriod == null) {
+      setError("Vui lòng chọn trạng thái kỳ đánh giá.");
       return;
     }
     if (draft.evaluationTypeId == null) {
@@ -249,7 +261,7 @@ export function EvaluationPeriodEditor({ period, onClose, onSaved }: Props) {
     setBusy(true);
     setError("");
     try {
-      await evaluationPeriodApi.save({ ...draft, name }, templateIds.map(Number));
+      await evaluationPeriodApi.save({ ...draft, name, periodType: periodTypeCode, statusPeriod }, templateIds.map(Number));
     } catch (cause) {
       setError(saveErrorMessage(cause));
       return;
@@ -363,8 +375,8 @@ export function EvaluationPeriodEditor({ period, onClose, onSaved }: Props) {
                       id="period-editor-kind"
                       label="Loại kỳ"
                       placeholder="Chọn loại kỳ"
-                      options={periodTypeOptions}
-                      value={kind}
+                      options={PERIOD_TYPE_OPTIONS}
+                      value={periodTypeCode == null ? "" : kind}
                       disabled={busy || (editing && !detail)}
                       onChange={(value) =>
                         patch({
@@ -495,6 +507,22 @@ export function EvaluationPeriodEditor({ period, onClose, onSaved }: Props) {
                       value={endValue}
                       onChange={(event) => patch({ endDate: datePayload(event.target.value) })}
                     />
+                  </label>
+
+                  <label className={labelClass + " sm:col-span-2"}>
+                    Trạng thái kỳ đánh giá
+                    <select
+                      className={inputClass}
+                      value={statusPeriod ?? ""}
+                      onChange={(event) => patch({ statusPeriod: Number(event.target.value) })}
+                    >
+                      {statusPeriod == null && (
+                        <option value="" disabled>Chọn trạng thái</option>
+                      )}
+                      {periodStatusOptions.map(({ value, label }) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
+                    </select>
                   </label>
                 </div>
               </div>
