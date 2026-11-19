@@ -261,7 +261,7 @@ export function EvaluationPeriodEditor({ period, onClose, onSaved }: Props) {
     setBusy(true);
     setError("");
     try {
-      await evaluationPeriodApi.save({ ...draft, name, periodType: periodTypeCode, statusPeriod }, templateIds.map(Number));
+      await evaluationPeriodApi.save({ ...draft, name, periodType: String(periodTypeCode), statusPeriod }, templateIds.map(Number));
     } catch (cause) {
       setError(saveErrorMessage(cause));
       return;

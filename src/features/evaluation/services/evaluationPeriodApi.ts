@@ -125,7 +125,7 @@ export const evaluationPeriodApi = {
     return data;
   },
 
-  async save(period: Omit<EvaluationPeriod, "listTemplateId"> & { periodType: number; statusPeriod: number }, templateIds: number[]) {
+  async save(period: Omit<EvaluationPeriod, "listTemplateId"> & { periodType: string; statusPeriod: number }, templateIds: number[]) {
     if (period.id == null) {
       await request("/kpi-evaluation-periods/create", {
         method: "POST",
