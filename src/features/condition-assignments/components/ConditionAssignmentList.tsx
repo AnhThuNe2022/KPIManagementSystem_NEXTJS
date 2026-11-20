@@ -726,7 +726,7 @@ export function ConditionAssignmentList() {
                         </span>
                         <span className="ca-cluster-count">{group.rows.length}</span>
                       </header>
-                      <div className="ca-cluster-list">
+                      <div className="ca-cluster-list" data-scrollable={group.rows.length > 4}>
                         {group.rows.map((item, index) => {
                           const isDepartment = inferScopeType(item) === AssignmentScopeType.Department;
                           const scopeName = getScopeName(item) || "—";

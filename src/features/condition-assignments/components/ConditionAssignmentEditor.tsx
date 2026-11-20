@@ -2,9 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import {
+  ArrowRightIcon,
   CheckIcon,
   Cross2Icon,
   ExclamationTriangleIcon,
+  LayersIcon,
+  MixerHorizontalIcon,
+  PersonIcon,
   ReloadIcon,
 } from "@radix-ui/react-icons";
 import { SearchableSelect, type SearchableSelectOption } from "@/components/ui/SearchableSelect";
@@ -115,6 +119,7 @@ export function ConditionAssignmentEditor({
   useEffect(() => {
     const element = dialog.current;
     element?.showModal();
+    element?.focus({ preventScroll: true });
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
@@ -295,9 +300,23 @@ export function ConditionAssignmentEditor({
     }
   }
 
+  const isDepartment = draft.scopeType === AssignmentScopeType.Department;
+  const previewCondition =
+    effectiveConditions.find((c) => c.id === draft.statusCondition)?.name ?? "";
+  const previewScope = isDepartment
+    ? effectiveDepartments.find((d) => d.id === draft.idValue)?.name ??
+      (draft.scopeValue || "")
+    : companyOptions.find((c) => c.id === draft.companyId)?.name ??
+      (draft.scopeValue || "");
+  const previewUser =
+    draft.fullName ||
+    userOptions.find((u) => u.id === draft.userId)?.name ||
+    "";
+
   return (
     <dialog
       ref={dialog}
+      tabIndex={-1}
       className="ca-modal"
       data-closing={closing}
       aria-labelledby="ca-modal-title"
@@ -317,19 +336,28 @@ export function ConditionAssignmentEditor({
     >
       <form onSubmit={save} className="ca-modal-form" inert={closing}>
         <header className="ca-modal-head">
-          <div>
-            <h2 id="ca-modal-title">
-              {editing ? "Chỉnh sửa phân công điều kiện" : "Thêm phân công mới"}
-            </h2>
-            <p>
-              {editing
-                ? "Cập nhật điều kiện, phạm vi áp dụng hoặc người phụ trách."
-                : "Thiết lập điều kiện xử lý, phạm vi đơn vị và người phụ trách."}
-            </p>
+          <div className="ca-modal-head-main">
+            <span className="ca-modal-emblem" aria-hidden="true">
+              <MixerHorizontalIcon />
+            </span>
+            <div className="ca-modal-head-copy">
+              <span className="ca-modal-eyebrow">
+                <span className="ca-modal-eyebrow-bar" aria-hidden="true" />
+                {editing ? "Cập nhật luồng" : "Cấu hình phân công"}
+              </span>
+              <h2 id="ca-modal-title">
+                {editing ? "Chỉnh sửa phân công điều kiện" : "Thêm phân công mới"}
+              </h2>
+              <p>
+                {editing
+                  ? "Điều chỉnh điều kiện, phạm vi đơn vị hoặc người phụ trách."
+                  : "Thiết lập điều kiện xử lý, phạm vi áp dụng và người phụ trách."}
+              </p>
+            </div>
           </div>
           <button
             type="button"
-            className="ca-action-btn"
+            className="ca-modal-close"
             disabled={busy}
             aria-label="Đóng"
             onClick={close}
@@ -339,9 +367,37 @@ export function ConditionAssignmentEditor({
         </header>
 
         <div className="ca-modal-body">
+          <div className="ca-modal-preview" aria-label="Tóm tắt quy tắc phân công">
+            <div className="ca-modal-preview-flow">
+              <span className="ca-preview-chip" data-filled={Boolean(previewCondition)}>
+                <span className="ca-preview-dot" aria-hidden="true" />
+                <span>{previewCondition || "Chọn điều kiện"}</span>
+              </span>
+              <ArrowRightIcon className="ca-preview-arrow" aria-hidden="true" />
+              <span className="ca-preview-chip" data-filled={Boolean(previewScope)}>
+                {isDepartment ? (
+                  <DepartmentScopeIcon aria-hidden="true" />
+                ) : (
+                  <CompanyScopeIcon aria-hidden="true" />
+                )}
+                <span>{previewScope || (isDepartment ? "Chọn phòng ban" : "Chọn công ty")}</span>
+              </span>
+              <ArrowRightIcon className="ca-preview-arrow" aria-hidden="true" />
+              <span className="ca-preview-chip" data-filled={Boolean(previewUser)}>
+                <PersonIcon aria-hidden="true" />
+                <span>{previewUser || "Chưa gán người"}</span>
+              </span>
+            </div>
+            <span className="ca-preview-state" data-active={draft.isActive}>
+              <span className="ca-preview-state-dot" aria-hidden="true" />
+              {draft.isActive ? "Hoạt động" : "Tạm ngưng"}
+            </span>
+          </div>
+
           <div className="ca-field">
             <label htmlFor="ca-editor-condition">
-              Điều kiện xử lý<span className="ca-req" aria-hidden="true">*</span>
+              <MixerHorizontalIcon aria-hidden="true" />
+              <span>Điều kiện xử lý<span className="ca-req" aria-hidden="true">*</span></span>
             </label>
             <SearchableSelect
               id="ca-editor-condition"
@@ -357,12 +413,14 @@ export function ConditionAssignmentEditor({
 
           <div className="ca-field">
             <span>
-              Loại phạm vi<span className="ca-req" aria-hidden="true">*</span>
+              <LayersIcon aria-hidden="true" />
+              <span>Loại phạm vi<span className="ca-req" aria-hidden="true">*</span></span>
             </span>
-            <div className="ca-segmented" role="group" aria-label="Loại phạm vi">
+            <div className="ca-scope-picker" role="group" aria-label="Loại phạm vi">
               <button
                 type="button"
-                aria-pressed={draft.scopeType === AssignmentScopeType.Company}
+                className="ca-scope-option"
+                aria-pressed={!isDepartment}
                 disabled={busy}
                 onClick={() =>
                   patch({
@@ -373,12 +431,18 @@ export function ConditionAssignmentEditor({
                   })
                 }
               >
-                <CompanyScopeIcon aria-hidden="true" />
-                <span>Công ty</span>
+                <span className="ca-scope-option-icon">
+                  <CompanyScopeIcon aria-hidden="true" />
+                </span>
+                <span className="ca-scope-option-copy">
+                  <strong>Công ty</strong>
+                  <small>Áp dụng toàn đơn vị</small>
+                </span>
               </button>
               <button
                 type="button"
-                aria-pressed={draft.scopeType === AssignmentScopeType.Department}
+                className="ca-scope-option"
+                aria-pressed={isDepartment}
                 disabled={busy}
                 onClick={() =>
                   patch({
@@ -388,61 +452,71 @@ export function ConditionAssignmentEditor({
                   })
                 }
               >
-                <DepartmentScopeIcon aria-hidden="true" />
-                <span>Phòng ban</span>
+                <span className="ca-scope-option-icon">
+                  <DepartmentScopeIcon aria-hidden="true" />
+                </span>
+                <span className="ca-scope-option-copy">
+                  <strong>Phòng ban</strong>
+                  <small>Áp dụng theo phòng/ban</small>
+                </span>
               </button>
             </div>
           </div>
 
-          <div className="ca-field">
-            <label htmlFor="ca-editor-company">
-              Công ty<span className="ca-req" aria-hidden="true">*</span>
-            </label>
-            <SearchableSelect
-              id="ca-editor-company"
-              label="Công ty"
-              placeholder="Chọn công ty"
-              required
-              options={companyOptions}
-              value={draft.companyId}
-              disabled={busy}
-              onChange={(companyId) => {
-                const companyName = companyOptions.find((option) => option.id === companyId)?.name ?? "";
-                patch({
-                  companyId,
-                  idValue: draft.scopeType === AssignmentScopeType.Company ? companyId : "",
-                  scopeValue: draft.scopeType === AssignmentScopeType.Company ? companyName : "",
-                });
-              }}
-            />
-          </div>
-
-          {draft.scopeType === AssignmentScopeType.Department && (
+          <div className={isDepartment ? "ca-field-grid" : undefined}>
             <div className="ca-field">
-              <label htmlFor="ca-editor-department">
-                Phòng ban<span className="ca-req" aria-hidden="true">*</span>
+              <label htmlFor="ca-editor-company">
+                <CompanyScopeIcon aria-hidden="true" />
+                <span>Công ty<span className="ca-req" aria-hidden="true">*</span></span>
               </label>
               <SearchableSelect
-                id="ca-editor-department"
-                label="Phòng ban"
-                placeholder={draft.companyId ? "Chọn phòng ban" : "Chọn công ty trước"}
+                id="ca-editor-company"
+                label="Công ty"
+                placeholder="Chọn công ty"
                 required
-                options={effectiveDepartments}
-                value={draft.idValue}
-                disabled={busy || (!draft.companyId && !effectiveDepartments.length)}
-                loading={deptLoading}
-                onChange={(departmentId) => {
-                  const deptName =
-                    effectiveDepartments.find((option) => option.id === departmentId)?.name ?? "";
-                  patch({ idValue: departmentId, scopeValue: deptName });
+                options={companyOptions}
+                value={draft.companyId}
+                disabled={busy}
+                onChange={(companyId) => {
+                  const companyName = companyOptions.find((option) => option.id === companyId)?.name ?? "";
+                  patch({
+                    companyId,
+                    idValue: !isDepartment ? companyId : "",
+                    scopeValue: !isDepartment ? companyName : "",
+                  });
                 }}
               />
             </div>
-          )}
+
+            {isDepartment && (
+              <div className="ca-field">
+                <label htmlFor="ca-editor-department">
+                  <DepartmentScopeIcon aria-hidden="true" />
+                  <span>Phòng ban<span className="ca-req" aria-hidden="true">*</span></span>
+                </label>
+                <SearchableSelect
+                  id="ca-editor-department"
+                  label="Phòng ban"
+                  placeholder={draft.companyId ? "Chọn phòng ban" : "Chọn công ty trước"}
+                  required
+                  options={effectiveDepartments}
+                  value={draft.idValue}
+                  disabled={busy || (!draft.companyId && !effectiveDepartments.length)}
+                  loading={deptLoading}
+                  onChange={(departmentId) => {
+                    const deptName =
+                      effectiveDepartments.find((option) => option.id === departmentId)?.name ?? "";
+                    patch({ idValue: departmentId, scopeValue: deptName });
+                  }}
+                />
+              </div>
+            )}
+          </div>
 
           <div className="ca-field">
             <label htmlFor="ca-editor-user">
-              Người phụ trách<span className="ca-req" aria-hidden="true">*</span>
+              <PersonIcon aria-hidden="true" />
+              <span>Người phụ trách<span className="ca-req" aria-hidden="true">*</span></span>
             </label>
             <SearchableSelect
               id="ca-editor-user"
@@ -478,7 +552,7 @@ export function ConditionAssignmentEditor({
             </div>
           )}
 
-          <label className="ca-switch-row">
+          <label className="ca-switch-row" data-active={draft.isActive}>
             <span>
               <strong>Trạng thái hoạt động</strong>
               <small>
