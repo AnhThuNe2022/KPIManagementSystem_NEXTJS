@@ -42,6 +42,8 @@ import {
 } from "../services/evaluationPeriodApi";
 import { EvaluationPeriodEditor } from "./EvaluationPeriodEditor";
 import "./EvaluationPeriodList.css";
+import { handleRequestError } from "@/lib/api/errors";
+
 
 type Status = "all" | "active" | "inactive";
 
@@ -160,12 +162,22 @@ export function EvaluationPeriodList() {
         setIntroPhase((prev) => (prev === "pending" ? "playing" : prev));
       })
       .catch((cause) => {
-        if (!controller.signal.aborted) {
-          setResult({
-            query,
-            error: requestMessage(cause, "Chưa tải được danh sách kỳ đánh giá."),
-          });
-        }
+
+         const message = handleRequestError(
+        cause,
+        "Chưa tải được danh sách kỳ đánh giá.",
+            controller.signal,
+          );
+
+          if (message) {
+            setResult({ query, error: message });
+          }
+        // if (!controller.signal.aborted) {
+        //   setResult({
+        //     query,
+        //     error: requestMessage(cause, "Chưa tải được danh sách kỳ đánh giá."),
+        //   });
+        // }
       });
     return () => controller.abort();
   }, [query]);

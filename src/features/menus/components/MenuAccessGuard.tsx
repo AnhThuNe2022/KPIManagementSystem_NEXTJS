@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import {
   ArrowLeftIcon,
   ExitIcon,
@@ -347,6 +347,7 @@ function GuardStatusCard({
 
 export function MenuRouteGuard({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const params = useParams<Record<string, string | string[]>>();
   const router = useRouter();
   const { logout } = useAuth();
   const { navigation, loading, error, reload } = useMyMenus();
@@ -366,6 +367,11 @@ export function MenuRouteGuard({ children }: { children: ReactNode }) {
   }, [logout, router]);
 
   if (isOpenRoute(normalizePath(pathname))) {
+    return <>{children}</>;
+  }
+
+  // The catch-all route calls notFound(); let it reach Next's 404 boundary.
+  if (params["not-found"] !== undefined) {
     return <>{children}</>;
   }
 
