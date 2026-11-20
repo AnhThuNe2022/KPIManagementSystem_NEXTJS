@@ -6,7 +6,7 @@ import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { notify } from "@/components/ui/Toaster";
 import { userOrganizationApi, type AvailableManager } from "@/features/user/services/userOrganizationApi";
 import { requestMessage } from "@/features/evaluation/evaluationDisplay";
-import { summaryApi } from "../services/summaryApi";
+import { summaryApi, type ReviewCustomUser } from "../services/summaryApi";
 import type { SummaryDetail } from "../types";
 
 export type SummaryReviewTarget = { kind: "approve" | "reject"; rows: SummaryDetail[]; all?: boolean };
@@ -82,8 +82,17 @@ export function SummaryReviewDialog({ target, level, onClose, onProcessed }: Pro
     let complete = false;
     try {
       if (approving) {
-        const selected = managers.filter(manager => managerIds.includes(String(manager.id)));
-        await summaryApi.approve(remaining.map(row => row.evalId), level, selected.map(manager => manager.id));
+        const selected: ReviewCustomUser[] = managers
+          .filter(manager => managerIds.includes(String(manager.id)))
+          .map(manager => ({
+            Id: Number(manager.id),
+            UserId: manager.userId ?? "",
+            SystemCode: manager.systemCode ?? manager.employeeCode ?? "",
+            JobTitle: manager.jobTitle ?? manager.jobPositionName ?? "",
+            CompanyId: manager.companyId ?? null,
+            DepartmentId: manager.departmentId ?? null,
+          }));
+        await summaryApi.approve(remaining.map(row => row.evalId), level, selected);
         processed.push(...remaining.map(row => row.evalId));
       } else {
         for (const row of remaining) {

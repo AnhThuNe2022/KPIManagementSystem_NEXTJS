@@ -9,7 +9,19 @@ interface PagedResponse<T> {
 }
 
 
-export type AvailableManager = { id: string | number; userName: string; departmentName?: string; companyName?: string };
+export type AvailableManager = {
+  id: string | number;
+  userId?: string;
+  userName: string;
+  systemCode?: string;
+  employeeCode?: string;
+  jobTitle?: string;
+  jobPositionName?: string;
+  companyId?: number | null;
+  companyName?: string;
+  departmentId?: number | null;
+  departmentName?: string;
+};
 
 export const userOrganizationApi = {
   getAvailableManagers(signal?: AbortSignal) {

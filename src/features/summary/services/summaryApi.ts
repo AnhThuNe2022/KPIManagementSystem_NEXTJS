@@ -2,6 +2,15 @@ import { downloadFile, request } from "@/lib/api/request";
 import type { PagedResult } from "@/lib/api/types";
 import type { SummaryDetail, SummaryDetailFilters, SummaryFilters, SummaryMode, SummaryRequest, SummaryRow } from "../types";
 
+export type ReviewCustomUser = {
+  Id: number;
+  UserId: string;
+  SystemCode: string;
+  JobTitle: string;
+  CompanyId: number | null;
+  DepartmentId: number | null;
+};
+
 export const summaryApi = {
   updateNote(row: SummaryDetail, note: string) {
     return request("/evaluation/" + row.evalId, {
@@ -32,10 +41,10 @@ export const summaryApi = {
       signal,
     });
   },
-  approve(ids: number[], level: number, managerIds: (string | number)[]) {
+  approve(ids: number[], level: number, managers: ReviewCustomUser[]) {
     return request("/evaluation/review-action-many", {
       method: "POST",
-      body: JSON.stringify({ Ids: ids, ReviewRequest: { Action: 1, Level: level, ListUserCustom: managerIds } }),
+      body: JSON.stringify({ Ids: ids, ReviewRequest: { Action: 1, Level: level, ListUserCustom: managers } }),
     });
   },
   reject(id: number, level: number, comment: string) {
