@@ -97,6 +97,40 @@
 .login-panel h2 { margin: 0; font-size: 38px; line-height: 1.2; font-weight: 750; letter-spacing: -1.5px; }
 .login-panel-description { margin: 14px 0 28px; color: rgb(var(--color-muted)); font-size: var(--text-body); line-height: 1.85; }
 .login-form { display: grid; gap: 21px; }
+.login-auth-swap { animation: login-auth-swap 190ms var(--login-ease) both; }
+@keyframes login-auth-swap {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.login-recovery-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  color: rgb(var(--color-brand));
+  font-size: var(--text-meta);
+  font-weight: 650;
+  text-underline-offset: 4px;
+}
+.login-recovery-link:hover:not(:disabled) { text-decoration: underline; }
+.login-recovery-link:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; border-radius: 3px; }
+.login-recovery-link:disabled { opacity: .65; }
+.login-forgot-link { justify-self: end; margin-block: -13px -9px; }
+.login-recovery-back { margin-top: 17px; }
+.login-recovery-status {
+  margin: 0;
+  color: rgb(var(--color-text));
+  background: rgb(var(--color-brand) / .08);
+  border-radius: 10px;
+  padding: 10px 13px;
+  font-size: var(--text-meta);
+  line-height: 1.55;
+}
+.login-reset-success { margin-bottom: 20px; }
+.login-reset-description strong { color: rgb(var(--color-text)); overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) {
+  .login-auth-swap { animation: login-fade 150ms ease both; }
+}
 .login-form > label > span:first-child { font-size: var(--text-label); font-weight: 650; margin-bottom: 9px; }
 .login-form .login-input { height: 55px; border-radius: 14px; padding-left: 17px; font-size: 16px; background: rgb(var(--color-surface)); color: rgb(var(--color-text)); box-shadow: inset 0 2px 5px rgb(var(--deoca-primary-rgb) / .055), 0 1px 0 rgb(255 255 255 / .55); transition: border-color 160ms ease, box-shadow 160ms ease; }
 .login-form .login-input::placeholder { font-size: var(--text-body); }

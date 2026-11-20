@@ -39,6 +39,8 @@ function redirectToLogin(request: NextRequest, reason: string) {
 }
 
 export function middleware(request: NextRequest) {
+    if (request.nextUrl.pathname === "/reset-password") return NextResponse.next();
+
     const token = request.cookies.get(appConfig.authCookieName)?.value;
 
     // console.log("[Middleware] Path:", request.nextUrl.pathname);
