@@ -1,104 +1,96 @@
-import { request } from "@/lib/api/request";
-import {
-  AssignmentScopeType,
-  type ConditionAssignmentDraft,
-  type ConditionAssignmentDto,
-  type ConditionAssignmentFilters,
-} from "@/features/condition-assignments/types";
-import type { ApiResponse, FilterString, PagedResult } from "@/lib/api/types";
-
-export interface ConditionAssigneeOption {
-  id: string;
-  fullName: string;
-  systemCode?: string;
-}
+import { request } from "@/lib/http/request";
+import { unwrapApiData, type ApiResponse, type PagedResult } from "@/server/api/types";
+import type {
+  ConditionAssignmentDraft,
+  ConditionAssignmentDto,
+  ConditionAssignmentFilterState,
+  ConditionAssignmentUserOption,
+} from "../types";
 
 export const conditionAssignmentApi = {
-  async getAll(filter: FilterString, signal?: AbortSignal): Promise<ConditionAssignmentDto[]> {
-    const params = new URLSearchParams();
-
-    Object.entries(filter.filters).forEach(([key, value]) => {
-      if (value !== null && value !== undefined) {
-        params.append(`Filters[${key}]`, value);
-      }
-    });
-
-    const query = params.toString();
-    const result = await request<ConditionAssignmentDto[] | { data?: ConditionAssignmentDto[] }>(
-      query ? `/conditionassignments/get-all?${query}` : "/conditionassignments/get-all",
-      { signal },
-    );
-    return Array.isArray(result) ? result : result?.data ?? [];
+  async getAll(
+    filters: Record<string, string>,
+    signal?: AbortSignal,
+  ): Promise<ConditionAssignmentDto[]> {
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(filters)) {
+      if (value.trim()) query.set(`Filters[${key}]`, value.trim());
+    }
+    const raw = await request<
+      ConditionAssignmentDto[] | ApiResponse<ConditionAssignmentDto[]>
+    >(`/conditionassignments/get-all?${query.toString()}`, { signal });
+    const unwrapped = unwrapApiData(raw);
+    return Array.isArray(unwrapped) ? unwrapped : [];
   },
 
-  async getPage(
-    page: number,
-    pageSize: number,
-    filters: ConditionAssignmentFilters,
-    signal?: AbortSignal,
-  ): Promise<PagedResult<ConditionAssignmentDto>> {
+  async getPage(params: {
+    page: number;
+    pageSize: number;
+    filters: ConditionAssignmentFilterState;
+    signal?: AbortSignal;
+  }): Promise<PagedResult<ConditionAssignmentDto>> {
+    const { page, pageSize, filters, signal } = params;
     const idValue =
-      filters.scopeType === String(AssignmentScopeType.Department)
+      filters.scopeType === "2"
         ? filters.departmentId
-        : filters.departmentId || filters.companyId;
+        : filters.companyId;
 
-    const response = await request<
+    const payload = {
+      Keyword: filters.keyword.trim() || undefined,
+      Page: page,
+      Take: pageSize,
+      Filters: {
+        scopetype: filters.scopeType || undefined,
+        idvalue: idValue || undefined,
+        isactive: filters.isActive || undefined,
+        userid: filters.userId || undefined,
+        statuscondition: filters.statusCondition || undefined,
+      },
+    };
+
+    const raw = await request<
       PagedResult<ConditionAssignmentDto> | ApiResponse<PagedResult<ConditionAssignmentDto>>
     >("/conditionassignments/get-all-paged", {
       method: "POST",
-      body: JSON.stringify({
-        Keyword: filters.keyword.trim(),
-        Page: page,
-        Take: pageSize,
-        Filters: {
-          scopetype: filters.scopeType,
-          idvalue: idValue,
-          isactive: filters.isActive,
-          userid: filters.userId,
-          statuscondition: filters.statusCondition,
-        },
-      }),
+      body: JSON.stringify(payload),
       signal,
     });
-
-    const data = "items" in response ? response : response.data;
-    if (!data) throw new Error("MISSING_CONDITION_ASSIGNMENT_LIST");
-    return data;
+    const unwrapped = unwrapApiData(raw);
+    return {
+      items: Array.isArray(unwrapped?.items) ? unwrapped.items : [],
+      total: Number(unwrapped?.total ?? 0),
+    };
   },
 
-  async getUsers(screenFilter = false, signal?: AbortSignal): Promise<ConditionAssigneeOption[]> {
+  async getUsers(screenFilter = false, signal?: AbortSignal): Promise<ConditionAssignmentUserOption[]> {
     const endpoint = screenFilter
       ? "/employeeinfor/get-user-by-filter?condition-assignments-screen=true"
       : "/employeeinfor/get-user-by-filter";
-    const response = await request<
-      | Array<{ id: string; fullName?: string; systemCode?: string }>
-      | { data?: Array<{ id: string; fullName?: string; systemCode?: string }> }
+    const raw = await request<
+      Array<{ id: string; fullName?: string | null; systemCode?: string | null }> |
+      ApiResponse<Array<{ id: string; fullName?: string | null; systemCode?: string | null }>>
     >(endpoint, { signal });
-    const rows = Array.isArray(response) ? response : response?.data ?? [];
-    return rows
-      .filter((row) => row && row.id)
-      .map((row) => ({
-        id: String(row.id),
-        fullName: row.fullName?.trim() || String(row.id),
-        systemCode: row.systemCode?.trim(),
-      }));
+    const unwrapped = unwrapApiData(raw);
+    if (!Array.isArray(unwrapped)) return [];
+    return unwrapped.map((u) => ({
+      id: String(u.id),
+      fullName: u.fullName?.trim() || String(u.id),
+      systemCode: u.systemCode ?? null,
+    }));
   },
 
-  async save(draft: ConditionAssignmentDraft, id?: number | string | null): Promise<void> {
-    const numericId = id != null && /^\d+$/.test(String(id).trim()) ? Number(id) : id;
-    const idValue = draft.idValue.trim();
-
-    if (id != null && String(id).trim() !== "") {
-      await request(`/conditionassignments/${encodeURIComponent(String(id))}`, {
+  async save(draft: ConditionAssignmentDraft): Promise<void> {
+    if (draft.id && draft.id > 0) {
+      await request(`/conditionassignments/${draft.id}`, {
         method: "PUT",
         body: JSON.stringify({
-          Id: numericId,
+          Id: draft.id,
           StatusCondition: draft.statusCondition,
           ScopeType: draft.scopeType,
-          IdValue: idValue,
+          IdValue: draft.idValue,
           UserId: draft.userId,
           IsActive: draft.isActive,
-          Description: draft.description,
+          Description: draft.description.trim() || null,
         }),
       });
       return;
@@ -108,7 +100,7 @@ export const conditionAssignmentApi = {
       method: "POST",
       body: JSON.stringify({
         StatusCondition: draft.statusCondition,
-        IdValue: idValue,
+        IdValue: draft.idValue,
         UserId: draft.userId,
         FullName: draft.fullName,
         SystemCodeUser: draft.systemCodeUser,
@@ -118,9 +110,7 @@ export const conditionAssignmentApi = {
     });
   },
 
-  async remove(id: number | string): Promise<void> {
-    await request(`/conditionassignments/${encodeURIComponent(String(id))}`, {
-      method: "DELETE",
-    });
+  async remove(id: number): Promise<void> {
+    await request(`/conditionassignments/${id}`, { method: "DELETE" });
   },
 };

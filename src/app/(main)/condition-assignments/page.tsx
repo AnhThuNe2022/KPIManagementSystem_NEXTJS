@@ -1,5 +1,5 @@
-import { ConditionAssignmentList } from "@/features/condition-assignments/components/ConditionAssignmentList";
+import { ConditionAssignmentListView } from "@/features/condition-assignments/components/ConditionAssignmentListView";
 
 export default function ConditionAssignmentsPage() {
-  return <ConditionAssignmentList />;
+  return <ConditionAssignmentListView />;
 }
