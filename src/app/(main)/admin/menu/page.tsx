@@ -1,10 +1,5 @@
-import { MenuManagement } from "@/features/menus/components/MenuManagement";
+import { MenuManagementView } from "@/features/menus/components/MenuManagementView";
 
-export const metadata = {
-  title: "Quản lý menu | Đèo Cả",
-  description: "Quản lý cấu trúc và thông tin menu của hệ thống KPI.",
-};
-
-export default async function MenuPage() {
-  return <MenuManagement />;
+export default function AdminMenuPage() {
+  return <MenuManagementView />;
 }

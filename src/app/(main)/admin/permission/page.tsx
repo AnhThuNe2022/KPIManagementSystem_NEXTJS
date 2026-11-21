@@ -1,7 +1,11 @@
-import { Suspense } from "react";
-import { Permissions } from "@/features/permissions/components/Permissions";
+import React, { Suspense } from "react";
+import { LoadingOverlay } from "@/components/ds";
+import { PermissionsView } from "@/features/permissions/components/PermissionsView";
 
-export const metadata = { title: "Quản lý quyền | Đèo Cả", description: "Quản lý quyền truy cập, màn hình, vai trò và người dùng." };
-export default async function PermissionPage() {
-  return <Suspense fallback={<p role="status">Đang mở quản lý quyền…</p>}><Permissions /></Suspense>;
+export default function AdminPermissionPage() {
+  return (
+    <Suspense fallback={<LoadingOverlay label="Đang tải quản lý phân quyền..." />}>
+      <PermissionsView />
+    </Suspense>
+  );
 }

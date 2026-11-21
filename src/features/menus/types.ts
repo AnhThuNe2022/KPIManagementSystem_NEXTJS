@@ -1,14 +1,22 @@
-export type MenuDto = {
+export interface MenuDto {
   id: number;
   code: string;
   title: string;
-  url?: string | null;
-  icon?: string | null;
-  parentId?: number | null;
+  url: string | null;
+  icon: string | null;
+  parentId: number | null;
   orderNo: number;
   isActive: boolean;
-  children: MenuDto[];
-};
+  children?: MenuDto[] | null;
+}
 
-
-export type MenuDraft = Omit<MenuDto, "children">;
+export interface MenuDraft {
+  id?: number;
+  code: string;
+  title: string;
+  url: string;
+  icon: string;
+  parentId: number | null;
+  orderNo: number;
+  isActive: boolean;
+}

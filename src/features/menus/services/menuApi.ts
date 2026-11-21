@@ -1,27 +1,48 @@
-import { request } from "@/lib/api/request";
-import type { MenuDto } from "@/features/menus/types";
-import type { MenuDraft } from "../types";
-export const MENUS_CHANGED = "menus-changed";
+import { emitAppEvent, MENUS_CHANGED_EVENT } from "@/lib/events/appEvents";
+import { request } from "@/lib/http/request";
+import { unwrapApiData, type ApiResponse } from "@/server/api/types";
+import type { MenuDraft, MenuDto } from "../types";
 
 export const menuApi = {
-  async my(signal?: AbortSignal) {
-    const response = await request<{ data: MenuDto[] | null }>("/menus/my", { signal });
-    return response.data ?? [];
+  async my(signal?: AbortSignal): Promise<MenuDto[]> {
+    const raw = await request<ApiResponse<MenuDto[] | null> | MenuDto[]>("/menus/my", { signal });
+    const unwrapped = unwrapApiData(raw);
+    return Array.isArray(unwrapped) ? unwrapped : [];
   },
-  tree(signal?: AbortSignal) {
-    return request<MenuDto[]>("/menus/tree", { signal });
+
+  async tree(signal?: AbortSignal): Promise<MenuDto[]> {
+    const raw = await request<MenuDto[] | ApiResponse<MenuDto[]>>("/menus/tree", { signal });
+    const unwrapped = unwrapApiData(raw);
+    return Array.isArray(unwrapped) ? unwrapped : [];
   },
-  save(menu: MenuDraft) {
-    return request("/menus" + (menu.id ? "/" + menu.id : ""), {
-      method: menu.id ? "PUT" : "POST",
-      body: JSON.stringify({
-        Id: menu.id, Code: menu.code.trim(), Title: menu.title.trim(),
-        Url: menu.url?.trim() || null, Icon: menu.icon || null,
-        ParentId: menu.parentId ?? null, OrderNo: menu.orderNo, IsActive: menu.isActive,
-      }),
-    });
+
+  async save(draft: MenuDraft): Promise<void> {
+    const payload = {
+      Id: draft.id ?? 0,
+      Code: draft.code.trim(),
+      Title: draft.title.trim(),
+      Url: draft.url.trim() || null,
+      Icon: draft.icon.trim() || null,
+      ParentId: draft.parentId,
+      OrderNo: Number(draft.orderNo) || 0,
+      IsActive: draft.isActive,
+    };
+    if (draft.id && draft.id > 0) {
+      await request(`/menus/${draft.id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+    } else {
+      await request("/menus", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    }
+    emitAppEvent(MENUS_CHANGED_EVENT);
   },
-  remove(id: number) {
-    return request("/menus/" + id, { method: "DELETE" });
+
+  async remove(id: number): Promise<void> {
+    await request(`/menus/${id}`, { method: "DELETE" });
+    emitAppEvent(MENUS_CHANGED_EVENT);
   },
 };
