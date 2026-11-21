@@ -1,22 +1,18 @@
-export type LoginCredentials = { username: string; password: string };
-
-export type LoginResponse = { accessToken: string; userId:string; roles: string[] };
-
-
 export enum UserRoleSystem {
   Admin = 1,
-  ManagerMid,
-  Employee,
-  ManagerSenior,
-  HR,
-  ChairMan,
-  DirectorSystem,
-  ChiefOfStaff,
-  DepartmentHead,
-  HRSummary,
-  Unknown,
+  ManagerMid = 2,
+  Employee = 3,
+  ManagerSenior = 4,
+  HR = 5,
+  ChairMan = 6,
+  DirectorSystem = 7,
+  ChiefOfStaff = 8,
+  DepartmentHead = 9,
+  HRSummary = 10,
+  Unknown = 11,
 }
 
+export type ReviewRole = UserRoleSystem.ManagerMid | UserRoleSystem.HR;
 
 export interface AuthUser {
   id: string;
@@ -26,14 +22,10 @@ export interface AuthUser {
   fullName?: string;
 }
 
-export interface AuthContextValue {
-  user: AuthUser | null;
-
-  isAuthenticated: boolean;
-
-  isLoading: boolean;
-
-  refresh: () => Promise<void>;
-
-  logout: () => Promise<void>;
+export function isAdminRole(roles: string[] | null | undefined): boolean {
+  if (!Array.isArray(roles)) return false;
+  return roles.some((role) => {
+    const clean = String(role ?? "").trim().toLowerCase();
+    return clean === "admin" || clean === String(UserRoleSystem.Admin);
+  });
 }
