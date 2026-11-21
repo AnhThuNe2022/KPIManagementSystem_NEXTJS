@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
-import { appConfig } from "@/config/app";
+import { clearAllAuthCookies } from "@/server/api/cookies";
+import { isSameOriginMutation } from "@/server/api/proxy";
 
-export async function POST() {
-  const response = NextResponse.json({ ok: true });
-  response.cookies.set(appConfig.authCookieName, "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/", maxAge: 0 });
-  response.cookies.set(appConfig.userNameCookieName, "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/", maxAge: 0 });
+export async function POST(request: Request) {
+  if (!isSameOriginMutation(request, "POST")) {
+    return NextResponse.json({ message: "Invalid origin" }, { status: 403 });
+  }
+  const response = NextResponse.json({ ok: true }, { status: 200 });
+  clearAllAuthCookies(response);
   return response;
 }

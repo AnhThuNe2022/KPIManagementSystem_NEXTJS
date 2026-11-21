@@ -1,35 +1,29 @@
-import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 import { appConfig } from "@/config/app";
+import { clearAllAuthCookies, isJwtUnexpired } from "@/server/api/cookies";
 
 export async function GET() {
   try {
     const cookieStore = await cookies();
+    const token = cookieStore.get(appConfig.authCookieName)?.value;
+    const userId = cookieStore.get(appConfig.userIdCookieName)?.value;
+    const rawRoles = cookieStore.get(appConfig.rolesCookieName)?.value;
+    const userName = cookieStore.get(appConfig.userNameCookieName)?.value ?? undefined;
 
-    const token = cookieStore.get(
-      appConfig.authCookieName
-    )?.value;
-
-    const userId = cookieStore.get(
-      "auth_user_id"
-    )?.value;
-
-    const rolesCookie = cookieStore.get(
-      "auth_roles"
-    )?.value;
-
-    if (!token || !userId) {
-      return NextResponse.json(
-        { user: null },
-        { status: 401 }
-      );
+    if (!token || !userId || !isJwtUnexpired(token)) {
+      const response = NextResponse.json({ user: null }, { status: 401 });
+      if (token && !isJwtUnexpired(token)) {
+        clearAllAuthCookies(response);
+      }
+      return response;
     }
 
     let roles: string[] = [];
-
-    if (rolesCookie) {
+    if (rawRoles) {
       try {
-        roles = JSON.parse(rolesCookie);
+        const parsed = JSON.parse(rawRoles);
+        if (Array.isArray(parsed)) roles = parsed.map(String);
       } catch {
         roles = [];
       }
@@ -39,17 +33,10 @@ export async function GET() {
       user: {
         id: userId,
         roles,
+        username: userName,
       },
     });
-  } catch (error) {
-    console.error(
-      "GET /api/auth/me error:",
-      error
-    );
-
-    return NextResponse.json(
-      { user: null },
-      { status: 500 }
-    );
+  } catch {
+    return NextResponse.json({ user: null }, { status: 500 });
   }
 }

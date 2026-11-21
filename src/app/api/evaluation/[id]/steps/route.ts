@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { proxyApiRequest } from "@/lib/api/proxy";
+import { BACKEND_PATHS, POSITIVE_INT_ID_RE } from "@/server/adapters/backendContracts";
+import { proxyApiRequest } from "@/server/api/proxy";
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
-  if (!/^[1-9]\d*$/.test(id)) return NextResponse.json({ message: "Invalid evaluation ID" }, { status: 400 });
-  return proxyApiRequest(request, "/KPIEvaluation/GetListSteps/" + id);
+  if (!POSITIVE_INT_ID_RE.test(id)) {
+    return NextResponse.json({ message: "Invalid evaluation id" }, { status: 400 });
+  }
+  return proxyApiRequest(request, BACKEND_PATHS.evaluationSteps(id), { method: "GET" });
 }

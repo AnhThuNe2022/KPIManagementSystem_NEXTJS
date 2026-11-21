@@ -1,5 +1,7 @@
-import { proxyApiRequest } from "@/lib/api/proxy";
+import { BACKEND_PATHS } from "@/server/adapters/backendContracts";
+import { proxyApiRequest } from "@/server/api/proxy";
 
 export async function GET(request: Request) {
-  return proxyApiRequest(request, "/Notifications" + new URL(request.url).search);
+  const { search } = new URL(request.url);
+  return proxyApiRequest(request, `${BACKEND_PATHS.notificationsRoot}${search}`, { method: "GET" });
 }

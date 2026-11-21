@@ -1,5 +1,7 @@
-import { proxyApiRequest } from "@/lib/api/proxy";
+import { BACKEND_PATHS } from "@/server/adapters/backendContracts";
+import { proxyApiRequest } from "@/server/api/proxy";
 
-export function GET(request: Request) {
-  return proxyApiRequest(request, "/KPITemplate" + new URL(request.url).search);
+export async function GET(request: Request) {
+  const { search } = new URL(request.url);
+  return proxyApiRequest(request, `${BACKEND_PATHS.kpiTemplateList}${search}`, { method: "GET" });
 }

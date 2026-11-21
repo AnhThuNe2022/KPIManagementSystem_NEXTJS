@@ -1,5 +1,6 @@
-import { proxyApiRequest } from "@/lib/api/proxy";
+import { BACKEND_PATHS } from "@/server/adapters/backendContracts";
+import { proxyApiRequest } from "@/server/api/proxy";
 
 export async function GET(request: Request) {
-  return proxyApiRequest(request, "/company/all");
+  return proxyApiRequest(request, BACKEND_PATHS.companyAll, { method: "GET" });
 }

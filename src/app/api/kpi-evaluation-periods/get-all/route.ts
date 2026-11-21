@@ -1,5 +1,20 @@
-import { proxyApiRequest } from "@/lib/api/proxy";
+import { NextResponse } from "next/server";
+import { BACKEND_PATHS } from "@/server/adapters/backendContracts";
+import { proxyApiRequest, readJsonBody } from "@/server/api/proxy";
+
+export async function GET(request: Request) {
+  return proxyApiRequest(request, BACKEND_PATHS.periodGetAll, { method: "GET" });
+}
 
 export async function POST(request: Request) {
-  return proxyApiRequest(request, "/kpi-evaluation-periods/get-all");
+  let body: unknown;
+  try {
+    body = await readJsonBody(request);
+  } catch {
+    return NextResponse.json({ message: "Invalid JSON body" }, { status: 400 });
+  }
+  return proxyApiRequest(request, BACKEND_PATHS.periodGetAll, {
+    method: "POST",
+    body: JSON.stringify(body ?? {}),
+  });
 }
