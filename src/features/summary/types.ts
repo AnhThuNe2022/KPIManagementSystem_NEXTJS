@@ -1,26 +1,17 @@
 export type SummaryMode = "HrSummary" | "SummaryDirector";
 
-export type SummaryFilters = {
+export function isValidSummaryMode(value: string): value is SummaryMode {
+  return value === "HrSummary" || value === "SummaryDirector";
+}
+
+export interface SummaryFilters {
   companyIds: string[];
   typeId: string;
   periodId: string;
   jobPositionId: string;
-};
+}
 
-export type SummaryRequest = {
-  Page: number;
-  PageSize: number;
-  Filters: {
-    typeScreen: "Summary";
-    typeScreenRole: "HrSummary" | "Director";
-    companyids: string;
-    jobpositionid: string;
-    kpievaluationtypeid: string | null;
-    periodid: string | null;
-  };
-};
-
-export type SummaryRow = {
+export interface SummaryRow {
   period: string;
   periodId: number;
   periodName: string;
@@ -28,9 +19,9 @@ export type SummaryRow = {
   companyId: number;
   companyName: string;
   totalEval: number;
-};
+}
 
-export type SummaryDetail = {
+export interface SummaryDetail {
   evalId: number;
   userId: string;
   userName: string;
@@ -52,11 +43,20 @@ export type SummaryDetail = {
   band: string | null;
   startDate: string;
   endDate: string;
-};
+}
 
-export type SummaryDetailFilters = {
+export interface SummaryDetailFilters {
   status: string;
   keyword: string;
   companyId: string;
   departmentId: string;
-};
+}
+
+export interface ReviewCustomUser {
+  Id: number;
+  UserId: string;
+  SystemCode: string;
+  JobTitle: string;
+  CompanyId: number | null;
+  DepartmentId: number | null;
+}

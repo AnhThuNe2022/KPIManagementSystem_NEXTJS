@@ -1,179 +1,231 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
-import { CheckIcon, Cross2Icon, PaperPlaneIcon, PersonIcon, ReloadIcon, ResetIcon } from "@radix-ui/react-icons";
-import { SearchableSelect } from "@/components/ui/SearchableSelect";
-import { notify } from "@/components/ui/Toaster";
-import { userOrganizationApi, type AvailableManager } from "@/features/user/services/userOrganizationApi";
-import { requestMessage } from "@/features/evaluation/evaluationDisplay";
-import { summaryApi, type ReviewCustomUser } from "../services/summaryApi";
-import type { SummaryDetail } from "../types";
+import React, { useEffect, useState } from "react";
+import {
+  AppForm,
+  AppMultiSelect,
+  AppTextArea,
+  FormDialog,
+  InlineErrorBanner,
+  useAppToast,
+} from "@/components/ds";
+import { userOrganizationApi } from "@/features/user/services/userOrganizationApi";
+import type { AvailableManager } from "@/features/user/types";
+import { ApiRequestError, getErrorMessage, isAbortError } from "@/lib/http/request";
+import { summaryApi } from "../services/summaryApi";
+import type { ReviewCustomUser, SummaryDetail } from "../types";
 
-export type SummaryReviewTarget = { kind: "approve" | "reject"; rows: SummaryDetail[]; all?: boolean };
-type Props = {
-  target: SummaryReviewTarget;
+export interface SummaryReviewTarget {
+  kind: "approve" | "reject";
+  rows: SummaryDetail[];
+  all?: boolean;
+}
+
+export function SummaryReviewDialog({
+  target,
+  level,
+  onClose,
+  onProcessed,
+}: {
+  target: SummaryReviewTarget | null;
   level: number;
   onClose: () => void;
   onProcessed: (ids: number[]) => void;
-};
+}) {
+  const showToast = useAppToast();
+  const isApproving = target?.kind === "approve";
 
-export function SummaryReviewDialog({ target, level, onClose, onProcessed }: Props) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  const submitting = useRef(false);
-  const closing = useRef(false);
-  const [remaining, setRemaining] = useState(target.rows);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [comment, setComment] = useState("");
+  const [remaining, setRemaining] = useState<SummaryDetail[]>([]);
   const [managers, setManagers] = useState<AvailableManager[]>([]);
   const [managerIds, setManagerIds] = useState<string[]>([]);
-  const [loading, setLoading] = useState(target.kind === "approve");
-  const [lookupError, setLookupError] = useState("");
-  const [revision, setRevision] = useState(0);
-  const approving = target.kind === "approve";
+  const [loadingManagers, setLoadingManagers] = useState(false);
+  const [managerError, setManagerError] = useState<string | null>(null);
+  const [managerReloadTick, setManagerReloadTick] = useState(0);
+
+  const [comment, setComment] = useState("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const element = dialog.current;
-    element?.showModal();
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      element?.close();
-      document.body.style.overflow = overflow;
-    };
-  }, []);
+    if (!target) return;
+    setRemaining(target.rows);
+    setManagerIds([]);
+    setComment("");
+    setSubmitError(null);
+    setManagerError(null);
+  }, [target]);
 
   useEffect(() => {
-    if (!approving) return;
-    const controller = new AbortController();
-    setLoading(true);
-    setLookupError("");
-    userOrganizationApi.getAvailableManagers(controller.signal).then(result => {
-      if (!controller.signal.aborted) setManagers(result.items);
-    }).catch(cause => {
-      if (!controller.signal.aborted) setLookupError(requestMessage(cause, "Chưa tải được người duyệt. Hãy thử lại."));
-    }).finally(() => {
-      if (!controller.signal.aborted) setLoading(false);
-    });
-    return () => controller.abort();
-  }, [approving, revision]);
+    if (!target || target.kind !== "approve") return;
+    const ctrl = new AbortController();
+    setLoadingManagers(true);
+    setManagerError(null);
+    userOrganizationApi
+      .getAvailableManagers(ctrl.signal)
+      .then((list) => {
+        if (!ctrl.signal.aborted) setManagers(list);
+      })
+      .catch((err) => {
+        if (!isAbortError(err) && !ctrl.signal.aborted) {
+          setManagerError(getErrorMessage(err, "Chưa tải được danh sách người duyệt."));
+        }
+      })
+      .finally(() => {
+        if (!ctrl.signal.aborted) setLoadingManagers(false);
+      });
+    return () => ctrl.abort();
+  }, [managerReloadTick, target]);
 
-  function close() {
-    if (submitting.current || closing.current) return;
-    closing.current = true;
-    const element = dialog.current;
-    if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      onClose();
+  const handleSubmit = async () => {
+    if (!target || isSubmitting || remaining.length === 0) return;
+    if (!isApproving && !comment.trim()) {
+      setSubmitError("Vui lòng nhập lý do trả về.");
       return;
     }
-    element.animate([{ opacity: 1 }, { opacity: 0, transform: "translateY(8px) scale(.98)" }], {
-      duration: 140, easing: "ease-in", fill: "forwards",
-    }).finished.catch(() => {}).then(onClose);
-  }
 
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    if (submitting.current || closing.current || !remaining.length || (!approving && !comment.trim())) return;
-    submitting.current = true;
-    setBusy(true);
-    setError("");
+    setIsSubmitting(true);
+    setSubmitError(null);
     const processed: number[] = [];
     let firstFailure: { row: SummaryDetail; cause: unknown } | null = null;
-    let complete = false;
+    let completed = false;
+
     try {
-      if (approving) {
-        const selected: ReviewCustomUser[] = managers
-          .filter(manager => managerIds.includes(String(manager.id)))
-          .map(manager => ({
-            Id: Number(manager.id),
-            UserId: manager.userId ?? "",
-            SystemCode: manager.systemCode ?? manager.employeeCode ?? "",
-            JobTitle: manager.jobTitle ?? manager.jobPositionName ?? "",
-            CompanyId: manager.companyId ?? null,
-            DepartmentId: manager.departmentId ?? null,
+      if (isApproving) {
+        const selectedManagers: ReviewCustomUser[] = managers
+          .filter((m) => managerIds.includes(String(m.id)))
+          .map((m) => ({
+            Id: Number(m.id),
+            UserId: m.userId ?? "",
+            SystemCode: m.systemCode ?? m.employeeCode ?? "",
+            JobTitle: m.jobTitle ?? m.jobPositionName ?? "",
+            CompanyId: m.companyId ?? null,
+            DepartmentId: m.departmentId ?? null,
           }));
-        await summaryApi.approve(remaining.map(row => row.evalId), level, selected);
-        processed.push(...remaining.map(row => row.evalId));
+        const ids = remaining.map((r) => r.evalId);
+        await summaryApi.approve(ids, level, selectedManagers);
+        processed.push(...ids);
       } else {
+        // Sequential reject with partial-failure recovery
         for (const row of remaining) {
           try {
             await summaryApi.reject(row.evalId, level, comment.trim());
             processed.push(row.evalId);
           } catch (cause) {
             firstFailure ??= { row, cause };
-            if (cause instanceof Error && (cause.message === "UNAUTHORIZED" || cause.name === "TypeError")) break;
+            if (
+              cause instanceof ApiRequestError &&
+              (cause.status === 401 || cause.code === "UNAUTHORIZED")
+            ) {
+              break;
+            }
           }
         }
         if (firstFailure) throw firstFailure.cause;
       }
-      notify("success", (approving ? "Đã gửi duyệt " : "Đã trả về ") + processed.length + " bản đánh giá.");
-      complete = true;
+
+      showToast(
+        "success",
+        `${isApproving ? "Đã gửi duyệt" : "Đã trả về"} ${processed.length} bản đánh giá.`,
+      );
+      completed = true;
     } catch (cause) {
-      const message = cause instanceof Error && cause.message === "FORBIDDEN"
-        ? "Bạn chưa được cấp quyền thực hiện thao tác này."
-        : requestMessage(cause, cause instanceof Error ? cause.message : "Chưa hoàn tất thao tác. Hãy thử lại.");
-      setRemaining(current => current.filter(row => !processed.includes(row.evalId)));
-      const feedback = firstFailure ? firstFailure.row.userName + " (" + firstFailure.row.userId + ") — " + message : message;
-      setError(feedback);
-      notify(processed.length ? "warning" : "error", processed.length
-        ? "Đã xử lý " + processed.length + " hồ sơ. Các hồ sơ còn lại chưa hoàn tất. " + feedback
-        : feedback);
+      const baseMsg = getErrorMessage(cause, "Chưa hoàn tất thao tác. Hãy thử lại.");
+      const detailMsg = firstFailure
+        ? `${firstFailure.row.userName} (${firstFailure.row.userId}) — ${baseMsg}`
+        : baseMsg;
+      setRemaining((current) => current.filter((row) => !processed.includes(row.evalId)));
+      setSubmitError(detailMsg);
+      showToast(
+        processed.length > 0 ? "warning" : "error",
+        processed.length > 0
+          ? `Đã xử lý ${processed.length} hồ sơ. Các hồ sơ còn lại chưa hoàn tất: ${detailMsg}`
+          : detailMsg,
+      );
     } finally {
-      if (processed.length) onProcessed(processed);
-      submitting.current = false;
-      setBusy(false);
-      if (complete) close();
+      if (processed.length > 0) onProcessed(processed);
+      setIsSubmitting(false);
+      if (completed) onClose();
     }
-  }
+  };
 
   return (
-    <dialog ref={dialog} className="summary-detail__dialog" aria-labelledby="summary-review-title"
-      onCancel={event => { event.preventDefault(); close(); }}
-      onClick={event => { if (event.target === event.currentTarget) close(); }}>
-      <form onSubmit={submit} aria-busy={busy}>
-        <header className="summary-detail__dialogHeader">
-          <span className="summary-detail__dialogIcon" data-reject={!approving}>
-            {approving ? <PaperPlaneIcon aria-hidden="true" /> : <ResetIcon aria-hidden="true" />}
-          </span>
-          <div>
-            <h2 id="summary-review-title">{approving ? "Gửi duyệt hồ sơ" : "Trả về hồ sơ"}</h2>
-            <p>{approving ? "Chọn người nhận và xác nhận bước xử lý tiếp theo." : "Ghi rõ nội dung cần bổ sung hoặc điều chỉnh."}</p>
-          </div>
-          <button type="button" className="summary-detail__iconButton" aria-label="Đóng hộp thoại" disabled={busy} onClick={close}>
-            <Cross2Icon aria-hidden="true" />
-          </button>
-        </header>
-        <div className="summary-detail__dialogBody">
-          <div className="summary-detail__reviewContext">
-            <PersonIcon aria-hidden="true" />
-            <div>
-              <strong>{remaining.length === 1 ? remaining[0].userName : remaining.length + " bản đánh giá"}</strong>
-              <span>{remaining.length === 1 ? remaining[0].userId + " · " + remaining[0].companyCode : target.all ? "Toàn bộ kết quả theo bộ lọc hiện tại" : "Các hồ sơ đã chọn, gồm các trang khác"}</span>
+    <FormDialog
+      isOpen={Boolean(target)}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title={isApproving ? "Gửi duyệt hồ sơ tổng hợp" : "Trả về hồ sơ tổng hợp"}
+      subtitle={
+        isApproving
+          ? "Chọn quản lý cấp cao nhận duyệt (không bắt buộc) và xác nhận chuyển bước."
+          : "Ghi rõ nội dung cần điều chỉnh hoặc bổ sung."
+      }
+      isDirty={Boolean(comment.trim() || managerIds.length > 0)}
+      isSubmitting={isSubmitting}
+      submitLabel={isApproving ? "Xác nhận gửi duyệt" : "Xác nhận trả về"}
+      submitDisabled={
+        remaining.length === 0 || (isApproving && loadingManagers) || (!isApproving && !comment.trim())
+      }
+      onSubmit={handleSubmit}
+    >
+      {target ? (
+        <div className="flex flex-col gap-4">
+          <div className="rounded-lg border border-border bg-muted/40 px-3.5 py-2.5 text-sm">
+            <div className="font-semibold text-primary">
+              {remaining.length === 1
+                ? remaining[0].userName
+                : `${remaining.length} bản đánh giá`}
+            </div>
+            <div className="text-xs text-secondary">
+              {remaining.length === 1
+                ? `${remaining[0].userId} · ${remaining[0].companyCode}`
+                : target.all
+                  ? "Toàn bộ kết quả theo bộ lọc hiện tại"
+                  : "Các hồ sơ đã chọn (bao gồm nhiều trang)"}
             </div>
           </div>
-          {approving ? <div className="summary-detail__field">
-            <label htmlFor="summary-review-managers">Quản lý cấp cao nhận duyệt <span>Không bắt buộc</span></label>
-            <SearchableSelect id="summary-review-managers" label="Người duyệt" multiple value={managerIds}
-              options={managers.map(manager => ({ id: String(manager.id), name: manager.userName + (manager.departmentName ? " · " + manager.departmentName : "") }))}
-              placeholder="Chọn người duyệt tiếp theo…" disabled={busy || loading} loading={loading} onChange={setManagerIds} />
-            <p className="summary-detail__hint">{loading ? "Đang tải người duyệt…" : "Có thể chọn nhiều người duyệt."}</p>
-            {lookupError && <p className="summary-detail__error" role="alert">{lookupError} <button type="button" onClick={() => setRevision(value => value + 1)} disabled={busy}>Thử lại</button></p>}
-          </div> : <div className="summary-detail__field">
-            <label htmlFor="summary-return-reason">Lý do trả về <span aria-hidden="true">*</span></label>
-            <textarea id="summary-return-reason" value={comment} onChange={event => setComment(event.target.value)} rows={4}
-              placeholder="Nội dung cần bổ sung hoặc điều chỉnh…" required disabled={busy} autoFocus aria-describedby={error ? "summary-review-error" : undefined} />
-          </div>}
-          {error && <p id="summary-review-error" className="summary-detail__error" role="alert">{error}</p>}
+
+          {managerError ? (
+            <InlineErrorBanner
+              message={managerError}
+              onRetry={() => setManagerReloadTick((t) => t + 1)}
+            />
+          ) : null}
+
+          {submitError ? <InlineErrorBanner title="Thao tác chưa hoàn tất" message={submitError} /> : null}
+
+          <AppForm>
+            {isApproving ? (
+              <AppMultiSelect
+                label="Quản lý cấp cao nhận duyệt (không bắt buộc)"
+                value={managerIds}
+                onChange={setManagerIds}
+                options={managers.map((m) => ({
+                  value: String(m.id),
+                  label: m.departmentName ? `${m.userName} · ${m.departmentName}` : m.userName,
+                }))}
+                placeholder="Chọn người duyệt tiếp theo..."
+                isLoading={loadingManagers}
+                isDisabled={isSubmitting || loadingManagers}
+                description="Có thể chọn nhiều quản lý hoặc để trống để dùng luồng duyệt mặc định."
+              />
+            ) : (
+              <AppTextArea
+                label="Lý do trả về"
+                value={comment}
+                onChange={(val) => {
+                  setComment(val);
+                  if (submitError) setSubmitError(null);
+                }}
+                placeholder="Nhập nội dung cần bổ sung hoặc điều chỉnh..."
+                rows={4}
+                isRequired
+                isDisabled={isSubmitting}
+              />
+            )}
+          </AppForm>
         </div>
-        <footer className="summary-detail__dialogFooter">
-          <button type="button" className="summary-detail__button" onClick={close} disabled={busy}>Hủy</button>
-          <button type="submit" className="summary-detail__button summary-detail__primary" data-reject={!approving}
-            disabled={busy || loading || (!approving && !comment.trim())}>
-            {busy ? <ReloadIcon className="summary-detail__spin" aria-hidden="true" /> : <CheckIcon aria-hidden="true" />}
-            {busy ? "Đang xử lý…" : approving ? "Xác nhận gửi duyệt" : "Xác nhận trả về"}
-          </button>
-        </footer>
-      </form>
-    </dialog>
+      ) : null}
+    </FormDialog>
   );
 }

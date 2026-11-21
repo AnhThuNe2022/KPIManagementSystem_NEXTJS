@@ -1,14 +1,27 @@
 import { notFound } from "next/navigation";
-import { SummaryListDetail } from "@/features/summary/components/SummaryListDetail";
+import { SummaryListDetailView } from "@/features/summary/components/SummaryListDetailView";
+import { isValidSummaryMode } from "@/features/summary/types";
 
-export default async function SummaryListDetailPage({ params }: {
+export default async function SummaryListDetailPage({
+  params,
+}: {
   params: Promise<{ mode: string; periodId: string; companyId: string }>;
 }) {
-  const route = await params;
-  const { mode } = route;
-  const periodId = Number(route.periodId);
-  const companyId = Number(route.companyId);
-  if (mode !== "HrSummary" && mode !== "SummaryDirector") notFound();
-  if (!Number.isSafeInteger(periodId) || periodId < 1 || !Number.isSafeInteger(companyId) || (companyId < 1 && companyId !== -1)) notFound();
-  return <SummaryListDetail key={mode + "-" + periodId + "-" + companyId} mode={mode} periodId={periodId} companyId={companyId} />;
+  const { mode, periodId: rawPeriodId, companyId: rawCompanyId } = await params;
+  const periodId = Number(rawPeriodId);
+  const companyId = Number(rawCompanyId);
+
+  if (
+    !isValidSummaryMode(mode) ||
+    !Number.isInteger(periodId) ||
+    periodId < 1 ||
+    !Number.isInteger(companyId) ||
+    (companyId < 1 && companyId !== -1)
+  ) {
+    notFound();
+  }
+
+  return (
+    <SummaryListDetailView mode={mode} periodId={periodId} companyId={companyId} />
+  );
 }

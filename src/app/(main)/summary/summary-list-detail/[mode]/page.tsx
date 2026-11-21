@@ -1,7 +1,14 @@
 import { notFound, redirect } from "next/navigation";
+import { isValidSummaryMode } from "@/features/summary/types";
 
-export default async function SummaryListDetailPage({ params }: { params: Promise<{ mode: string }> }) {
+export default async function SummaryListDetailRedirectPage({
+  params,
+}: {
+  params: Promise<{ mode: string }>;
+}) {
   const { mode } = await params;
-  if (mode !== "HrSummary" && mode !== "SummaryDirector") notFound();
+  if (!isValidSummaryMode(mode)) {
+    notFound();
+  }
   redirect(`/summary/summary-list/${mode}`);
 }
