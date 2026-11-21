@@ -1,42 +1,59 @@
-import { request } from "@/lib/api/request";
-import { DepartmentDto } from "@/features/department/types";
+import { request } from "@/lib/http/request";
+import { unwrapApiData, type ApiResponse } from "@/server/api/types";
+import type { DepartmentDraft, DepartmentDto } from "../types";
 
-
-export type Department = DepartmentDto & { companyId: number };
-export type DepartmentDraft = Pick<Department, "name" | "description" | "companyId" | "isActive">;
+function asDepartmentArray(raw: DepartmentDto[] | ApiResponse<DepartmentDto[]> | null): DepartmentDto[] {
+  const unwrapped = unwrapApiData(raw);
+  return Array.isArray(unwrapped) ? unwrapped : [];
+}
 
 export const departmentApi = {
-  async getAll(companyId?: number | string, options: { byScope?: boolean; signal?: AbortSignal } = {}) {
-    const params = new URLSearchParams();
-
-    if (companyId) {
-      params.set(
-        "Filters[companyid]",
-        String(companyId)
-      );
+  async getAll(companyId: string | number, options?: { byScope?: boolean; signal?: AbortSignal }): Promise<DepartmentDto[]> {
+    const query = new URLSearchParams();
+    if (String(companyId ?? "").trim()) {
+      query.set("Filters[companyid]", String(companyId).trim());
     }
-
-    if (options.byScope) params.set("byscope", "true");
-
-    const query = params.toString();
-
-    return request<DepartmentDto[]>(
-      `/department/get-all-department${query ? `?${query}` : ""}`,
-      { signal: options.signal }
+    if (options?.byScope) {
+      query.set("byscope", "true");
+    }
+    const raw = await request<DepartmentDto[] | ApiResponse<DepartmentDto[]>>(
+      `/department/get-all-department?${query.toString()}`,
+      { signal: options?.signal },
     );
+    return asDepartmentArray(raw);
   },
-  async list(companyId: string, name: string, signal?: AbortSignal) {
-    const query = new URLSearchParams({ companyid: companyId, name });
-    const response = await request<Department[] | { data: Department[] }>("/departments?" + query, { signal });
-    return Array.isArray(response) ? response : response.data;
+
+  async list(
+    companyId = "",
+    name = "",
+    options?: { byUnitHrCompile?: boolean; signal?: AbortSignal },
+  ): Promise<DepartmentDto[]> {
+    const query = new URLSearchParams();
+    if (companyId.trim()) query.set("companyid", companyId.trim());
+    if (name.trim()) query.set("name", name.trim());
+    if (options?.byUnitHrCompile === false) query.set("byunithrcompile", "false");
+    const raw = await request<DepartmentDto[] | ApiResponse<DepartmentDto[]>>(
+      `/departments?${query.toString()}`,
+      { signal: options?.signal },
+    );
+    return asDepartmentArray(raw);
   },
-  save(draft: DepartmentDraft, id = 0) {
-    return request("/departments", {
-      method: id ? "PUT" : "POST",
-      body: JSON.stringify({ Id: id, Name: draft.name.trim(), Description: draft.description, CompanyId: draft.companyId, IsActive: draft.isActive }),
+
+  async save(draft: DepartmentDraft): Promise<void> {
+    const payload = {
+      Id: draft.id,
+      Name: draft.name.trim(),
+      Description: draft.description.trim(),
+      CompanyId: draft.companyId,
+      IsActive: draft.isActive,
+    };
+    await request("/departments", {
+      method: draft.id > 0 ? "PUT" : "POST",
+      body: JSON.stringify(payload),
     });
   },
-  remove(id: number) {
-    return request("/departments?id=" + id, { method: "DELETE" });
+
+  async remove(id: number): Promise<void> {
+    await request(`/departments?id=${encodeURIComponent(String(id))}`, { method: "DELETE" });
   },
 };

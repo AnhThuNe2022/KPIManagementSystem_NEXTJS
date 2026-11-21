@@ -1,5 +1,5 @@
-import { DepartmentManagement } from "@/features/department/components/DepartmentManagement";
+import { DepartmentManagementView } from "@/features/department/components/DepartmentManagementView";
 
-export default async function DepartmentsPage() {
-  return <DepartmentManagement />;
+export default function DepartmentsPage() {
+  return <DepartmentManagementView />;
 }
