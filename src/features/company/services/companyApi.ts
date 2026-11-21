@@ -1,36 +1,36 @@
-import { request } from "@/lib/api/request";
-import {
-  CompanyDto,
-} from "@/features/company/types";
-import {
-  FilterString,
-} from "@/lib/api/types";
+import { request } from "@/lib/http/request";
+import { unwrapApiData, type ApiResponse } from "@/server/api/types";
+import type { CompanyDto } from "../types";
 
+function asCompanyArray(raw: CompanyDto[] | ApiResponse<CompanyDto[]> | null): CompanyDto[] {
+  const unwrapped = unwrapApiData(raw);
+  return Array.isArray(unwrapped) ? unwrapped : [];
+}
 
 export const companyApi = {
-  async getForHrCompile(signal?: AbortSignal) {
-    const response = await request<CompanyDto[] | { data: CompanyDto[] }>("/company/by-manager", {
-      method: "POST", body: JSON.stringify({ filters: { byunithrcompile: "1" } }), signal,
+  async getAll(signal?: AbortSignal): Promise<CompanyDto[]> {
+    const raw = await request<CompanyDto[] | ApiResponse<CompanyDto[]>>("/company/all", { signal });
+    return asCompanyArray(raw);
+  },
+
+  async getForHrCompile(signal?: AbortSignal): Promise<CompanyDto[]> {
+    const raw = await request<CompanyDto[] | ApiResponse<CompanyDto[]>>("/company/by-manager", {
+      method: "POST",
+      body: JSON.stringify({ filters: { byunithrcompile: "1" } }),
+      signal,
     });
-    return Array.isArray(response) ? response : response.data;
+    return asCompanyArray(raw);
   },
+
   async getCompaniesByManager(
-    filter?: FilterString,
-    signal?: AbortSignal
+    filter: Record<string, unknown> = { filters: {} },
+    signal?: AbortSignal,
   ): Promise<CompanyDto[]> {
-    return request<CompanyDto[]>(
-      "/company/by-manager",
-      {
-        method: "POST",
-        body: JSON.stringify(
-          filter ?? { filters: {} }
-        ),
-        signal,
-      }
-    );
-  },
-  getAll(signal?: AbortSignal) {
-    return request<CompanyDto[]>("/company/all", { signal }
-    );
+    const raw = await request<CompanyDto[] | ApiResponse<CompanyDto[]>>("/company/by-manager", {
+      method: "POST",
+      body: JSON.stringify(filter),
+      signal,
+    });
+    return asCompanyArray(raw);
   },
 };
