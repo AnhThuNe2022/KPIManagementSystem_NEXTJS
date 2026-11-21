@@ -1,6 +1,6 @@
-import { PendingEvaluations } from "@/features/evaluation/components/PendingEvaluations";
 import { UserRoleSystem } from "@/features/auth/types";
+import { PendingEvaluationsView } from "@/features/evaluation/components/PendingEvaluationsView";
 
-export default async function HRPendingPage() {
-  return <PendingEvaluations level={UserRoleSystem.HR} />;
+export default function HrPendingPage() {
+  return <PendingEvaluationsView level={UserRoleSystem.HR} />;
 }

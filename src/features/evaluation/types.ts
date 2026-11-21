@@ -1,36 +1,27 @@
-import { UserRoleSystem } from "@/features/auth/types";
+export interface LookupOption {
+  id: string;
+  name: string;
+}
+
+export interface EvaluationTypeOption extends LookupOption {
+  periods: LookupOption[];
+}
 
 export interface EvaluationDto {
   id: number;
-  period?: string;
-  templateName?: string;
-  submitDate?: string | null;
+  userId?: string;
+  name?: string | null;
+  email?: string | null;
   status: string;
-  evalPeriodTemplateId: number;
-}
-
-export enum EvaluationStatus {
-  Unknown = "Unknown",
-  Drafted = "Drafted",
-  Submitted = "Submitted",
-  DirectManagerReviewing = "DirectManagerReviewing",
-  ManagerMidReviewing = "ManagerMidReviewing",
-  HRReviewing = "HRReviewing",
-  ManagerSeniorReviewing = "ManagerSeniorReviewing",
-  ChairManReviewing = "ChairManReviewing",
-  Rejected = "Rejected",
-  SentHR = "SentHR",
-  CompileHRList = "CompileHRList",
-  DirectorReviewCompileHRList = "DirectorReviewCompileHRList",
-  CompileChiefOfStaffList = "CompileChiefOfStaffList",
-  ChairManReviewCompile = "ChairManReviewCompile",
-  DepartmentHeadReviewing = "DepartmentHeadReviewing",
-  DirectorReviewing = "DirectorReviewing",
-  Imported = "Imported",
-  DeputyDirector = "DeputyDirector",
-  DepartmentDirector = "DepartmentDirector",
-  Over = "Over",
-  HRDepartmentReviewing = "HRDepartmentReviewing",
+  templateId?: number | null;
+  systemCode?: string | null;
+  companyCode?: string | null;
+  departmentName?: string | null;
+  period?: string | null;
+  templateName?: string | null;
+  submitDate?: string | null;
+  strDirectManager?: string | null;
+  evalPeriodTemplateId?: number | null;
 }
 
 export interface PendingEvaluationDto {
@@ -53,19 +44,9 @@ export interface PendingEvaluationFilters {
   keyword: string;
   companyId: string;
   departmentId: string;
+  typeId: string;
   periodId: string;
 }
-
-export interface EvaluationFilterOption {
-  id: string;
-  name: string;
-}
-
-export interface EvaluationTypeOption extends EvaluationFilterOption {
-  periods: EvaluationFilterOption[];
-}
-
-export type ReviewRole = UserRoleSystem.ManagerMid | UserRoleSystem.HR;
 
 export interface ReviewedEvaluationDto {
   id: number;
@@ -80,7 +61,7 @@ export interface ReviewedEvaluationDto {
   totalScore: number | null;
   managerSocre: number | null;
   band: string | null;
-  evalid: number;
+  evalid?: number;
 }
 
 export interface ReviewedEvaluationFilters {
@@ -92,83 +73,89 @@ export interface ReviewedEvaluationFilters {
   status: string;
   from: string;
   to: string;
-  sortBy: string;
-}
-
-export interface GeneralHrEvaluationRequest {
-  Page: number;
-  PageSize: number;
-  Filters: {
-    keyword?: string;
-    departmentid?: string;
-    status: string;
-    ismatchall: "true" | "false";
-    companyid?: string;
-    evaluationtypeid?: string;
-    periodid?: string;
-    userapprove?: string;
-    sortOrder?: "asc" | "desc";
-    sortBy?: string;
-  };
-}
-
-export interface GeneralHrStatusChange {
-  EvalId: number;
-  Status: number;
-  Reason?: string | null;
 }
 
 export interface GeneralHrEvaluationDto {
   id: number;
   userId: string;
-  name: string;
-  email?: string | null;
+  name: string | null;
+  email: string | null;
   status: string;
-  templateId?: number | null;
-  systemCode?: string | null;
-  companyCode?: string | null;
-  departmentName?: string | null;
-  period?: string | null;
-  templateName?: string | null;
-  submitDate?: string | null;
-  strDirectManager?: string | null;
+  templateId: number | null;
+  systemCode: string | null;
+  companyCode: string | null;
+  departmentName: string | null;
+  period: string | null;
+  templateName: string | null;
+  submitDate: string | null;
+  strDirectManager: string | null;
+  evalPeriodTemplateId?: number | null;
+}
+
+export interface GeneralHrFilters {
+  keyword: string;
+  companyId: string;
+  departmentId: string;
+  reviewerId: string;
+  typeId: string;
+  periodId: string;
+  statuses: string[];
+  sortOrder: "desc" | "asc";
 }
 
 export interface ApprovalHistoryEntry {
-  approvalId: number;
-  approverName?: string | null;
+  approvalId?: number;
+  approverName: string | null;
   approverUserId?: string | null;
   approvalLevel?: string | null;
-  status: string;
+  status?: string | null;
   statusValue?: string | null;
   comment?: string | null;
-  createdAt: string;
+  createdAt?: string | null;
 }
 
 export interface EvaluationApprover {
   id: number;
-  userName: string;
-  userId?: string | null;
+  userName: string | null;
   systemCode?: string | null;
-  status: string;
+  status?: string | null;
   isApprove: boolean;
   approvalDate?: string | null;
   message?: string | null;
 }
 
+export interface TemplateStatusOption {
+  status: number;
+  stepStatus?: string | null;
+  id?: string | null;
+  name?: string | null;
+}
 
-export type EvaluationPeriodDto = { id: number | string; name: string };
+export interface EvaluationTemplateDto {
+  id: number;
+  templateCode?: string | null;
+  templateName: string;
+}
 
-export type EvaluationTypeDto = EvaluationPeriodDto & { listKPIEvaluationPeriodDto: EvaluationPeriodDto[] };
+export interface EvaluationPeriodTemplateDto {
+  templateId: number;
+  templateName: string;
+}
 
-export const generalHrStatusOptions = [
-  { value: EvaluationStatus.Unknown, label: "Không xác định" },
-  { value: EvaluationStatus.Drafted, label: "Lưu nháp" },
-  { value: EvaluationStatus.Rejected, label: "Bị từ chối" },
-  { value: EvaluationStatus.DirectManagerReviewing, label: "Quản lý trực tiếp đang duyệt" },
-  { value: EvaluationStatus.HRReviewing, label: "HR đang duyệt" },
-  { value: EvaluationStatus.CompileHRList, label: "Đã đánh giá xong" },
-  { value: EvaluationStatus.ManagerSeniorReviewing, label: "Quản lý cấp cao đang duyệt" },
-  { value: EvaluationStatus.SentHR, label: "QLCC đã duyệt" },
-  { value: EvaluationStatus.Imported, label: "Đã được import" },
-] as const;
+export interface EvaluationPeriodDto {
+  id: number;
+  periodType: string | number;
+  name: string;
+  year: number | null;
+  month: number | null;
+  quarter: number | null;
+  isActive: boolean | null;
+  startDate: string | null;
+  endDate: string | null;
+  evaluationTypeId: number | null;
+  templateId?: number | null;
+  listTemplateId?: number[] | null;
+  templatePeriodDtos?: EvaluationPeriodTemplateDto[] | null;
+  statusPeriod?: string | number | null;
+  createdAt?: string | null;
+}

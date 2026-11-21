@@ -1,10 +1,5 @@
-import { EvaluationPeriodList } from "@/features/evaluation/components/EvaluationPeriodList";
+import { EvaluationPeriodListView } from "@/features/evaluation/components/EvaluationPeriodListView";
 
-export const metadata = {
-  title: "Danh sách kỳ đánh giá KPI | Đèo Cả",
-  description: "Theo dõi chu kỳ và thời gian hiệu lực các kỳ đánh giá KPI.",
-};
-
-export default function EvaluationPeriodsPage() {
-  return <EvaluationPeriodList />;
+export default function ManagerKpiEvaluationPeriodsPage() {
+  return <EvaluationPeriodListView />;
 }

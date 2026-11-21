@@ -1,6 +1,6 @@
-import { ReviewedEvaluations } from "@/features/evaluation/components/ReviewedEvaluations";
 import { UserRoleSystem } from "@/features/auth/types";
+import { ReviewedEvaluationsView } from "@/features/evaluation/components/ReviewedEvaluationsView";
 
-export default async function ManagerReviewedPage() {
-  return <ReviewedEvaluations level={UserRoleSystem.ManagerMid} />;
+export default function ManagerReviewedPage() {
+  return <ReviewedEvaluationsView level={UserRoleSystem.ManagerMid} />;
 }

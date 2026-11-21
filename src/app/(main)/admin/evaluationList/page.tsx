@@ -1,7 +1,5 @@
-import { GeneralHrEvaluations } from "@/features/evaluation/components/GeneralHrEvaluations";
+import { GeneralHrEvaluationsView } from "@/features/evaluation/components/GeneralHrEvaluationsView";
 
-export const metadata = { title: "Theo dõi đánh giá | Đèo Cả" };
-
-export default async function GeneralHrPage() {
-  return <GeneralHrEvaluations />;
+export default function AdminEvaluationListPage() {
+  return <GeneralHrEvaluationsView />;
 }

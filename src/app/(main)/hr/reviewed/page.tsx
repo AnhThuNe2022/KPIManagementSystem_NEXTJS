@@ -1,6 +1,6 @@
-import { ReviewedEvaluations } from "@/features/evaluation/components/ReviewedEvaluations";
 import { UserRoleSystem } from "@/features/auth/types";
+import { ReviewedEvaluationsView } from "@/features/evaluation/components/ReviewedEvaluationsView";
 
-export default async function HRReviewedPage() {
-  return <ReviewedEvaluations level={UserRoleSystem.HR} />;
+export default function HrReviewedPage() {
+  return <ReviewedEvaluationsView level={UserRoleSystem.HR} />;
 }

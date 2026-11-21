@@ -1,18 +1,46 @@
-import type { PagedResult } from "@/lib/api/types";
-import type { ReviewedEvaluationDto, ReviewedEvaluationFilters, ReviewRole } from "@/features/evaluation/types";
-import { request } from "@/lib/api/request";
-
-type ReviewedQuery = {
-  level: ReviewRole; page: number; pageSize: number;
-  filters: ReviewedEvaluationFilters; signal?: AbortSignal;
-};
+import type { ReviewRole } from "@/features/auth/types";
+import { request } from "@/lib/http/request";
+import type { PagedResult } from "@/server/api/types";
+import type { ReviewedEvaluationDto, ReviewedEvaluationFilters } from "../types";
 
 export const reviewedEvaluationApi = {
-  get({ level, page, pageSize, filters, signal }: ReviewedQuery) {
-    const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize), rolePage: String(level) });
-    for (const [key, value] of Object.entries(filters)) {
-      if (value.trim()) query.set(key, value.trim());
+  async get(params: {
+    page?: number;
+    pageSize?: number;
+    rolePage: ReviewRole;
+    filters: ReviewedEvaluationFilters;
+    sortBy: string;
+    signal?: AbortSignal;
+  }): Promise<PagedResult<ReviewedEvaluationDto>> {
+    const query = new URLSearchParams({
+      page: String(params.page ?? 1),
+      pageSize: String(params.pageSize ?? 20),
+      rolePage: String(params.rolePage),
+      sortBy: params.sortBy,
+    });
+
+    const entries: Array<[string, string]> = [
+      ["keyword", params.filters.keyword],
+      ["companyId", params.filters.companyId],
+      ["departmentId", params.filters.departmentId],
+      ["typeId", params.filters.typeId],
+      ["periodId", params.filters.periodId],
+      ["status", params.filters.status],
+      ["from", params.filters.from],
+      ["to", params.filters.to],
+    ];
+    for (const [key, val] of entries) {
+      if (val.trim()) query.set(key, val.trim());
     }
-    return request<PagedResult<ReviewedEvaluationDto>>("/evaluation/reviewed?" + query, { signal });
+
+    const data = await request<PagedResult<ReviewedEvaluationDto>>(
+      `/evaluation/reviewed?${query.toString()}`,
+      { signal: params.signal },
+    );
+
+    return {
+      items: Array.isArray(data?.items) ? data.items : [],
+      total: Number(data?.total ?? 0),
+    };
   },
 };

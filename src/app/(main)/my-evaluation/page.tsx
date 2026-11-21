@@ -1,5 +1,5 @@
-import EvaluationList from "@/features/evaluation/components/EvaluationList";
+import { MyEvaluationListView } from "@/features/evaluation/components/MyEvaluationListView";
 
-export default function EvaluationPage() {
-  return <EvaluationList />;
+export default function MyEvaluationPage() {
+  return <MyEvaluationListView />;
 }

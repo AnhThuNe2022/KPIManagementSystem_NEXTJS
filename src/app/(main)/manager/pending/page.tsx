@@ -1,6 +1,6 @@
-import { PendingEvaluations } from "@/features/evaluation/components/PendingEvaluations";
 import { UserRoleSystem } from "@/features/auth/types";
+import { PendingEvaluationsView } from "@/features/evaluation/components/PendingEvaluationsView";
 
-export default async function ManagerPendingPage() {
-  return <PendingEvaluations level={UserRoleSystem.ManagerMid} />;
+export default function ManagerPendingPage() {
+  return <PendingEvaluationsView level={UserRoleSystem.ManagerMid} />;
 }

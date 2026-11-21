@@ -1,43 +1,116 @@
+import { GENERAL_HR_FILTER_STATUS_KEYS } from "@/design-system/registries";
+import { request } from "@/lib/http/request";
+import { unwrapApiData, type ApiResponse, type PagedResult } from "@/server/api/types";
 import type {
-  GeneralHrEvaluationDto, GeneralHrEvaluationRequest, GeneralHrStatusChange,
-  ApprovalHistoryEntry, EvaluationApprover,
-} from "@/features/evaluation/types";
-import type {
-  PagedResult,
-} from "@/lib/api/types";
-import { downloadFile, request } from "@/lib/api/request";
+  ApprovalHistoryEntry,
+  EvaluationApprover,
+  GeneralHrEvaluationDto,
+  GeneralHrFilters,
+  TemplateStatusOption,
+} from "../types";
+
+export interface ReviewerOption {
+  id: string;
+  fullName: string;
+  systemCode: string | null;
+}
 
 export const generalHrEvaluationApi = {
-  async getPaged(body: GeneralHrEvaluationRequest, signal?: AbortSignal) {
-    const response = await request<{ data: PagedResult<GeneralHrEvaluationDto> }>("/evaluation/paged", {
+  async getPaged(params: {
+    page?: number;
+    pageSize?: number;
+    filters: GeneralHrFilters;
+    signal?: AbortSignal;
+  }): Promise<PagedResult<GeneralHrEvaluationDto>> {
+    const { filters } = params;
+    const isMatchAll =
+      filters.statuses.length === 0 ||
+      filters.statuses.length >= GENERAL_HR_FILTER_STATUS_KEYS.length;
+
+    const payload = {
+      Page: params.page ?? 1,
+      PageSize: params.pageSize ?? 10,
+      Filters: {
+        keyword: filters.keyword.trim() || undefined,
+        companyid: filters.companyId.trim() || undefined,
+        departmentid: filters.departmentId.trim() || undefined,
+        userapprove: filters.reviewerId.trim() || undefined,
+        evaluationtypeid: filters.typeId.trim() || undefined,
+        periodid: filters.periodId.trim() || undefined,
+        status: isMatchAll ? "" : filters.statuses.join(";"),
+        ismatchall: isMatchAll ? "true" : "false",
+        sortBy: "Id",
+        sortOrder: filters.sortOrder,
+      },
+    };
+
+    const raw = await request<
+      ApiResponse<PagedResult<GeneralHrEvaluationDto>> | PagedResult<GeneralHrEvaluationDto>
+    >("/evaluation/paged", {
       method: "POST",
-      body: JSON.stringify(body),
-      signal,
+      body: JSON.stringify(payload),
+      signal: params.signal,
     });
-    return response.data;
+    const unwrapped = unwrapApiData(raw);
+    return {
+      items: Array.isArray(unwrapped?.items) ? unwrapped.items : [],
+      total: Number(unwrapped?.total ?? 0),
+    };
   },
-  exportExcel(items: GeneralHrEvaluationDto[], signal?: AbortSignal) {
-    return downloadFile("/export-file/list-evaluations", {
-      method: "POST", body: JSON.stringify(items), signal,
-    }, "danh-sach-danh-gia.xlsx");
+
+  async getReviewers(signal?: AbortSignal): Promise<ReviewerOption[]> {
+    const raw = await request<
+      Array<{ id: string; fullName?: string | null; systemCode?: string | null }> |
+      ApiResponse<Array<{ id: string; fullName?: string | null; systemCode?: string | null }>>
+    >("/employeeinfor/get-user-by-filter?Filters[userapprove]=1", { signal });
+    const unwrapped = unwrapApiData(raw);
+    if (!Array.isArray(unwrapped)) return [];
+    return unwrapped.map((item) => ({
+      id: String(item.id),
+      fullName: item.fullName?.trim() || String(item.id),
+      systemCode: item.systemCode ?? null,
+    }));
   },
-  getReviewers(signal?: AbortSignal) {
-    const query = new URLSearchParams({ "Filters[userapprove]": "1" });
-    return request<{ id: string; fullName: string; systemCode?: string }[]>("/employeeinfor/get-user-by-filter?" + query, { signal });
+
+  async getApprovalHistory(id: number, signal?: AbortSignal): Promise<ApprovalHistoryEntry[]> {
+    const raw = await request<ApprovalHistoryEntry[] | ApiResponse<ApprovalHistoryEntry[]>>(
+      `/evaluation/${id}/approval-history`,
+      { signal },
+    );
+    const unwrapped = unwrapApiData(raw);
+    return Array.isArray(unwrapped) ? unwrapped : [];
   },
-  getApprovalHistory(id: number, signal?: AbortSignal) {
-    return request<ApprovalHistoryEntry[]>("/evaluation/" + id + "/approval-history", { signal });
+
+  async getApprovers(id: number, signal?: AbortSignal): Promise<EvaluationApprover[]> {
+    const raw = await request<EvaluationApprover[] | ApiResponse<EvaluationApprover[]>>(
+      `/evaluation/${id}/steps`,
+      { signal },
+    );
+    const unwrapped = unwrapApiData(raw);
+    return Array.isArray(unwrapped) ? unwrapped : [];
   },
-  getApprovers(id: number, signal?: AbortSignal) {
-    return request<EvaluationApprover[]>("/evaluation/" + id + "/steps", { signal });
+
+  async getStatuses(templateId: number, signal?: AbortSignal): Promise<TemplateStatusOption[]> {
+    const raw = await request<TemplateStatusOption[] | ApiResponse<TemplateStatusOption[]>>(
+      `/evaluation/statuses?templateid=${encodeURIComponent(String(templateId))}`,
+      { signal },
+    );
+    const unwrapped = unwrapApiData(raw);
+    return Array.isArray(unwrapped) ? unwrapped : [];
   },
-  getStatuses(templateId: number, signal?: AbortSignal) {
-    return request<{ status: number; stepStatus?: string | null }[]>("/evaluation/statuses?templateid=" + templateId, { signal });
+
+  async changeStatus(params: { evalId: number; status: number; reason: string }): Promise<void> {
+    await request("/evaluation/change-status", {
+      method: "POST",
+      body: JSON.stringify({
+        EvalId: params.evalId,
+        Status: params.status,
+        Reason: params.reason.trim(),
+      }),
+    });
   },
-  changeStatus(body: GeneralHrStatusChange) {
-    return request("/evaluation/change-status", { method: "POST", body: JSON.stringify(body) });
-  },
-  remove(id: number) {
-    return request("/evaluation/" + id, { method: "DELETE" });
+
+  async remove(id: number): Promise<void> {
+    await request(`/evaluation/${id}`, { method: "DELETE" });
   },
 };
