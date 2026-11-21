@@ -1,8 +1,5 @@
-import type { Metadata } from "next";
-import { Notifications } from "@/features/notifications/components/Notifications";
-
-export const metadata: Metadata = { title: "Thông báo | KPI Management" };
+import { NotificationsPageView } from "@/features/notifications/components/NotificationsPageView";
 
 export default function NotificationsPage() {
-  return <Notifications />;
+  return <NotificationsPageView />;
 }

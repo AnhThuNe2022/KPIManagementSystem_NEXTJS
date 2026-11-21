@@ -1,454 +1,230 @@
 "use client";
 
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { Popover } from "@astryxdesign/core/Popover";
+import { Bell, Check, CheckCheck, Trash2 } from "lucide-react";
 import {
-  BellIcon,
-  CheckIcon,
-  ClockIcon,
-  Cross2Icon,
-  MagnifyingGlassIcon,
-  ArrowRightIcon,
-  EnvelopeClosedIcon,
-  EnvelopeOpenIcon,
-  InfoCircledIcon,
-  TrashIcon,
-} from "@radix-ui/react-icons";
-import { notificationApi, NOTIFICATIONS_CHANGED } from "@/features/notifications/services/notificationApi";
-import type { NotificationItem, NotificationPage } from "@/features/notifications/types";
-import "./NotificationBell.css";
-import { searchText, internalNotificationLink } from "@/features/notifications/notificationUtils";
+  AppButton,
+  AppIconButton,
+  AppTextInput,
+  InlineErrorBanner,
+  StatusFilterTabs,
+} from "@/components/ds";
+import { NOTIFICATIONS_CHANGED_EVENT, subscribeAppEvent } from "@/lib/events/appEvents";
+import { formatDateTime, normalizeVietnamese } from "@/lib/format/formatters";
+import { getErrorMessage, isAbortError } from "@/lib/http/request";
+import { resolveInternalLink } from "@/lib/security/redirect";
+import { notificationApi } from "../services/notificationApi";
+import type { NotificationItem } from "../types";
 
-const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
-  hour: "2-digit",
-  minute: "2-digit",
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-});
-
-function notificationDate(value: string | null) {
-  if (!value) return "";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) || date.getFullYear() < 1900
-    ? ""
-    : dateFormatter.format(date);
-}
-
-function errorMessage(error: unknown) {
-  if (error instanceof Error && error.message === "UNAUTHORIZED") {
-    return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
-  }
-  return "Không thể cập nhật thông báo lúc này. Vui lòng thử lại.";
-}
-
-export function NotificationBell() {
+export function NotificationBell({ triggerClassName }: { triggerClassName?: string } = {}) {
   const router = useRouter();
-  const popupId = useId();
-  const rootRef = useRef<HTMLDivElement>(null);
-  const bellRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLElement>(null);
-  const [open, setOpen] = useState(false);
-  const [data, setData] = useState<NotificationPage | null>(null);
-  const [revision, setRevision] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [items, setItems] = useState<NotificationItem[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | "unread">("all");
   const [query, setQuery] = useState("");
-  const [unreadOnly, setUnreadOnly] = useState(false);
-  const searchRef = useRef<HTMLInputElement>(null);
-  const unread = data?.unreadCount ?? 0;
-  const disabled = loading || busy;
-  const items = data?.items ?? [];
-  const recentUnread = items.filter((item) => !item.isRead).length;
-  const term = searchText(query);
-  // Search is scoped to the recent items returned by the existing API.
-  const visibleItems = items.filter(
-    (item) => (!unreadOnly || !item.isRead) && searchText(item.message).includes(term),
-  );
+  const [revision, setRevision] = useState(0);
 
-  useEffect(() => {
-    const refresh = () => setRevision((value) => value + 1);
-    window.addEventListener(NOTIFICATIONS_CHANGED, refresh);
-    return () => window.removeEventListener(NOTIFICATIONS_CHANGED, refresh);
-  }, []);
-
-  useLayoutEffect(() => {
-    if (!open) return;
-    function alignPointer() {
-      const panel = panelRef.current;
-      const bell = bellRef.current;
-      if (panel && bell) {
-        const anchor = bell.getBoundingClientRect();
-        const bounds = panel.getBoundingClientRect();
-        // Ignore the opening scale when measuring the arrow's resting position.
-        const scale = bounds.width / panel.offsetWidth;
-        const origin = parseFloat(getComputedStyle(panel).transformOrigin);
-        const left = bounds.left - origin * (1 - scale);
-        panel.style.setProperty("--anchor-x", `${anchor.left + anchor.width / 2 - left}px`);
-      }
-    }
-    alignPointer();
-    window.addEventListener("resize", alignPointer);
-    return () => window.removeEventListener("resize", alignPointer);
-  }, [open]);
-
-  useEffect(() => {
-    const controller = new AbortController();
+  const loadRecent = useCallback((signal?: AbortSignal) => {
     setLoading(true);
-    setError("");
+    setError(null);
     notificationApi
-      .get({ pageSize: 5, signal: controller.signal })
-      .then((result) => {
-        if (!controller.signal.aborted) setData({ ...result, items: result.items.slice(0, 5) });
+      .get({ page: 1, pageSize: 5, signal })
+      .then((res) => {
+        if (signal?.aborted) return;
+        setItems(res.items);
+        setUnreadCount(res.unreadCount);
       })
-      .catch((cause: unknown) => {
-        if (!controller.signal.aborted) setError(errorMessage(cause));
+      .catch((cause) => {
+        if (!isAbortError(cause)) {
+          setError(getErrorMessage(cause, "Không tải được thông báo."));
+        }
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!signal?.aborted) setLoading(false);
       });
-    return () => controller.abort();
-  }, [revision]);
+  }, []);
 
   useEffect(() => {
-    if (!open) return;
-    panelRef.current?.focus({ preventScroll: true });
-    function onPointerDown(event: PointerEvent) {
-      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setOpen(false);
-    }
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setOpen(false);
-        bellRef.current?.focus();
+    const ctrl = new AbortController();
+    loadRecent(ctrl.signal);
+    return () => ctrl.abort();
+  }, [loadRecent, revision]);
+
+  useEffect(() => {
+    return subscribeAppEvent(NOTIFICATIONS_CHANGED_EVENT, () => setRevision((v) => v + 1));
+  }, []);
+
+  const visibleItems = useMemo(() => {
+    const needle = normalizeVietnamese(query);
+    return items.filter((item) => {
+      if (filter === "unread" && item.isRead) return false;
+      if (needle && !normalizeVietnamese(item.message).includes(needle)) return false;
+      return true;
+    });
+  }, [filter, items, query]);
+
+  const handleOpenItem = async (item: NotificationItem) => {
+    const target = resolveInternalLink(item.linkNoti);
+    if (!item.isRead) {
+      try {
+        await notificationApi.markRead(item.id);
+      } catch {
+        // Ignore non-blocking mark-read failure before navigation
       }
     }
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
-
-  function closePanel() {
-    setOpen(false);
-    bellRef.current?.focus();
-  }
-
-  async function mutate(action: () => Promise<unknown>, onSuccess?: () => void) {
-    if (disabled) return;
-    setBusy(true);
-    setError("");
-    try {
-      await action();
-      if (panelRef.current?.contains(document.activeElement))
-        panelRef.current.focus({ preventScroll: true });
-      onSuccess?.();
-    } catch (cause) {
-      setError(errorMessage(cause));
-    } finally {
-      setBusy(false);
+    if (target) {
+      setIsOpen(false);
+      router.push(target);
     }
-  }
+  };
 
-  function selectNotification(item: NotificationItem) {
-    const href = internalNotificationLink(item.linkNoti);
-    const navigate = () => {
-      if (href) {
-        closePanel();
-        router.push(href);
-      }
-    };
-    if (item.isRead) navigate();
-    else void mutate(() => notificationApi.markRead(item.id), navigate);
-  }
+  const unreadDisplay = unreadCount > 99 ? "99+" : String(unreadCount);
 
   return (
-    <div
-      ref={rootRef}
-      className="notification-bell__root"
-      onBlur={(event) => {
-        if (
-          event.relatedTarget instanceof Node &&
-          !event.currentTarget.contains(event.relatedTarget)
-        )
-          setOpen(false);
+    <Popover
+      isOpen={isOpen}
+      onOpenChange={(next) => {
+        setIsOpen(next);
+        if (next) setRevision((v) => v + 1);
       }}
-    >
-      <button
-        ref={bellRef}
-        type="button"
-        className="notification-bell__bell"
-        aria-label={unread ? `Thông báo, ${unread} chưa đọc` : "Thông báo"}
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        aria-controls={popupId}
-        onClick={() => {
-          if (open) closePanel();
-          else {
-            setOpen(true);
-            setRevision((value) => value + 1);
-          }
-        }}
-      >
-        <BellIcon width={18} height={18} aria-hidden="true" />
-        {unread > 0 && (
-          <span className="notification-bell__badge" aria-hidden="true">
-            {unread > 99 ? "99+" : unread}
-          </span>
-        )}
-      </button>
-      <section
-        ref={panelRef}
-        id={popupId}
-        role="dialog"
-        tabIndex={-1}
-        aria-labelledby={`${popupId}-title`}
-        inert={!open}
-        data-open={open}
-        className="notification-bell__panel"
-      >
-        <div className="notification-bell__heading">
-          <span className="notification-bell__headingIcon">
-            <BellIcon width={20} height={20} aria-hidden="true" />
-          </span>
-          <div className="notification-bell__headingText">
-            <h2 id={`${popupId}-title`}>Thông báo</h2>
-            <p>
-              {unread > 0 ? (
-                <>
-                  <span className="notification-bell__headingDot" />
-                  {unread} thông báo đang chờ bạn đọc
-                </>
-              ) : (
-                "Các cập nhật dành riêng cho bạn"
-              )}
-            </p>
-          </div>
-          <button
-            type="button"
-            className="notification-bell__iconButton"
-            aria-label="Đóng thông báo"
-            onClick={closePanel}
-          >
-            <Cross2Icon aria-hidden="true" />
-          </button>
-        </div>
-        <div className="notification-bell__searchBox">
-          <MagnifyingGlassIcon aria-hidden="true" />
-          <label htmlFor={`${popupId}-search`} className="notification-bell__srOnly">
-            Tìm trong thông báo gần đây
-          </label>
-          <input
-            ref={searchRef}
-            id={`${popupId}-search`}
-            type="search"
-            value={query}
-            placeholder="Tìm trong thông báo gần đây…"
-            autoComplete="off"
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          {query && (
-            <button
-              type="button"
-              className="notification-bell__clearSearch"
-              aria-label="Xóa từ khóa tìm kiếm"
-              onClick={() => {
-                setQuery("");
-                searchRef.current?.focus();
-              }}
-            >
-              <Cross2Icon aria-hidden="true" />
-            </button>
-          )}
-        </div>
-        <div className="notification-bell__toolbar">
-          <div
-            className="notification-bell__filters"
-            role="group"
-            aria-label="Lọc thông báo gần đây"
-            data-unread={unreadOnly}
-          >
-            <span className="notification-bell__filterIndicator" aria-hidden="true" />
-            <button
-              type="button"
-              className="notification-bell__filter"
-              aria-pressed={!unreadOnly}
-              onClick={() => setUnreadOnly(false)}
-            >
-              Tất cả<span>{items.length}</span>
-            </button>
-            <button
-              type="button"
-              className="notification-bell__filter"
-              aria-pressed={unreadOnly}
-              onClick={() => setUnreadOnly(true)}
-            >
-              Chưa đọc<span>{recentUnread}</span>
-            </button>
-          </div>
-          <button
-            type="button"
-            className="notification-bell__textButton"
-            disabled={disabled || unread === 0}
-            aria-label="Đọc tất cả thông báo"
-            onClick={() => void mutate(() => notificationApi.markAllRead())}
-          >
-            <CheckIcon aria-hidden="true" />
-            Đọc tất cả
-          </button>
-        </div>
-        {error && (
-          <div role="alert" className="notification-bell__error">
-            <InfoCircledIcon aria-hidden="true" />
-            <span>{error}</span>
-            <button
-              type="button"
-              className="notification-bell__textButton"
-              disabled={disabled}
-              onClick={() => setRevision((value) => value + 1)}
-            >
-              Thử lại
-            </button>
-          </div>
-        )}
-        <div className="notification-bell__content" aria-busy={loading || busy}>
-          {loading && !data ? (
-            <div role="status" aria-label="Đang tải thông báo" className="notification-bell__skeletons">
-              {[0, 1, 2].map((key) => (
-                <div key={key} className="notification-bell__skeleton" aria-hidden="true">
-                  <i />
-                  <div>
-                    <i />
-                    <i />
-                  </div>
-                </div>
-              ))}
+      placement="below"
+      alignment="end"
+      content={
+        <div className="flex w-[360px] max-w-[92vw] flex-col gap-3 p-3.5">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-semibold text-primary">Thông báo</h3>
+              <p className="text-xs text-secondary">{unreadCount} chưa đọc</p>
             </div>
-          ) : visibleItems.length ? (
-            <ul className="notification-bell__list">
+            {unreadCount > 0 ? (
+              <AppButton
+                label="Đọc tất cả"
+                variant="ghost"
+                size="sm"
+                icon={<CheckCheck className="h-3.5 w-3.5" />}
+                onClick={() => void notificationApi.markAllRead()}
+              />
+            ) : null}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <AppTextInput
+              label="Tìm thông báo"
+              isLabelHidden
+              type="search"
+              startIcon="search"
+              size="sm"
+              placeholder="Tìm nhanh trong 5 thông báo gần nhất..."
+              value={query}
+              onChange={setQuery}
+              hasClear
+            />
+            <StatusFilterTabs
+              label="Lọc thông báo"
+              value={filter}
+              onChange={(v) => setFilter(v === "unread" ? "unread" : "all")}
+              items={[
+                { value: "all", label: "Tất cả" },
+                { value: "unread", label: "Chưa đọc", count: unreadCount },
+              ]}
+            />
+          </div>
+
+          {error ? (
+            <InlineErrorBanner message={error} onRetry={() => setRevision((v) => v + 1)} />
+          ) : loading && items.length === 0 ? (
+            <p className="py-6 text-center text-xs text-secondary">Đang tải thông báo...</p>
+          ) : visibleItems.length === 0 ? (
+            <p className="py-6 text-center text-xs text-secondary">Không có thông báo phù hợp.</p>
+          ) : (
+            <ul className="flex max-h-80 flex-col divide-y divide-border overflow-y-auto">
               {visibleItems.map((item) => {
-                const date = notificationDate(item.createdAt);
+                const target = resolveInternalLink(item.linkNoti);
+                const interactive = !item.isRead || Boolean(target);
                 return (
-                  <li key={item.id} className="notification-bell__row" data-unread={!item.isRead}>
-                    <span className="notification-bell__itemIcon">
-                      {item.isRead ? (
-                        <EnvelopeOpenIcon aria-hidden="true" />
-                      ) : (
-                        <EnvelopeClosedIcon aria-hidden="true" />
-                      )}
-                    </span>
+                  <li
+                    key={item.id}
+                    className={`flex items-start gap-2.5 px-2 py-2.5 ds-interactive ${
+                      item.isRead ? "bg-surface" : "bg-blue-subtle/50"
+                    }`}
+                  >
                     <button
                       type="button"
-                      className="notification-bell__message"
-                      disabled={disabled}
-                      title={item.message}
-                      onClick={() => selectNotification(item)}
-                      aria-label={`${item.message}${item.isRead ? ", đã đọc" : ", đánh dấu đã đọc"}`}
+                      disabled={!interactive}
+                      onClick={() => void handleOpenItem(item)}
+                      className="flex flex-1 flex-col gap-1 text-left disabled:cursor-default"
                     >
-                      <span>{item.message}</span>
-                      <span className="notification-bell__messageMeta">
-                        {date && (
-                          <>
-                            <ClockIcon aria-hidden="true" />
-                            <time dateTime={item.createdAt ?? undefined}>{date}</time>
-                          </>
-                        )}
-                        {!item.isRead && (
-                          <span className="notification-bell__unreadStatus">
-                            <i aria-hidden="true" />
-                            Chưa đọc
-                          </span>
-                        )}
+                      <span
+                        className={`text-xs leading-relaxed ${
+                          item.isRead ? "text-secondary" : "font-semibold text-primary"
+                        }`}
+                      >
+                        {item.message}
+                      </span>
+                      <span className="text-[11px] text-disabled">
+                        {formatDateTime(item.createdAt)}
                       </span>
                     </button>
-                    <div className="notification-bell__rowActions">
-                      {!item.isRead && (
-                        <button
-                          type="button"
-                          className={`notification-bell__iconButton notification-bell__readButton`}
-                          disabled={disabled}
-                          aria-label={`Đánh dấu đã đọc: ${item.message}`}
-                          title="Đánh dấu đã đọc"
-                          onClick={() => void mutate(() => notificationApi.markRead(item.id))}
-                        >
-                          <CheckIcon aria-hidden="true" />
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        className={`notification-bell__iconButton notification-bell__deleteButton`}
-                        disabled={disabled}
-                        title="Xóa thông báo"
-                        aria-label={`Xóa thông báo: ${item.message}`}
-                        onClick={() => void mutate(() => notificationApi.deleteOne(item.id))}
-                      >
-                        <TrashIcon aria-hidden="true" />
-                      </button>
+                    <div className="flex shrink-0 items-center gap-0.5">
+                      {!item.isRead ? (
+                        <AppIconButton
+                          label="Đánh dấu đã đọc"
+                          icon={<Check className="h-3.5 w-3.5" />}
+                          onClick={() => void notificationApi.markRead(item.id)}
+                        />
+                      ) : null}
+                      <AppIconButton
+                        label="Xóa thông báo"
+                        icon={<Trash2 className="h-3.5 w-3.5 text-error" />}
+                        onClick={() => void notificationApi.deleteOne(item.id)}
+                      />
                     </div>
                   </li>
                 );
               })}
             </ul>
-          ) : (
-            <div className="notification-bell__empty">
-              <span className="notification-bell__emptyIcon">
-                {term ? (
-                  <MagnifyingGlassIcon aria-hidden="true" />
-                ) : (
-                  <EnvelopeOpenIcon aria-hidden="true" />
-                )}
-              </span>
-              <p>
-                {error && !data
-                  ? "Chưa tải được thông báo"
-                  : term
-                    ? "Không tìm thấy thông báo"
-                    : unreadOnly
-                      ? "Không có thông báo chưa đọc"
-                      : "Chưa có thông báo"}
-              </p>
-              <span>
-                {error && !data
-                  ? "Hãy thử tải lại sau ít phút."
-                  : term
-                    ? "Thử từ khóa khác hoặc bỏ bộ lọc đang chọn."
-                    : unreadOnly
-                      ? "Bạn đã xem hết các thông báo gần đây."
-                      : "Những cập nhật mới sẽ xuất hiện tại đây."}
-              </span>
-              {(term || unreadOnly) && items.length > 0 && (
-                <button
-                  type="button"
-                  className="notification-bell__textButton"
-                  onClick={() => {
-                    setQuery("");
-                    setUnreadOnly(false);
-                  }}
-                >
-                  Xem tất cả thông báo gần đây
-                </button>
-              )}
-            </div>
           )}
+
+          <div className="border-t border-border pt-2">
+            <AppButton
+              label="Xem tất cả thông báo"
+              variant="secondary"
+              size="sm"
+              width="100%"
+              href="/notifications"
+              onClick={() => setIsOpen(false)}
+            />
+          </div>
         </div>
-        <div className="notification-bell__footer">
-          <span role="status" aria-live="polite" aria-atomic="true">
-            {loading && !data
-              ? "Đang tải cập nhật…"
-              : data
-                ? `${visibleItems.length}/${items.length} thông báo gần đây`
-                : "Thông báo gần đây"}
-          </span>
-          <Link href="/notifications" className="notification-bell__viewAll" onClick={() => setOpen(false)}>
-            Xem tất cả
-            <ArrowRightIcon aria-hidden="true" />
-          </Link>
-        </div>
-      </section>
-    </div>
+      }
+    >
+      {(triggerProps) => (
+        <button
+          ref={triggerProps.ref}
+          type="button"
+          onClick={triggerProps.onClick}
+          aria-haspopup={triggerProps["aria-haspopup"]}
+          aria-expanded={triggerProps["aria-expanded"]}
+          aria-controls={triggerProps["aria-controls"]}
+          aria-label={`Thông báo (${unreadCount} chưa đọc)`}
+          className={
+            triggerClassName ||
+            "relative flex h-9 w-9 items-center justify-center rounded-md text-secondary ds-interactive hover:bg-overlay-hover hover:text-primary"
+          }
+        >
+          <Bell className="h-[18px] w-[18px]" />
+          {unreadCount > 0 ? (
+            <span className="absolute -right-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold text-on-error shadow-sm">
+              {unreadDisplay}
+            </span>
+          ) : null}
+        </button>
+      )}
+    </Popover>
   );
 }

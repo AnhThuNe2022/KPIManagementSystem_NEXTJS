@@ -1,73 +1,64 @@
-import type { DepartmentDto } from "@/features/department/types";
-
 export interface EmployeeInforDto {
-  id?: string;
-  fullName?: string;
-  email?: string;
-
-  departmentId?: number;
-  department?: DepartmentDto;
-
-  jobPositionId?: number;
-  jobPosition?: JobPosition;
-
-  employeeCode?: string;
-  systemCode?: string;
-  jobTitle?: string;
-  userName?: string;
-
-  companyId?: number;
-  companyName?: string;
-
+  id: string;
+  fullName: string;
+  email: string;
+  departmentId?: number | null;
+  department?: { id: number; name: string } | null;
+  jobPositionId?: number | null;
+  jobPosition?: { id: number; name: string } | null;
+  employeeCode?: string | null;
+  systemCode?: string | null;
+  jobTitle?: string | null;
+  userName?: string | null;
+  companyId?: number | null;
+  companyName?: string | null;
   roles?: string[];
 }
 
-export interface JobPosition {
-  id: number;
-  name: string;
+export interface UserOrganizationDto {
+  id?: number;
+  /** Client-only stable key for unsaved drafts so multiple new rows never collide or overwrite each other. */
+  _localKey?: string;
+  userId?: string;
+  userName?: string;
+  assignmentType: number;
+  employeeCode?: string | null;
+  companyId: number;
+  companyName?: string | null;
+  companyCode?: string | null;
+  departmentId: number;
+  departmentName?: string | null;
+  jobPositionId?: number | null;
+  jobPositionName?: string | null;
+  jobTitle?: string | null;
+  managerID?: string | null;
+  managerName?: string | null;
+  managerJobTitle?: string | null;
+  managerDepartmentName?: string | null;
+  managerCompanyName?: string | null;
+  managerOrganizationId?: number | null;
+  isActive?: boolean;
+  isDeleted?: boolean;
+}
+
+export interface AvailableManager {
+  id: string | number;
+  userId?: string | null;
+  userName: string;
+  systemCode?: string | null;
+  employeeCode?: string | null;
+  jobTitle?: string | null;
+  jobPositionName?: string | null;
+  companyId?: number | null;
+  departmentId?: number | null;
+  departmentName?: string | null;
+  companyName?: string | null;
 }
 
 export interface ChangePasswordDto {
   cmsUsername?: string;
   cmsPassword?: string;
   currentPassword?: string;
-  newPassword?: string;
-  confirmPassword?: string;
-}
-
-
-export enum AssignmentType {
-  Primary = 1,
-  Concurrent = 2,
-}
-
-export interface UserOrganizationDto {
-  id?: number;
-
-  userId?: string;
-  userName?:string;
-
-  assignmentType: AssignmentType;
-  employeeCode?: string;
-
-  companyId?: number;
-  companyName?: string;
-
-  departmentId?: number;
-  departmentName?: string;
-
-  jobPositionId?: number;
-  jobPositionName?: string;
-
-  jobTitle?: string;
-
-  managerID?: string;
-  managerName?: string;
-  managerJobTitle?: string;
-  managerDepartmentName?: string;
-  managerCompanyName?: string;
-  managerOrganizationId?:number,
-
-  isActive: boolean;
-  isDeleted: boolean;
+  newPassword: string;
+  confirmPassword: string;
 }

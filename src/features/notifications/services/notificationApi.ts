@@ -1,67 +1,86 @@
-import { request as apiRequest } from "@/lib/api/request";
-import { NotificationDto, NotificationPage } from "@/features/notifications/types";
-
-export const NOTIFICATIONS_CHANGED = "notifications:changed";
-
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const result = await apiRequest<T>(endpoint, options);
-  if (options.method && options.method !== "GET") window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED));
-  return result;
-}
-
+import { emitAppEvent, NOTIFICATIONS_CHANGED_EVENT } from "@/lib/events/appEvents";
+import { request } from "@/lib/http/request";
+import type { NotificationDto, NotificationItem, NotificationPage } from "../types";
 
 export const notificationApi = {
-  async get({ page = 1, pageSize = 20, all = false, signal }: {
+  async get(params: {
     page?: number;
     pageSize?: number;
     all?: boolean;
     signal?: AbortSignal;
   } = {}): Promise<NotificationPage> {
-    const data = await request<NotificationPage>(
-      `/notifications?page=${all ? 1 : page}&pagesize=${pageSize}`,
-      { signal }
+    const page = params.page ?? 1;
+    const pageSize = params.pageSize ?? 10;
+
+    const first = await request<NotificationPage>(
+      `/notifications?page=${page}&pagesize=${pageSize}`,
+      { signal: params.signal },
     );
 
-    if (!all) return data;
+    const normalizedFirst: NotificationPage = {
+      unreadCount: Number(first?.unreadCount ?? 0),
+      total: Number(first?.total ?? 0),
+      items: Array.isArray(first?.items) ? first.items : [],
+      page: Number(first?.page ?? page),
+      pageSize: Number(first?.pageSize ?? pageSize),
+    };
 
-    // shortcut: fetch remaining pages for local search/filters until the backend supports them.
-    const items = [...data.items];
-    const batchSize = data.items.length;
-    for (let nextPage = 2; batchSize && (nextPage - 1) * batchSize < data.total; nextPage++) {
-      const next = await notificationApi.get({ page: nextPage, pageSize, signal });
-      if (!next.items.length) break;
-      items.push(...next.items);
+    if (!params.all || normalizedFirst.items.length >= normalizedFirst.total) {
+      return normalizedFirst;
     }
-    return { ...data, items: Array.from(new Map(items.map((item) => [item.id, item])).values()) };
-  },
 
-  async markRead(id: number) {
-    return request<unknown>(`/notifications/mark-read/${encodeURIComponent(id)}`, {
-      method: "POST",
-    });
-  },
-
-  async markAllRead() {
-    return request<unknown>("/notifications/mark-all-read", { method: "POST" });
-  },
-
-  async deleteOne(id: number) {
-    return request<unknown>(`/notifications/${encodeURIComponent(id)}`, {
-      method: "DELETE",
-    });
-  },
-
-  async deleteAll() {
-    return request<unknown>("/notifications/all", { method: "DELETE" });
-  },
-
-  async sendMessage(model: NotificationDto) {
-    return request<NotificationDto>(
-      "/notifications/sendMessage",
-      {
-        method: "POST",
-        body: JSON.stringify(model),
+    const collected: NotificationItem[] = [...normalizedFirst.items];
+    const totalPages = Math.ceil(normalizedFirst.total / pageSize);
+    for (let nextPage = 2; nextPage <= totalPages; nextPage += 1) {
+      if (params.signal?.aborted) break;
+      const chunk = await request<NotificationPage>(
+        `/notifications?page=${nextPage}&pagesize=${pageSize}`,
+        { signal: params.signal },
+      );
+      if (Array.isArray(chunk?.items) && chunk.items.length > 0) {
+        collected.push(...chunk.items);
+      } else {
+        break;
       }
-    );
+    }
+
+    return {
+      ...normalizedFirst,
+      items: collected,
+    };
+  },
+
+  async markRead(id: number): Promise<void> {
+    await request(`/notifications/mark-read/${id}`, { method: "POST" });
+    emitAppEvent(NOTIFICATIONS_CHANGED_EVENT);
+  },
+
+  async markAllRead(): Promise<void> {
+    await request("/notifications/mark-all-read", { method: "POST" });
+    emitAppEvent(NOTIFICATIONS_CHANGED_EVENT);
+  },
+
+  async deleteOne(id: number): Promise<void> {
+    await request(`/notifications/${id}`, { method: "DELETE" });
+    emitAppEvent(NOTIFICATIONS_CHANGED_EVENT);
+  },
+
+  async deleteAll(): Promise<void> {
+    await request("/notifications/all", { method: "DELETE" });
+    emitAppEvent(NOTIFICATIONS_CHANGED_EVENT);
+  },
+
+  async sendMessage(
+    payload: NotificationDto,
+    options?: { silentEvent?: boolean },
+  ): Promise<NotificationDto> {
+    const res = await request<NotificationDto>("/notifications/sendMessage", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (!options?.silentEvent) {
+      emitAppEvent(NOTIFICATIONS_CHANGED_EVENT);
+    }
+    return res;
   },
 };

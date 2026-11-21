@@ -1,122 +1,180 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  Cross2Icon,
-  PaperPlaneIcon,
-} from "@radix-ui/react-icons";
-import "../user-common.css";
+  AppForm,
+  AppTextArea,
+  FormDialog,
+  InlineErrorBanner,
+  useAppToast,
+} from "@/components/ds";
+import { AssignmentScopeType, ConditionStatus } from "@/design-system/registries";
+import { conditionAssignmentApi } from "@/features/condition-assignments/services/conditionAssignmentApi";
+import { notificationApi } from "@/features/notifications/services/notificationApi";
+import { EnumCodeNoti } from "@/features/notifications/types";
+import { getErrorMessage } from "@/lib/http/request";
+import type { EmployeeInforDto, UserOrganizationDto } from "../types";
 
-interface ComplaintDialogProps {
-  open: boolean;
-  value: string;
-  loading?: boolean;
-  onChange: (value: string) => void;
-  onClose: () => void;
-  onSubmit: () => void;
-}
+export function ComplaintDialog({
+  isOpen,
+  onOpenChange,
+  userId,
+  employee,
+  assignments,
+}: {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  userId: string;
+  employee: EmployeeInforDto | null;
+  assignments: UserOrganizationDto[];
+}) {
+  const showToast = useAppToast();
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
 
-export default function ComplaintDialog({
-  open,
-  value,
-  loading = false,
-  onChange,
-  onClose,
-  onSubmit,
-}: ComplaintDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  // Preserve alertGroupId & already-sent recipients across retries so no duplicate alerts are sent
+  const alertGroupIdRef = useRef<string | null>(null);
+  const sentUserIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    if (!open) return;
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (!dialog.open) dialog.showModal();
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      dialog.close();
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [open]);
+    if (!isOpen) {
+      setReason("");
+      setError(null);
+      alertGroupIdRef.current = null;
+      sentUserIdsRef.current = new Set();
+    }
+  }, [isOpen]);
 
-  if (!open) return null;
+  const handleSubmit = async () => {
+    const trimmed = reason.trim();
+    if (!trimmed) {
+      setError("Vui lòng nhập thông tin cần báo lỗi hoặc điều chỉnh.");
+      return;
+    }
+    if (!employee) {
+      setError("Không tìm thấy thông tin nhân viên.");
+      return;
+    }
+
+    const companyIds = Array.from(
+      new Set(
+        assignments
+          .filter((a) => !a.isDeleted && a.companyId > 0)
+          .map((a) => a.companyId),
+      ),
+    );
+    if (companyIds.length === 0) {
+      showToast("warning", "Không tìm thấy công ty của nhân viên để xác định người tiếp nhận.");
+      return;
+    }
+
+    setIsSending(true);
+    setError(null);
+    try {
+      const listCondition = await conditionAssignmentApi.getAll({
+        statuscondition: ConditionStatus.ByUnitHRCompile,
+        isactive: "true",
+        scopevalue: String(AssignmentScopeType.Company),
+        idvalue: companyIds.join(","),
+      });
+
+      const receivers = Array.from(
+        new Map(
+          listCondition
+            .filter((x) => x.userId && x.userId.trim() !== "")
+            .map((x) => [x.userId, x]),
+        ).values(),
+      );
+
+      if (receivers.length === 0) {
+        showToast("warning", "Không tìm thấy nhân sự HR tiếp nhận cho công ty của bạn.");
+        return;
+      }
+
+      if (!alertGroupIdRef.current) {
+        alertGroupIdRef.current =
+          typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID()
+            : `alert-${Date.now()}`;
+      }
+      const alertGroupId = alertGroupIdRef.current;
+
+      for (const receiver of receivers) {
+        if (sentUserIdsRef.current.has(receiver.userId)) continue;
+        await notificationApi.sendMessage(
+          {
+            alertGroupId,
+            userId: receiver.userId,
+            senderUserId: userId,
+            codeNoti: String(EnumCodeNoti.COMPLAINT),
+            message: trimmed,
+          },
+          { silentEvent: true },
+        );
+        sentUserIdsRef.current.add(receiver.userId);
+      }
+
+      if (!sentUserIdsRef.current.has("admin")) {
+        const listUser = receivers
+          .map((x) => `${x.fullName ?? x.userId} (${x.systemCodeUser ?? "—"})`)
+          .join(", ");
+        await notificationApi.sendMessage({
+          userId: "admin",
+          alertGroupId,
+          senderUserId: userId,
+          codeNoti: String(EnumCodeNoti.COMPLAINT_ADMIN),
+          message:
+            `Nhân viên [${employee.fullName} (${employee.systemCode ?? "—"})] ` +
+            `đã tạo cuộc trao đổi khiếu nại.\n` +
+            `Nội dung: ${trimmed}\n` +
+            `Đã gửi tới: ${listUser}`,
+        });
+        sentUserIdsRef.current.add("admin");
+      }
+
+      showToast("success", "Đã gửi báo lỗi tới nhân sự tiếp nhận và quản trị viên.");
+      onOpenChange(false);
+    } catch (err) {
+      const msg = getErrorMessage(
+        err,
+        "Gửi báo lỗi chưa hoàn tất. Bạn có thể nhấn Gửi lại để tiếp tục gửi cho các người nhận còn lại.",
+      );
+      setError(msg);
+      showToast("error", msg);
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   return (
-    <dialog
-      className="user-common__dialog"
-      ref={dialogRef}
-      aria-labelledby="ComplaintDialog-title"
-      onCancel={event => {
-        event.preventDefault();
-        if (!loading) onClose();
-      }}
+    <FormDialog
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      title="Báo sai thông tin với HR / Admin"
+      subtitle="Nội dung sẽ được chuyển tự động tới HR tổng hợp phụ trách đơn vị của bạn và quản trị viên."
+      isDirty={Boolean(reason.trim())}
+      isSubmitting={isSending}
+      submitLabel="Gửi báo lỗi"
+      onSubmit={handleSubmit}
     >
-      <div className="user-common__dialogSurface">
-        {/* Header */}
-        <div className="user-common__dialogHeader">
-          <h2 id="ComplaintDialog-title" className="text-lg font-semibold">
-            Báo với admin
-          </h2>
-        </div>
-
-        {/* Content */}
-        <div className="user-common__dialogBody">
-          <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
-            Nhập thông tin sai hoặc cần báo với admin:
-          </p>
-
-          <textarea
-            aria-label="Thông tin cần điều chỉnh"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            rows={4}
-            autoFocus
-            placeholder="Nhập nội dung tại đây..."
-            className="
-              w-full
-              resize-y
-              rounded-lg
-              border
-              border-gray-300
-              bg-gray-50
-              px-3
-              py-2
-              text-sm
-              outline-none
-              transition
-              focus:border-red-500
-              focus:ring-1
-              focus:ring-red-500
-              dark:border-gray-700
-              dark:bg-gray-800
-              dark:text-white
-            "
+      <div className="flex flex-col gap-3">
+        {error ? <InlineErrorBanner message={error} /> : null}
+        <AppForm>
+          <AppTextArea
+            label="Thông tin sai hoặc cần điều chỉnh"
+            value={reason}
+            onChange={(val) => {
+              setReason(val);
+              if (error) setError(null);
+            }}
+            placeholder="Mô tả rõ thông tin cần điều chỉnh (họ tên, chức danh, đơn vị, quản lý...)"
+            rows={5}
+            isRequired
+            isDisabled={isSending}
           />
-        </div>
-
-        {/* Actions */}
-        <div className="user-common__dialogFooter">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className="user-common__button"
-          >
-            <Cross2Icon aria-hidden="true" />
-            Hủy bỏ
-          </button>
-
-          <button
-            type="button"
-            onClick={onSubmit}
-            disabled={loading}
-            className="user-common__primaryButton"
-          >
-            <PaperPlaneIcon aria-hidden="true" />
-            {loading ? "Đang gửi..." : "Xác nhận"}
-          </button>
-        </div>
+        </AppForm>
       </div>
-    </dialog>
+    </FormDialog>
   );
 }

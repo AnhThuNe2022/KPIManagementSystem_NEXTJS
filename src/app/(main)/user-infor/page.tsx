@@ -1,5 +1,5 @@
-import UserInforPage from "@/features/user/components/UserInformation";
+import { UserInformationView } from "@/features/user/components/UserInformationView";
 
-export default function Page() {
-  return <UserInforPage />;
+export default function UserInforPage() {
+  return <UserInformationView />;
 }

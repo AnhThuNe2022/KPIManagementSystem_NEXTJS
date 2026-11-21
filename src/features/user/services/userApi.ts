@@ -1,36 +1,23 @@
-import { request } from "@/lib/api/request";
-// services/user-api.ts
-
-import {
-  EmployeeInforDto,
-  ChangePasswordDto,
-} from "../types";
-
+import { request } from "@/lib/http/request";
+import type { ChangePasswordDto, EmployeeInforDto } from "../types";
 
 export const userApi = {
-  async get(userId: string) {
-    return request<EmployeeInforDto>(
-      `/employeeinfor/infor/${encodeURIComponent(userId)}`
-    );
+  async get(userId: string, signal?: AbortSignal): Promise<EmployeeInforDto> {
+    return request<EmployeeInforDto>(`/employeeinfor/infor/${encodeURIComponent(userId)}`, {
+      signal,
+    });
   },
 
   async changePassword(
-    userId: string | undefined,
-    model: ChangePasswordDto
-  ) {
-    if (!userId) {
-      throw new Error("USER_ID_REQUIRED");
-    }
-
-    return request<{
-      success: boolean;
-      message: string;
-    }>(
+    userId: string,
+    payload: ChangePasswordDto,
+  ): Promise<{ success?: boolean; ok?: boolean; message?: string }> {
+    return request<{ success?: boolean; ok?: boolean; message?: string }>(
       `/employeeinfor/password/${encodeURIComponent(userId)}`,
       {
         method: "POST",
-        body: JSON.stringify(model),
-      }
+        body: JSON.stringify(payload),
+      },
     );
   },
 };

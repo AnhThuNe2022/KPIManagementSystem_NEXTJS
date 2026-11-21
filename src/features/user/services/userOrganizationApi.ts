@@ -1,99 +1,78 @@
-import { request } from "@/lib/api/request";
-import { UserOrganizationDto } from "@/features/user/types";
-
-interface PagedResponse<T> {
-  total: number;
-  items: T[];
-  page: number;
-  pageSize: number;
-}
-
-
-export type AvailableManager = {
-  id: string | number;
-  userId?: string;
-  userName: string;
-  systemCode?: string;
-  employeeCode?: string;
-  jobTitle?: string;
-  jobPositionName?: string;
-  companyId?: number | null;
-  companyName?: string;
-  departmentId?: number | null;
-  departmentName?: string;
-};
+import { request } from "@/lib/http/request";
+import type { PagedResult } from "@/server/api/types";
+import type { AvailableManager, UserOrganizationDto } from "../types";
 
 export const userOrganizationApi = {
-  getAvailableManagers(signal?: AbortSignal) {
-    return request<PagedResponse<AvailableManager>>("/userorganizations/get-page", {
+  async getPaged(userId: string, signal?: AbortSignal): Promise<PagedResult<UserOrganizationDto>> {
+    const data = await request<PagedResult<UserOrganizationDto>>("/userorganizations/get-page", {
       method: "POST",
-      body: JSON.stringify({ Page: 1, Take: 5000, Filters: { AvailableManager: "1" } }),
+      body: JSON.stringify({
+        Filters: { userid: userId },
+        Page: 1,
+        Take: 1000,
+      }),
       signal,
     });
+    return {
+      items: Array.isArray(data?.items) ? data.items : [],
+      total: Number(data?.total ?? 0),
+    };
   },
-  /**
-   * Load các đơn vị công tác của user
-   */
-async getPaged(userId: string) {
-  return request<{
-    items: UserOrganizationDto[];
-    total?: number;
-    page?: number;
-    pageSize?: number;
-  }>("/userorganizations/get-page", {
-    method: "POST",
-    body: JSON.stringify({
-      Filters: {
-        userid: userId,
-      },
-      Page: 1,
-      Take: 1000,
-    }),
-  });
-},
 
-  /**
-   * Search danh sách quản lý trực tiếp
-   *
-   * Dùng chính UserOrganization API,
-   * không có API manager riêng.
-   */
-async searchManagers(
-  userId: string,
-  keyword: string
-): Promise<PagedResponse<UserOrganizationDto>> {
-  return request<PagedResponse<UserOrganizationDto>>(
-    "/userorganizations/get-page",
-    {
+  async getAvailableManagers(signal?: AbortSignal): Promise<AvailableManager[]> {
+    const data = await request<PagedResult<AvailableManager>>("/userorganizations/get-page", {
       method: "POST",
       body: JSON.stringify({
         Page: 1,
-        Take: 5,
-        Filters: {
-          AvailableManager: userId,
-          Keyword: keyword,
-        },
+        Take: 5000,
+        Filters: { AvailableManager: "1" },
       }),
-    }
-  );
-},
+      signal,
+    });
+    return Array.isArray(data?.items) ? data.items : [];
+  },
 
-  /**
-   * Lưu toàn bộ danh sách đơn vị công tác
-   */
-async upsert(
-  userId: string,
-  assignments: UserOrganizationDto[]
-) {
-  return request<{
-    success: boolean;
-    message?: string;
-  }>(
-    `/userorganizations/upsert?userId=${encodeURIComponent(userId)}`,
-    {
+  async searchManagers(
+    userId: string,
+    keyword: string,
+    signal?: AbortSignal,
+  ): Promise<UserOrganizationDto[]> {
+    const data = await request<PagedResult<UserOrganizationDto>>("/userorganizations/get-page", {
       method: "POST",
-      body: JSON.stringify(assignments),
+      body: JSON.stringify({
+        Page: 1,
+        Take: 20,
+        Filters: { AvailableManager: userId, Keyword: keyword.trim() },
+      }),
+      signal,
+    });
+    const items = Array.isArray(data?.items) ? data.items : [];
+    const seen = new Set<string>();
+    const deduped: UserOrganizationDto[] = [];
+    for (const item of items) {
+      const key = String(item.userId ?? item.id ?? "");
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      deduped.push(item);
     }
-  );
-},
-}
+    return deduped;
+  },
+
+  async upsert(
+    userId: string,
+    assignments: UserOrganizationDto[],
+  ): Promise<{ success?: boolean; message?: string }> {
+    const sanitized = assignments.map((item) => {
+      const copy = { ...item };
+      delete copy._localKey;
+      return copy;
+    });
+    return request<{ success?: boolean; message?: string }>(
+      `/userorganizations/upsert?userId=${encodeURIComponent(userId)}`,
+      {
+        method: "POST",
+        body: JSON.stringify(sanitized),
+      },
+    );
+  },
+};
