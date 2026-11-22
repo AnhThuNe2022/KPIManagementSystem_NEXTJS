@@ -501,10 +501,16 @@ export function SummaryListDetailView({
             <EvaluationStatusBadge
               status={row.status}
               displayLabel={row.statusDisplay}
+              isRejected={row.isReject}
               compact
             />
             {row.userDoing ? (
               <span className="truncate text-xs text-secondary">{row.userDoing}</span>
+            ) : null}
+            {!row.isCanApprove ? (
+              <span className="text-[11px] font-medium text-status-warning">
+                Không có quyền chuyển
+              </span>
             ) : null}
           </div>
         ),
@@ -539,27 +545,19 @@ export function SummaryListDetailView({
           <RowActionMenu
             label={`Thao tác hồ sơ ${row.userName}`}
             items={[
-              ...(row.isCanApprove
-                ? [
-                    {
-                      id: "approve",
-                      label: "Gửi duyệt",
-                      icon: <Send className="h-4 w-4" />,
-                      onClick: () => setReviewTarget({ kind: "approve", rows: [row] }),
-                    },
-                  ]
-                : []),
-              ...(row.isReject
-                ? [
-                    {
-                      id: "reject",
-                      label: "Trả về",
-                      icon: <RotateCcw className="h-4 w-4" />,
-                      variant: "destructive" as const,
-                      onClick: () => setReviewTarget({ kind: "reject", rows: [row] }),
-                    },
-                  ]
-                : []),
+              {
+                id: "approve",
+                label: "Gửi duyệt",
+                icon: <Send className="h-4 w-4" />,
+                onClick: () => setReviewTarget({ kind: "approve", rows: [row] }),
+              },
+              {
+                id: "reject",
+                label: "Trả về",
+                icon: <RotateCcw className="h-4 w-4" />,
+                variant: "destructive" as const,
+                onClick: () => setReviewTarget({ kind: "reject", rows: [row] }),
+              },
               {
                 id: "note",
                 label: "Ý kiến BĐH",
@@ -588,9 +586,6 @@ export function SummaryListDetailView({
     ],
     [],
   );
-
-  const approvableSelected = selectedRows.filter((r) => r.isCanApprove);
-  const rejectableSelected = selectedRows.filter((r) => r.isReject);
 
   return (
     <PageFrame>
@@ -755,23 +750,23 @@ export function SummaryListDetailView({
           actions: (
             <>
               <AppButton
-                label={`Gửi duyệt (${approvableSelected.length})`}
+                label={`Gửi duyệt (${selectedRows.length})`}
                 variant="primary"
                 size="sm"
                 icon={<Send className="h-3.5 w-3.5" />}
-                isDisabled={approvableSelected.length === 0 || Boolean(taskState.kind)}
+                isDisabled={selectedRows.length === 0 || Boolean(taskState.kind)}
                 onClick={() =>
-                  setReviewTarget({ kind: "approve", rows: approvableSelected })
+                  setReviewTarget({ kind: "approve", rows: selectedRows })
                 }
               />
               <AppButton
-                label={`Trả về (${rejectableSelected.length})`}
+                label={`Trả về (${selectedRows.length})`}
                 variant="destructive"
                 size="sm"
                 icon={<RotateCcw className="h-3.5 w-3.5" />}
-                isDisabled={rejectableSelected.length === 0 || Boolean(taskState.kind)}
+                isDisabled={selectedRows.length === 0 || Boolean(taskState.kind)}
                 onClick={() =>
-                  setReviewTarget({ kind: "reject", rows: rejectableSelected })
+                  setReviewTarget({ kind: "reject", rows: selectedRows })
                 }
               />
               <AppButton
