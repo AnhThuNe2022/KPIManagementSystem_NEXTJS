@@ -2,12 +2,14 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Card } from "@astryxdesign/core/Card";
-import { Heading } from "@astryxdesign/core/Heading";
-import { Text } from "@astryxdesign/core/Text";
 import {
+  ArrowLeft,
+  Check,
+  ChevronLeft,
+  ChevronRight,
   KeyRound,
-  LayoutList,
+  Loader2,
+  Monitor,
   Plus,
   RefreshCw,
   RotateCcw,
@@ -15,25 +17,24 @@ import {
   Shield,
   Trash2,
   Users,
+  X,
 } from "lucide-react";
 import {
   ActiveStatus,
   AppButton,
-  AppCheckbox,
   AppEmptyState,
   AppForm,
   AppPagination,
   AppSwitch,
-  AppTabs,
   AppTextArea,
   AppTextInput,
   ConfirmDialog,
   InlineErrorBanner,
   LoadingOverlay,
-  MasterDetailFrame,
   PageFrame,
   PageHeader,
   PublicStatusBadge,
+  StatusFilterTabs,
   UserIdentityCell,
   useAppToast,
 } from "@/components/ds";
@@ -56,6 +57,15 @@ const EMPTY_DRAFT: PermissionDraft = {
   isPublic: false,
 };
 
+type AssignFilterMode = "all" | "assigned" | "unassigned";
+
+const INSPECTOR_TABS = [
+  { id: "detail", label: "Chi tiết", icon: KeyRound },
+  { id: "menus", label: "Màn hình", icon: Monitor },
+  { id: "roles", label: "Vai trò", icon: Shield },
+  { id: "users", label: "Người dùng", icon: Users },
+] as const;
+
 function dtoToDraft(item: PermissionDto): PermissionDraft {
   return {
     code: item.code ?? "",
@@ -77,13 +87,17 @@ function parseTab(raw: string | null): PermissionInspectorTab {
   return "detail";
 }
 
+function sortAssignedFirst(items: PermissionAssignmentItem[]): PermissionAssignmentItem[] {
+  return [...items].sort((a, b) => Number(b.isAssigned) - Number(a.isAssigned));
+}
+
 export function PermissionsView() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const showToast = useAppToast();
 
-  // URL-synced state
+  // Trạng thái đồng bộ URL
   const selectedParam = searchParams.get("permission") ?? "";
   const isCreating = selectedParam === "new";
   const activeTab = parseTab(searchParams.get("tab"));
@@ -96,16 +110,18 @@ export function PermissionsView() {
 
   const [catalogSearchInput, setCatalogSearchInput] = useState(queryKeyword);
   const [assignSearchInput, setAssignSearchInput] = useState(assignSearchParam);
+  const [assignFilter, setAssignFilter] = useState<AssignFilterMode>("all");
+  const [mobileShowCatalog, setMobileShowCatalog] = useState(!selectedParam);
   const [reloadTick, setReloadTick] = useState(0);
 
-  // Catalog state
+  // Danh mục quyền (cột trái)
   const [catalogItems, setCatalogItems] = useState<PermissionDto[]>([]);
   const [catalogTotal, setCatalogTotal] = useState(0);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [catalogUnauthorized, setCatalogUnauthorized] = useState(false);
 
-  // Detail state
+  // Chi tiết quyền (cột phải)
   const [selectedDetail, setSelectedDetail] = useState<PermissionDto | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
@@ -115,19 +131,20 @@ export function PermissionsView() {
   const [saveServerError, setSaveServerError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Assignments state
+  // Danh sách đối tượng gán quyền (Màn hình / Vai trò / Người dùng)
   const [assignItems, setAssignItems] = useState<PermissionAssignmentItem[]>([]);
   const [assignTotal, setAssignTotal] = useState(0);
   const [assignLoading, setAssignLoading] = useState(false);
   const [assignError, setAssignError] = useState<string | null>(null);
   const [busyTargets, setBusyTargets] = useState<Set<string>>(() => new Set());
 
-  // Confirm dialogs
+  // Hộp thoại xác nhận
   const [pendingNav, setPendingNav] = useState<(() => void) | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const catalogCtrlRef = useRef<AbortController | null>(null);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const updateUrlParams = useCallback(
     (patch: Record<string, string | null | undefined>) => {
@@ -142,11 +159,17 @@ export function PermissionsView() {
     [pathname, router, searchParams],
   );
 
-  // Sync local search inputs when URL changes externally
+  // Đồng bộ ô tìm kiếm khi URL đổi
   useEffect(() => setCatalogSearchInput(queryKeyword), [queryKeyword]);
   useEffect(() => setAssignSearchInput(assignSearchParam), [assignSearchParam]);
+  useEffect(() => {
+    setAssignFilter("all");
+  }, [activeTab, selectedParam]);
+  useEffect(() => {
+    if (selectedParam) setMobileShowCatalog(false);
+  }, [selectedParam]);
 
-  // Debounce catalog search -> URL `q`
+  // Debounce tìm kiếm danh mục quyền -> URL `q`
   useEffect(() => {
     const trimmed = catalogSearchInput.trim();
     if (trimmed === queryKeyword) return;
@@ -156,7 +179,7 @@ export function PermissionsView() {
     return () => window.clearTimeout(timer);
   }, [catalogSearchInput, queryKeyword, updateUrlParams]);
 
-  // Debounce assignment search -> URL `search`
+  // Debounce tìm kiếm đối tượng gán quyền -> URL `search`
   useEffect(() => {
     const trimmed = assignSearchInput.trim();
     if (trimmed === assignSearchParam) return;
@@ -179,7 +202,7 @@ export function PermissionsView() {
     action();
   };
 
-  // Load catalog
+  // Tải thư viện quyền
   useEffect(() => {
     catalogCtrlRef.current?.abort();
     const ctrl = new AbortController();
@@ -207,7 +230,7 @@ export function PermissionsView() {
     return () => ctrl.abort();
   }, [page, pageSize, queryKeyword, reloadTick]);
 
-  // Load selected permission detail
+  // Tải chi tiết quyền đang chọn
   useEffect(() => {
     setSaveServerError(null);
     setFormErrors({});
@@ -250,7 +273,7 @@ export function PermissionsView() {
     return () => ctrl.abort();
   }, [isCreating, reloadTick, selectedParam]);
 
-  // Load assignments when on menus/roles/users tab
+  // Tải danh sách gán quyền cho Màn hình / Vai trò / Người dùng
   useEffect(() => {
     if (!selectedParam || isCreating || activeTab === "detail") return;
     const ctrl = new AbortController();
@@ -282,7 +305,7 @@ export function PermissionsView() {
     return () => ctrl.abort();
   }, [activeTab, assignSearchParam, isCreating, reloadTick, selectedParam, userPage, userSize]);
 
-  // Group catalog by module
+  // Nhóm danh mục quyền theo phân hệ (Module)
   const groupedCatalog = useMemo(() => {
     const groups = new Map<string, PermissionDto[]>();
     for (const item of catalogItems) {
@@ -293,6 +316,30 @@ export function PermissionsView() {
     }
     return Array.from(groups.entries());
   }, [catalogItems]);
+
+  // Bộ lọc nhanh Tât cả / Đã gán / Chưa gán cho tab Màn hình & Vai trò (không tốn API)
+  const assignCounts = useMemo(() => {
+    let assigned = 0;
+    for (const item of assignItems) {
+      if (item.isAssigned) assigned++;
+    }
+    return {
+      all: assignItems.length,
+      assigned,
+      unassigned: assignItems.length - assigned,
+    };
+  }, [assignItems]);
+
+  const visibleAssignItems = useMemo(() => {
+    if (activeTab === "users" || assignFilter === "all") return assignItems;
+    if (assignFilter === "assigned") return assignItems.filter((item) => item.isAssigned);
+    return assignItems.filter((item) => !item.isAssigned);
+  }, [activeTab, assignFilter, assignItems]);
+
+  const totalCatalogPages = Math.max(1, Math.ceil(catalogTotal / pageSize));
+  const activeTabIndex = isCreating
+    ? 0
+    : Math.max(0, INSPECTOR_TABS.findIndex((t) => t.id === activeTab));
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -322,7 +369,6 @@ export function PermissionsView() {
       }
       setReloadTick((t) => t + 1);
     } catch (err) {
-      // Preserve exact backend validation message
       const msg = getErrorMessage(err, "Không thể lưu thông tin quyền.");
       setSaveServerError(msg);
       showToast("error", msg);
@@ -340,6 +386,7 @@ export function PermissionsView() {
       setDeleteDialogOpen(false);
       setInitialDraft(EMPTY_DRAFT);
       setDraft(EMPTY_DRAFT);
+      setMobileShowCatalog(true);
       updateUrlParams({ permission: null, tab: null, search: null });
       setReloadTick((t) => t + 1);
     } catch (err) {
@@ -361,11 +408,12 @@ export function PermissionsView() {
     setBusyTargets((prev) => new Set([...prev, lockKey]));
     try {
       await permissionApi.assign(selectedParam, tab, item.id, nextChecked);
-      setAssignItems((prev) =>
-        prev.map((row) =>
+      setAssignItems((prev) => {
+        const mapped = prev.map((row) =>
           String(row.id) === String(item.id) ? { ...row, isAssigned: nextChecked } : row,
-        ),
-      );
+        );
+        return tab === "users" ? sortAssignedFirst(mapped) : mapped;
+      });
       const delta = nextChecked ? 1 : -1;
       const countField =
         tab === "menus" ? "menuCount" : tab === "roles" ? "roleCount" : "userCount";
@@ -379,9 +427,12 @@ export function PermissionsView() {
             : perm,
         ),
       );
+      const targetName = item.userName || item.name || String(item.id);
       showToast(
         "success",
-        nextChecked ? "Đã gán quyền thành công." : "Đã thu hồi quyền thành công.",
+        nextChecked
+          ? `Đã cấp quyền cho ${targetName}.`
+          : `Đã thu hồi quyền của ${targetName}.`,
       );
     } catch (err) {
       showToast("error", getErrorMessage(err, "Không thể thay đổi trạng thái gán quyền."));
@@ -396,15 +447,48 @@ export function PermissionsView() {
 
   const selectPermission = (id: number) => {
     guardDirty(() => {
+      setMobileShowCatalog(false);
       updateUrlParams({ permission: String(id), search: null, userPage: "1" });
     });
   };
 
   const startCreateNew = () => {
     guardDirty(() => {
+      setMobileShowCatalog(false);
       updateUrlParams({ permission: "new", tab: "detail", search: null });
     });
   };
+
+  const clearSelection = () => {
+    guardDirty(() => {
+      setMobileShowCatalog(true);
+      updateUrlParams({ permission: null, tab: null, search: null, userPage: null });
+    });
+  };
+
+  const handleTabKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const idx = tabRefs.current.findIndex((el) => el === document.activeElement);
+    const available = isCreating ? 1 : INSPECTOR_TABS.length;
+    let next = -1;
+    if (e.key === "ArrowRight") next = (idx + 1) % available;
+    else if (e.key === "ArrowLeft") next = (idx - 1 + available) % available;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = available - 1;
+    if (next >= 0) {
+      e.preventDefault();
+      tabRefs.current[next]?.focus();
+    }
+  };
+
+  const getTabCount = (tabId: PermissionInspectorTab): number | undefined => {
+    if (!selectedDetail || isCreating) return undefined;
+    if (tabId === "menus") return selectedDetail.menuCount;
+    if (tabId === "roles") return selectedDetail.roleCount;
+    if (tabId === "users") return selectedDetail.userCount;
+    return undefined;
+  };
+
+  const mobileView = !selectedParam || mobileShowCatalog ? "catalog" : "detail";
 
   return (
     <PageFrame>
@@ -413,7 +497,7 @@ export function PermissionsView() {
         icon={<Shield className="h-5 w-5" />}
         eyebrow="Quản trị hệ thống"
         title="Quản lý phân quyền (RBAC)"
-        description="Quản lý danh mục quyền theo phân hệ và gán quyền trực tiếp cho Menu, Vai trò và Người dùng."
+        description="Quản lý danh mục quyền theo phân hệ và gán quyền trực tiếp cho Màn hình, Vai trò và Người dùng."
         actions={
           <>
             <AppButton
@@ -432,179 +516,318 @@ export function PermissionsView() {
         }
       />
 
-      <MasterDetailFrame
-        isDetailOpen
-        detailWidth="lg:w-[54%] xl:w-[58%]"
-        main={
-          <div className="flex flex-col gap-3">
-            <Card padding={4} elevation="low">
-              <div className="flex flex-col gap-3">
-                <AppTextInput
-                  label="Tìm kiếm quyền"
-                  isLabelHidden
-                  value={catalogSearchInput}
-                  onChange={setCatalogSearchInput}
-                  placeholder="Tìm theo mã quyền, tên quyền, phân hệ..."
-                  startIcon="search"
-                  hasClear
-                />
-
-                {catalogError ? (
-                  <InlineErrorBanner
-                    message={catalogError}
-                    isUnauthorized={catalogUnauthorized}
-                    loginNextPath="/admin/permission"
-                    onRetry={() => setReloadTick((t) => t + 1)}
-                  />
-                ) : catalogLoading ? (
-                  <LoadingOverlay label="Đang tải danh mục quyền..." />
-                ) : catalogItems.length === 0 ? (
-                  <AppEmptyState
-                    title="Chưa có quyền nào"
-                    description="Thử từ khóa khác hoặc tạo quyền mới."
-                    isCompact
-                  />
-                ) : (
-                  <div className="flex max-h-[600px] flex-col gap-4 overflow-y-auto pr-1">
-                    {groupedCatalog.map(([moduleName, perms]) => (
-                      <section key={moduleName} className="flex flex-col gap-1.5">
-                        <div className="sticky top-0 z-10 bg-surface py-1 text-xs font-semibold uppercase tracking-wider text-accent">
-                          {moduleName} ({perms.length})
-                        </div>
-                        <ul className="flex flex-col gap-1">
-                          {perms.map((perm) => {
-                            const isSelected = !isCreating && String(perm.id) === selectedParam;
-                            return (
-                              <li key={perm.id}>
-                                <button
-                                  type="button"
-                                  onClick={() => selectPermission(perm.id)}
-                                  className={`flex w-full flex-col gap-1.5 rounded-md border px-3 py-2.5 text-left ds-interactive ${
-                                    isSelected
-                                      ? "border-blue-ring bg-blue-subtle/70"
-                                      : "border-border bg-surface hover:bg-overlay-hover"
-                                  }`}
-                                >
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0">
-                                      <div className="truncate text-sm font-semibold text-primary">
-                                        {perm.name}
-                                      </div>
-                                      <div className="truncate font-mono text-xs text-secondary">
-                                        {perm.code}
-                                      </div>
-                                    </div>
-                                    <div className="flex shrink-0 items-center gap-1.5">
-                                      <PublicStatusBadge isPublic={perm.isPublic} />
-                                      <ActiveStatus isActive={perm.isActive} compact />
-                                    </div>
-                                  </div>
-                                  <div className="flex flex-wrap items-center gap-3 text-xs text-secondary">
-                                    <span>Menu: {perm.menuCount ?? 0}</span>
-                                    <span>Vai trò: {perm.roleCount ?? 0}</span>
-                                    <span>Người dùng: {perm.userCount ?? 0}</span>
-                                  </div>
-                                </button>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </section>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </Card>
-
-            {catalogTotal > 0 ? (
-              <AppPagination
-                page={page}
-                pageSize={pageSize}
-                totalItems={catalogTotal}
-                pageSizeOptions={[10, 15, 30]}
-                onPageChange={(next) => updateUrlParams({ page: String(next) })}
-                onPageSizeChange={(nextSize) =>
-                  updateUrlParams({ size: String(nextSize), page: "1" })
-                }
-                itemLabel="quyền"
-              />
-            ) : null}
+      <div className="ds-perm-workbench" data-mobile-view={mobileView}>
+        {/* CỘT TRÁI: THƯ VIỆN QUYỀN THEO PHÂN HỆ */}
+        <section className="ds-perm-library" aria-labelledby="perm-library-heading">
+          <div className="ds-perm-libHead">
+            <div className="flex items-center gap-2">
+              <h2 id="perm-library-heading" className="text-[15px] font-bold text-primary">
+                Thư viện quyền
+              </h2>
+              {!catalogLoading && !catalogError ? (
+                <span className="ds-count-pill">
+                  {catalogTotal.toLocaleString("vi-VN")}
+                </span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className="ds-perm-pageBtn"
+              aria-label="Tải lại thư viện quyền"
+              title="Tải lại thư viện quyền"
+              disabled={catalogLoading}
+              onClick={() => setReloadTick((t) => t + 1)}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${catalogLoading ? "animate-spin" : ""}`} />
+            </button>
           </div>
-        }
-        detail={
-          <Card padding={5} elevation="low">
-            {!selectedParam ? (
+
+          <div className="ds-perm-libSearch">
+            <AppTextInput
+              label="Tìm kiếm quyền"
+              isLabelHidden
+              size="sm"
+              value={catalogSearchInput}
+              onChange={setCatalogSearchInput}
+              placeholder="Tìm mã quyền, tên hoặc phân hệ..."
+              startIcon="search"
+              hasClear
+            />
+          </div>
+
+          <div className="ds-perm-catalog" aria-busy={catalogLoading}>
+            {catalogError ? (
+              <div className="p-2">
+                <InlineErrorBanner
+                  message={catalogError}
+                  isUnauthorized={catalogUnauthorized}
+                  loginNextPath="/admin/permission"
+                  onRetry={() => setReloadTick((t) => t + 1)}
+                />
+              </div>
+            ) : catalogLoading ? (
+              <LoadingOverlay label="Đang tải thư viện quyền..." />
+            ) : catalogItems.length === 0 ? (
               <AppEmptyState
-                title="Chọn một quyền để xem hoặc phân bổ"
-                description="Chọn bất kỳ quyền nào ở cột bên trái để chỉnh sửa thông tin và gán Menu, Vai trò hoặc Người dùng."
-                icon={<KeyRound className="h-8 w-8 text-accent" />}
-                actions={
-                  <AppButton
-                    label="Tạo quyền mới"
-                    variant="primary"
-                    icon={<Plus className="h-4 w-4" />}
-                    onClick={startCreateNew}
-                  />
-                }
+                title="Chưa có quyền nào"
+                description="Thử từ khóa khác hoặc tạo quyền mới."
+                isCompact
               />
             ) : (
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <Heading level={4}>
-                      {isCreating
-                        ? "Tạo quyền mới"
-                        : selectedDetail?.name || `Quyền #${selectedParam}`}
-                    </Heading>
-                    {selectedDetail ? (
-                      <Text type="supporting">
-                        Mã: {selectedDetail.code} · Phân hệ: {selectedDetail.module}
-                      </Text>
-                    ) : null}
-                  </div>
-                  {selectedDetail ? (
-                    <div className="flex items-center gap-2">
+              groupedCatalog.map(([moduleName, perms]) => (
+                <div key={moduleName}>
+                  <h3 className="ds-perm-moduleHead">
+                    <span>
+                      {moduleName} · {perms.length}
+                    </span>
+                  </h3>
+                  <ul className="flex flex-col gap-1">
+                    {perms.map((perm) => {
+                      const isSelected = !isCreating && String(perm.id) === selectedParam;
+                      return (
+                        <li key={perm.id}>
+                          <button
+                            type="button"
+                            onClick={() => selectPermission(perm.id)}
+                            aria-current={isSelected ? "true" : undefined}
+                            className="ds-perm-item"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-[13.5px] font-semibold leading-snug">
+                                {perm.name}
+                              </div>
+                              <div className="ds-perm-itemCode truncate">{perm.code}</div>
+                              <div className="ds-perm-itemMeta">
+                                <span>Màn hình: {perm.menuCount ?? 0}</span>
+                                <span>·</span>
+                                <span>Vai trò: {perm.roleCount ?? 0}</span>
+                                <span>·</span>
+                                <span>User: {perm.userCount ?? 0}</span>
+                              </div>
+                            </div>
+                            <span
+                              className="ds-perm-itemDot"
+                              data-active={String(Boolean(perm.isActive))}
+                              title={perm.isActive ? "Đang hoạt động" : "Tạm ngưng"}
+                            />
+                            <ChevronRight
+                              className="ds-perm-itemArrow h-4 w-4 shrink-0 text-secondary"
+                              aria-hidden="true"
+                            />
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))
+            )}
+          </div>
+
+          <footer className="ds-perm-libFooter">
+            <label className="mr-auto flex items-center gap-1.5">
+              <span>Hiển thị</span>
+              <select
+                aria-label="Số quyền mỗi trang"
+                className="ds-perm-pageSelect"
+                value={pageSize}
+                disabled={catalogLoading}
+                onChange={(e) => updateUrlParams({ size: e.target.value, page: "1" })}
+              >
+                {[10, 15, 30].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <span className="min-w-[44px] text-center font-semibold tabular-nums text-primary">
+              {catalogLoading ? "…" : `${page} / ${totalCatalogPages}`}
+            </span>
+            <button
+              type="button"
+              className="ds-perm-pageBtn"
+              aria-label="Trang trước"
+              disabled={catalogLoading || page <= 1}
+              onClick={() => updateUrlParams({ page: String(page - 1) })}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              className="ds-perm-pageBtn"
+              aria-label="Trang sau"
+              disabled={catalogLoading || page >= totalCatalogPages}
+              onClick={() => updateUrlParams({ page: String(page + 1) })}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </footer>
+        </section>
+
+        {/* CỘT PHẢI: CHI TIẾT & PHÂN BỔ QUYỀN */}
+        <section className="ds-perm-inspector" aria-label="Chi tiết và phân quyền">
+          {!selectedParam ? (
+            <div className="ds-perm-welcome ds-fade-in">
+              <span className="ds-perm-welcomeIcon" aria-hidden="true">
+                <Shield className="h-6 w-6" />
+              </span>
+              <h2 className="text-[28px] font-extrabold leading-[1.2] tracking-[-0.03em] text-primary sm:text-[32px]">
+                Quyền rõ ràng.
+                <br />
+                Kết nối đúng người.
+              </h2>
+              <p className="mt-3 max-w-[46ch] text-sm leading-relaxed text-secondary">
+                Chọn một quyền ở thư viện bên trái để chỉnh sửa thông tin định danh và cấp quyền
+                trực tiếp cho từng màn hình, nhóm vai trò hoặc nhân sự cụ thể.
+              </p>
+
+              <dl className="ds-perm-welcomePaths">
+                <div className="ds-perm-welcomePath">
+                  <dt className="flex items-center gap-2 text-sm font-bold text-accent">
+                    <Monitor className="h-4 w-4" aria-hidden="true" />
+                    Màn hình
+                  </dt>
+                  <dd className="text-sm text-secondary">
+                    Quy định các trang / menu được phép hiển thị và truy cập.
+                  </dd>
+                </div>
+                <div className="ds-perm-welcomePath">
+                  <dt className="flex items-center gap-2 text-sm font-bold text-accent">
+                    <Shield className="h-4 w-4" aria-hidden="true" />
+                    Vai trò
+                  </dt>
+                  <dd className="text-sm text-secondary">
+                    Cấp quyền hàng loạt theo nhóm chức năng của hệ thống.
+                  </dd>
+                </div>
+                <div className="ds-perm-welcomePath">
+                  <dt className="flex items-center gap-2 text-sm font-bold text-accent">
+                    <Users className="h-4 w-4" aria-hidden="true" />
+                    Người dùng
+                  </dt>
+                  <dd className="text-sm text-secondary">
+                    Cấp bổ sung hoặc thu hồi quyền cho từng cá nhân cụ thể.
+                  </dd>
+                </div>
+              </dl>
+
+              <AppButton
+                label="Tạo quyền mới"
+                variant="primary"
+                icon={<Plus className="h-4 w-4" />}
+                onClick={startCreateNew}
+              />
+            </div>
+          ) : (
+            <>
+              {/* Phần đầu ngữ cảnh quyền đang mở */}
+              <div className="ds-perm-context">
+                <div className="ds-perm-backBtn">
+                  <AppButton
+                    label="Thư viện quyền"
+                    variant="secondary"
+                    size="sm"
+                    icon={<ArrowLeft className="h-3.5 w-3.5" />}
+                    onClick={() => setMobileShowCatalog(true)}
+                  />
+                </div>
+
+                {!isCreating ? (
+                  <button
+                    type="button"
+                    className="ds-perm-closeBtn"
+                    aria-label="Bỏ chọn quyền"
+                    title="Bỏ chọn quyền"
+                    onClick={clearSelection}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                ) : null}
+
+                <div className="flex flex-wrap items-center gap-2 pr-10">
+                  <span className="ds-perm-moduleBadge">
+                    {isCreating ? "Tạo mới" : selectedDetail?.module || "Phân hệ"}
+                  </span>
+                  <span className="ds-perm-codeBadge">
+                    {isCreating ? "NEW_PERMISSION" : selectedDetail?.code || `#${selectedParam}`}
+                  </span>
+                  {!isCreating && selectedDetail ? (
+                    <div className="ml-auto flex items-center gap-2">
                       <PublicStatusBadge isPublic={selectedDetail.isPublic} />
                       <ActiveStatus isActive={selectedDetail.isActive} />
                     </div>
                   ) : null}
                 </div>
 
-                {!isCreating ? (
-                  <AppTabs
-                    size="sm"
-                    value={activeTab}
-                    onChange={(tab) => {
-                      updateUrlParams({ tab, search: null, userPage: "1" });
-                    }}
-                    items={[
-                      {
-                        value: "detail",
-                        label: "Chi tiết",
-                        icon: <KeyRound className="h-3.5 w-3.5" />,
-                      },
-                      {
-                        value: "menus",
-                        label: "Menu",
-                        count: selectedDetail?.menuCount,
-                        icon: <LayoutList className="h-3.5 w-3.5" />,
-                      },
-                      {
-                        value: "roles",
-                        label: "Vai trò",
-                        count: selectedDetail?.roleCount,
-                        icon: <Shield className="h-3.5 w-3.5" />,
-                      },
-                      {
-                        value: "users",
-                        label: "Người dùng",
-                        count: selectedDetail?.userCount,
-                        icon: <Users className="h-3.5 w-3.5" />,
-                      },
-                    ]}
-                  />
-                ) : null}
+                <h2 className="mt-2.5 pr-10 text-[22px] font-extrabold leading-tight tracking-[-0.02em] text-primary">
+                  {isCreating
+                    ? "Thiết lập quyền mới"
+                    : selectedDetail?.name || `Quyền #${selectedParam}`}
+                </h2>
+                <p className="mt-1 text-[13.5px] leading-relaxed text-secondary">
+                  {isCreating
+                    ? "Khai báo mã định danh và phân hệ trước, sau đó cấp quyền cho Màn hình, Vai trò và Người dùng."
+                    : selectedDetail?.description?.trim() ||
+                      "Quản lý thông tin mô tả và đối tượng được cấp quyền truy cập."}
+                </p>
+              </div>
 
+              {/* Thanh 4 Tab chia đều kiểu Segmented trượt + vạch đỏ thương hiệu Đèo Cả */}
+              <div className="ds-perm-tabSticky">
+                <div
+                  className="ds-perm-tabs"
+                  role="tablist"
+                  aria-label="Các mục quản lý quyền"
+                  onKeyDown={handleTabKeyDown}
+                >
+                  <span
+                    className="ds-perm-tabMarker"
+                    aria-hidden="true"
+                    style={{ transform: `translateX(${activeTabIndex * 100}%)` }}
+                  />
+                  {INSPECTOR_TABS.map((tabItem, index) => {
+                    const Icon = tabItem.icon;
+                    const selected = isCreating ? tabItem.id === "detail" : activeTab === tabItem.id;
+                    const disabled = isCreating && tabItem.id !== "detail";
+                    const count = getTabCount(tabItem.id);
+                    return (
+                      <button
+                        key={tabItem.id}
+                        ref={(el) => {
+                          tabRefs.current[index] = el;
+                        }}
+                        type="button"
+                        role="tab"
+                        aria-selected={selected}
+                        tabIndex={selected ? 0 : -1}
+                        disabled={disabled}
+                        className="ds-perm-tab"
+                        onClick={() =>
+                          guardDirty(() =>
+                            updateUrlParams({
+                              tab: tabItem.id === "detail" ? null : tabItem.id,
+                              search: null,
+                              userPage: "1",
+                            }),
+                          )
+                        }
+                      >
+                        <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        <span className="truncate">{tabItem.label}</span>
+                        {count !== undefined ? (
+                          <span className="ds-perm-tabCount">
+                            {count.toLocaleString("vi-VN")}
+                          </span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Nội dung theo từng Tab */}
+              <div className="ds-perm-panelBody">
                 {activeTab === "detail" || isCreating ? (
                   detailLoading ? (
                     <LoadingOverlay label="Đang tải chi tiết quyền..." />
@@ -614,80 +837,99 @@ export function PermissionsView() {
                       onRetry={() => setReloadTick((t) => t + 1)}
                     />
                   ) : (
-                    <form onSubmit={handleSave} className="flex flex-col gap-4">
+                    <form onSubmit={handleSave} className="ds-fade-in flex flex-col gap-4">
                       {saveServerError ? <InlineErrorBanner message={saveServerError} /> : null}
-                      <AppForm>
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          <AppTextInput
-                            label="Mã quyền (Code)"
-                            value={draft.code}
-                            onChange={(code) => {
-                              setDraft((p) => ({ ...p, code }));
-                              setFormErrors((e) => ({ ...e, code: undefined }));
-                            }}
-                            placeholder="VD: KPI.EVALUATION.VIEW"
-                            isRequired
-                            isReadOnly={!isCreating}
-                            description={
-                              !isCreating ? "Mã quyền cố định sau khi khởi tạo." : undefined
-                            }
-                            error={formErrors.code}
-                          />
-                          <AppTextInput
-                            label="Phân hệ (Module)"
-                            value={draft.module}
-                            onChange={(module) => {
-                              setDraft((p) => ({ ...p, module }));
-                              setFormErrors((e) => ({ ...e, module: undefined }));
-                            }}
-                            placeholder="VD: Evaluation, Admin..."
-                            isRequired
-                            error={formErrors.module}
-                          />
-                        </div>
 
-                        <AppTextInput
-                          label="Tên quyền"
-                          value={draft.name}
-                          onChange={(name) => {
-                            setDraft((p) => ({ ...p, name }));
-                            setFormErrors((e) => ({ ...e, name: undefined }));
-                          }}
-                          placeholder="VD: Xem danh sách đánh giá KPI"
-                          isRequired
-                          error={formErrors.name}
-                        />
-
-                        <AppTextArea
-                          label="Mô tả"
-                          value={draft.description}
-                          onChange={(description) => setDraft((p) => ({ ...p, description }))}
-                          placeholder="Mô tả phạm vi áp dụng của quyền..."
-                          rows={3}
-                        />
-
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          <div className="rounded-lg border border-border bg-muted/40 p-3">
-                            <AppSwitch
-                              label="Kích hoạt"
-                              description="Cho phép hệ thống kiểm tra quyền này"
-                              value={draft.isActive}
-                              onChange={(isActive) => setDraft((p) => ({ ...p, isActive }))}
-                            />
-                          </div>
-                          <div className="rounded-lg border border-border bg-muted/40 p-3">
-                            <AppSwitch
-                              label="Quyền công khai"
-                              description="Mọi tài khoản đăng nhập đều có quyền"
-                              value={draft.isPublic}
-                              onChange={(isPublic) => setDraft((p) => ({ ...p, isPublic }))}
-                            />
+                      <div className="ds-form-section">
+                        <div className="mb-3 flex items-center gap-2.5">
+                          <span className="ds-section-icon">
+                            <KeyRound className="h-4 w-4" aria-hidden="true" />
+                          </span>
+                          <div>
+                            <h3 className="text-sm font-bold text-primary">
+                              {isCreating ? "Thông tin khởi tạo quyền" : "Thông tin định danh quyền"}
+                            </h3>
+                            <p className="text-xs text-secondary">
+                              {isCreating
+                                ? "Đặt mã rõ nghĩa theo quy ước để nhận diện quyền trong hệ thống."
+                                : "Chỉnh sửa diễn giải, phân hệ hoặc mô tả phạm vi áp dụng."}
+                            </p>
                           </div>
                         </div>
-                      </AppForm>
+
+                        <AppForm>
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <AppTextInput
+                              label="Mã quyền (Code)"
+                              value={draft.code}
+                              onChange={(code) => {
+                                setDraft((p) => ({ ...p, code }));
+                                setFormErrors((e) => ({ ...e, code: undefined }));
+                              }}
+                              placeholder="VD: EVAL_VIEW"
+                              isRequired
+                              isReadOnly={!isCreating}
+                              description={
+                                !isCreating ? "Mã quyền cố định sau khi khởi tạo." : undefined
+                              }
+                              error={formErrors.code}
+                            />
+                            <AppTextInput
+                              label="Phân hệ (Module)"
+                              value={draft.module}
+                              onChange={(module) => {
+                                setDraft((p) => ({ ...p, module }));
+                                setFormErrors((e) => ({ ...e, module: undefined }));
+                              }}
+                              placeholder="VD: Evaluation, Admin..."
+                              isRequired
+                              error={formErrors.module}
+                            />
+                          </div>
+
+                          <AppTextInput
+                            label="Diễn giải / Tên quyền"
+                            value={draft.name}
+                            onChange={(name) => {
+                              setDraft((p) => ({ ...p, name }));
+                              setFormErrors((e) => ({ ...e, name: undefined }));
+                            }}
+                            placeholder="VD: Xem danh sách đánh giá KPI"
+                            isRequired
+                            error={formErrors.name}
+                          />
+
+                          <AppTextArea
+                            label="Mô tả phạm vi"
+                            value={draft.description}
+                            onChange={(description) => setDraft((p) => ({ ...p, description }))}
+                            placeholder="Bổ sung phạm vi áp dụng hoặc ghi chú cho quyền..."
+                            rows={3}
+                          />
+                        </AppForm>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="ds-status-card" data-active={String(draft.isActive)}>
+                          <AppSwitch
+                            label="Trạng thái hoạt động"
+                            description="Cho phép hệ thống kiểm tra áp dụng quyền này"
+                            value={draft.isActive}
+                            onChange={(isActive) => setDraft((p) => ({ ...p, isActive }))}
+                          />
+                        </div>
+                        <div className="ds-status-card" data-active={String(draft.isPublic)}>
+                          <AppSwitch
+                            label="Quyền công khai"
+                            description="Mọi tài khoản đăng nhập đều mặc định có quyền"
+                            value={draft.isPublic}
+                            onChange={(isPublic) => setDraft((p) => ({ ...p, isPublic }))}
+                          />
+                        </div>
+                      </div>
 
                       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4">
-                        <div>
+                        <div className="flex items-center gap-3">
                           {selectedDetail ? (
                             <AppButton
                               label="Xóa quyền"
@@ -698,15 +940,26 @@ export function PermissionsView() {
                               onClick={() => setDeleteDialogOpen(true)}
                             />
                           ) : null}
+                          <span className="text-xs text-secondary">
+                            {isDirty
+                              ? "Có thay đổi chưa lưu"
+                              : isCreating
+                                ? "Điền đủ thông tin để tạo mới"
+                                : "Đã đồng bộ với hệ thống"}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <AppButton
-                            label="Hoàn tác"
+                            label={isCreating ? "Hủy" : "Hoàn tác"}
                             variant="secondary"
                             size="sm"
                             icon={<RotateCcw className="h-4 w-4" />}
-                            isDisabled={!isDirty || isSaving}
+                            isDisabled={(!isCreating && !isDirty) || isSaving}
                             onClick={() => {
+                              if (isCreating) {
+                                clearSelection();
+                                return;
+                              }
                               setDraft({ ...initialDraft });
                               setFormErrors({});
                               setSaveServerError(null);
@@ -726,7 +979,51 @@ export function PermissionsView() {
                     </form>
                   )
                 ) : (
-                  <div className="flex flex-col gap-3">
+                  <div className="ds-fade-in flex flex-col gap-3.5">
+                    {/* Thanh tiêu đề + hướng dẫn lưu tức thì */}
+                    <div className="flex flex-wrap items-end justify-between gap-3">
+                      <div>
+                        <h3 className="text-[15px] font-bold text-primary">
+                          {activeTab === "menus"
+                            ? "Màn hình được phép truy cập"
+                            : activeTab === "roles"
+                              ? "Vai trò được cấp quyền"
+                              : "Người dùng được cấp quyền"}
+                        </h3>
+                        <p className="text-xs text-secondary">
+                          Nhấp trực tiếp vào từng thẻ để cấp hoặc thu hồi quyền — thay đổi được lưu
+                          ngay lập tức.
+                        </p>
+                      </div>
+
+                      {activeTab !== "users" && !assignLoading ? (
+                        <StatusFilterTabs
+                          label="Lọc trạng thái gán quyền"
+                          value={assignFilter}
+                          onChange={(val) => setAssignFilter(val as AssignFilterMode)}
+                          items={[
+                            {
+                              value: "all",
+                              label: "Tất cả",
+                              count: assignCounts.all,
+                            },
+                            {
+                              value: "assigned",
+                              label: "Đã gán",
+                              count: assignCounts.assigned,
+                              tone: "green",
+                            },
+                            {
+                              value: "unassigned",
+                              label: "Chưa gán",
+                              count: assignCounts.unassigned,
+                              tone: "neutral",
+                            },
+                          ]}
+                        />
+                      ) : null}
+                    </div>
+
                     <AppTextInput
                       label="Tìm đối tượng gán quyền"
                       isLabelHidden
@@ -734,7 +1031,7 @@ export function PermissionsView() {
                       onChange={setAssignSearchInput}
                       placeholder={
                         activeTab === "menus"
-                          ? "Tìm theo tên menu..."
+                          ? "Tìm theo tên màn hình / menu..."
                           : activeTab === "roles"
                             ? "Tìm theo tên vai trò..."
                             : "Tìm theo tên, mã nhân viên, email..."
@@ -749,75 +1046,156 @@ export function PermissionsView() {
                         onRetry={() => setReloadTick((t) => t + 1)}
                       />
                     ) : assignLoading ? (
-                      <LoadingOverlay label="Đang tải danh sách gán quyền..." />
-                    ) : assignItems.length === 0 ? (
+                      <LoadingOverlay label="Đang tải danh sách phân quyền..." />
+                    ) : visibleAssignItems.length === 0 ? (
                       <AppEmptyState
                         title="Không có đối tượng phù hợp"
-                        description="Thử nhập từ khóa khác."
+                        description={
+                          assignSearchInput.trim() || assignFilter !== "all"
+                            ? "Thử đổi từ khóa hoặc chọn lại bộ lọc Tất cả."
+                            : "Danh sách hiện chưa có dữ liệu để gán quyền."
+                        }
                         isCompact
                       />
                     ) : (
-                      <ul className="flex max-h-[460px] flex-col divide-y divide-border overflow-y-auto rounded-lg border border-border">
-                        {assignItems.map((item) => {
-                          const lockKey = `${activeTab}:${item.id}`;
-                          const isBusy = busyTargets.has(lockKey);
-                          return (
-                            <li
-                              key={String(item.id)}
-                              className="flex items-center justify-between gap-3 px-3.5 py-2.5 ds-interactive hover:bg-overlay-hover"
-                            >
-                              {activeTab === "users" ? (
-                                <UserIdentityCell
-                                  name={item.userName || item.name || String(item.id)}
-                                  subtitle={
-                                    [item.systemCode, item.email].filter(Boolean).join(" · ") ||
-                                    undefined
-                                  }
-                                  size="xsm"
-                                />
-                              ) : (
-                                <span className="truncate text-sm font-medium text-primary">
-                                  {item.name || String(item.id)}
-                                </span>
-                              )}
+                      <>
+                        <div className="flex items-center justify-between border-b border-border pb-2 text-xs text-secondary">
+                          <span>
+                            {activeTab === "users" ? (
+                              <>
+                                Tổng{" "}
+                                <strong className="font-semibold text-primary">
+                                  {assignTotal.toLocaleString("vi-VN")}
+                                </strong>{" "}
+                                người dùng
+                                {selectedDetail ? (
+                                  <>
+                                    {" "}
+                                    · Đã cấp:{" "}
+                                    <strong className="font-semibold text-accent">
+                                      {(selectedDetail.userCount ?? 0).toLocaleString("vi-VN")}
+                                    </strong>
+                                  </>
+                                ) : null}
+                              </>
+                            ) : (
+                              <>
+                                Hiển thị{" "}
+                                <strong className="font-semibold text-primary">
+                                  {visibleAssignItems.length}
+                                </strong>{" "}
+                                {activeTab === "roles" ? "vai trò" : "màn hình"} · Đã cấp:{" "}
+                                <strong className="font-semibold text-accent">
+                                  {assignCounts.assigned}
+                                </strong>
+                              </>
+                            )}
+                          </span>
+                          <span>Tự động lưu</span>
+                        </div>
 
-                              <div className="shrink-0">
-                                <AppCheckbox
-                                  label={item.isAssigned ? "Đã gán" : "Gán"}
-                                  value={item.isAssigned}
-                                  isLoading={isBusy}
-                                  isDisabled={isBusy}
-                                  onChange={(checked) =>
-                                    void handleToggleAssignment(activeTab, item, checked)
-                                  }
-                                />
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
+                        <div className="ds-perm-assignGrid" data-kind={activeTab}>
+                          {visibleAssignItems.map((item) => {
+                            const lockKey = `${activeTab}:${item.id}`;
+                            const isBusy = busyTargets.has(lockKey);
+                            const label = item.userName || item.name || String(item.id);
+                            return (
+                              <button
+                                key={String(item.id)}
+                                type="button"
+                                role="checkbox"
+                                aria-checked={item.isAssigned}
+                                aria-busy={isBusy}
+                                disabled={isBusy}
+                                data-assigned={String(item.isAssigned)}
+                                data-busy={String(isBusy)}
+                                className="ds-perm-tile"
+                                onClick={() =>
+                                  void handleToggleAssignment(activeTab, item, !item.isAssigned)
+                                }
+                              >
+                                {activeTab === "users" ? (
+                                  <div className="min-w-0 flex-1">
+                                    <UserIdentityCell
+                                      name={label}
+                                      subtitle={
+                                        [item.systemCode, item.email]
+                                          .filter(Boolean)
+                                          .join(" · ") || undefined
+                                      }
+                                      size="xsm"
+                                    />
+                                  </div>
+                                ) : (
+                                  <>
+                                    <span className="ds-perm-tileIcon" aria-hidden="true">
+                                      {activeTab === "menus" ? (
+                                        <Monitor className="h-4 w-4" />
+                                      ) : (
+                                        <Shield className="h-4 w-4" />
+                                      )}
+                                    </span>
+                                    <div className="min-w-0 flex-1">
+                                      <div className="truncate text-[13.5px] font-semibold leading-snug text-primary">
+                                        {label}
+                                      </div>
+                                      <div className="mt-0.5 text-[11.5px] text-secondary">
+                                        {isBusy
+                                          ? "Đang lưu..."
+                                          : item.isAssigned
+                                            ? "Đã cấp quyền"
+                                            : "Chưa gán"}
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
+
+                                {activeTab === "users" ? (
+                                  <span className="ds-perm-stateTag">
+                                    {isBusy
+                                      ? "Đang lưu..."
+                                      : item.isAssigned
+                                        ? "Đã cấp quyền"
+                                        : "Chưa gán"}
+                                  </span>
+                                ) : null}
+
+                                <span className="ds-perm-check" aria-hidden="true">
+                                  {isBusy ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : item.isAssigned ? (
+                                    <Check className="h-3.5 w-3.5 stroke-[2.6]" />
+                                  ) : null}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </>
                     )}
 
                     {activeTab === "users" && assignTotal > 0 ? (
-                      <AppPagination
-                        page={userPage}
-                        pageSize={userSize}
-                        totalItems={assignTotal}
-                        pageSizeOptions={[10, 15, 30]}
-                        onPageChange={(next) => updateUrlParams({ userPage: String(next) })}
-                        onPageSizeChange={(nextSize) =>
-                          updateUrlParams({ userSize: String(nextSize), userPage: "1" })
-                        }
-                        itemLabel="người dùng"
-                      />
+                      <div className="pt-1">
+                        <AppPagination
+                          page={userPage}
+                          pageSize={userSize}
+                          totalItems={assignTotal}
+                          pageSizeOptions={[10, 15, 30]}
+                          onPageChange={(next) => updateUrlParams({ userPage: String(next) })}
+                          onPageSizeChange={(nextSize) =>
+                            updateUrlParams({ userSize: String(nextSize), userPage: "1" })
+                          }
+                          itemLabel="người dùng"
+                        />
+                      </div>
                     ) : null}
                   </div>
                 )}
               </div>
-            )}
-          </Card>
-        }
-      />
+            </>
+          )}
+        </section>
+      </div>
 
       <ConfirmDialog
         isOpen={Boolean(pendingNav)}
@@ -825,7 +1203,7 @@ export function PermissionsView() {
           if (!open) setPendingNav(null);
         }}
         title="Bỏ các thay đổi chưa lưu?"
-        description="Thông tin quyền đang chỉnh sửa chưa được lưu. Bạn có chắc muốn chuyển sang mục khác?"
+        description="Thông tin quyền đang chỉnh sửa chưa được lưu. Các lượt cấp/thu hồi quyền đã tick trước đó vẫn được giữ nguyên."
         confirmLabel="Bỏ thay đổi"
         cancelLabel="Ở lại"
         confirmVariant="destructive"
@@ -842,7 +1220,7 @@ export function PermissionsView() {
         title="Xóa quyền?"
         description={
           selectedDetail
-            ? `Bạn có chắc muốn xóa quyền "${selectedDetail.name}" (${selectedDetail.code})? Tất cả gán quyền liên quan sẽ bị gỡ bỏ.`
+            ? `Bạn có chắc muốn xóa quyền "${selectedDetail.name}" (${selectedDetail.code})? Tất cả liên kết gán quyền liên quan sẽ bị gỡ bỏ.`
             : ""
         }
         confirmLabel="Xóa quyền"

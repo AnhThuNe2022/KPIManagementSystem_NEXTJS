@@ -2087,6 +2087,639 @@
   }
 
   /* =========================================================================
+   * 1I. BÀN LÀM VIỆC PHÂN QUYỀN RBAC (/admin/permission — Kế thừa bố cục bản gốc theo style Đèo Cả)
+   * ========================================================================= */
+  .ds-perm-workbench {
+    display: grid;
+    grid-template-columns: 336px minmax(0, 1fr);
+    overflow: clip;
+    border-radius: 18px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-background-surface);
+    box-shadow:
+      0 12px 32px -22px var(--shell-shadow-strong),
+      0 2px 8px -4px var(--shell-shadow-soft);
+  }
+
+  /* Cột trái: Thư viện quyền nhóm theo Phân hệ (Module) */
+  .ds-perm-library {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: calc(100dvh - 252px);
+    min-height: 580px;
+    max-height: 820px;
+    border-right: 1px solid var(--color-border);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--shell-well) 56%, var(--color-background-surface)) 0%,
+      color-mix(in srgb, var(--shell-well) 30%, var(--color-background-surface)) 100%
+    );
+  }
+
+  .ds-perm-libHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 14px 14px 10px 16px;
+  }
+
+  .ds-perm-libSearch {
+    padding: 0 14px 12px;
+  }
+
+  .ds-perm-catalog {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 10px 14px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+
+  .ds-perm-moduleHead {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 6px 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-text-accent);
+  }
+
+  .ds-perm-moduleHead:first-child {
+    margin-top: 2px;
+  }
+
+  .ds-perm-moduleHead > span {
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--ribbon-blue-border);
+    background-color: var(--ribbon-blue-bg);
+    color: var(--ribbon-blue-ink);
+  }
+
+  .ds-perm-moduleHead::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: var(--color-border);
+  }
+
+  .ds-perm-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--color-text-primary);
+    text-align: left;
+    cursor: pointer;
+    outline: none;
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      color 150ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .ds-perm-item:hover:not([aria-current="true"]) {
+    border-color: color-mix(in srgb, var(--color-border-emphasized) 72%, transparent);
+    background-color: var(--color-background-surface);
+  }
+
+  .ds-perm-item:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 34%, transparent);
+  }
+
+  .ds-perm-item[aria-current="true"] {
+    border-color: transparent;
+    color: var(--shell-on-wedge);
+    background: linear-gradient(
+      135deg,
+      var(--shell-wedge-start) 0%,
+      var(--shell-wedge-mid) 62%,
+      var(--shell-wedge-end) 100%
+    );
+    box-shadow:
+      0 10px 22px -12px var(--shell-shadow-strong),
+      inset 0 1px 0 color-mix(in srgb, var(--shell-on-wedge) 20%, transparent);
+  }
+
+  .ds-perm-item[aria-current="true"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 3px;
+    border-radius: 0 999px 999px 0;
+    background: linear-gradient(180deg, var(--deoca-red) 0%, var(--deoca-orange) 100%);
+  }
+
+  .ds-perm-itemCode {
+    font-family: var(--font-family-code);
+    font-size: 11.5px;
+    color: var(--color-text-secondary);
+  }
+
+  .ds-perm-item[aria-current="true"] .ds-perm-itemCode,
+  .ds-perm-item[aria-current="true"] .ds-perm-itemMeta,
+  .ds-perm-item[aria-current="true"] .ds-perm-itemArrow {
+    color: var(--shell-brand-subtitle);
+  }
+
+  .ds-perm-itemMeta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 3px;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-secondary);
+  }
+
+  .ds-perm-itemDot {
+    width: 7px;
+    height: 7px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background-color: var(--ribbon-green-dot);
+  }
+
+  .ds-perm-itemDot[data-active="false"] {
+    background-color: var(--ribbon-red-dot);
+  }
+
+  /* Chân cột trái: phân trang gọn trên 1 dòng */
+  .ds-perm-libFooter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--color-border);
+    background-color: color-mix(in srgb, var(--color-background-surface) 82%, transparent);
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+
+  .ds-perm-pageSelect {
+    height: 30px;
+    padding: 0 6px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border-emphasized);
+    background-color: var(--color-background-surface);
+    color: var(--color-text-primary);
+    font-size: 12px;
+    font-weight: 600;
+    outline: none;
+  }
+
+  .ds-perm-pageSelect:focus-visible {
+    border-color: var(--color-accent);
+  }
+
+  .ds-perm-pageBtn {
+    display: inline-grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-background-surface);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+  }
+
+  .ds-perm-pageBtn:hover:not(:disabled) {
+    border-color: var(--ribbon-blue-border);
+    background-color: var(--shell-hover-wash);
+    color: var(--color-text-accent);
+  }
+
+  .ds-perm-pageBtn:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+  }
+
+  /* Cột phải: Vùng xem chi tiết & gán quyền */
+  .ds-perm-inspector {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: calc(100dvh - 252px);
+    min-height: 580px;
+    max-height: 820px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+
+  /* Màn hình chào khi chưa chọn quyền nào */
+  .ds-perm-welcome {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    max-width: 580px;
+    min-height: 100%;
+    margin-inline: auto;
+    padding: 40px 32px;
+  }
+
+  .ds-perm-welcomeIcon {
+    display: inline-grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 18px;
+    border-radius: 15px;
+    color: var(--shell-on-wedge);
+    background: linear-gradient(135deg, var(--deoca-navy) 0%, var(--deoca-blue) 64%, var(--deoca-sky) 100%);
+    box-shadow: 0 12px 24px -10px var(--shell-shadow-strong);
+  }
+
+  .ds-perm-welcomePaths {
+    display: grid;
+    gap: 12px;
+    width: 100%;
+    margin: 22px 0 26px;
+  }
+
+  .ds-perm-welcomePath {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  /* Đầu vùng chi tiết quyền (Context Bar) */
+  .ds-perm-context {
+    position: relative;
+    padding: 22px 26px 16px;
+    background: radial-gradient(
+      460px 180px at 96% 0%,
+      color-mix(in srgb, var(--deoca-blue) 7%, transparent) 0%,
+      transparent 72%
+    );
+  }
+
+  .ds-perm-moduleBadge {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 9px;
+    border-radius: 6px;
+    border: 1px solid var(--ribbon-blue-border);
+    background-color: var(--ribbon-blue-bg);
+    color: var(--ribbon-blue-ink);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+
+  .ds-perm-codeBadge {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background-color: color-mix(in srgb, var(--shell-well) 70%, var(--color-background-surface));
+    color: var(--color-text-secondary);
+    font-family: var(--font-family-code);
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+
+  .ds-perm-closeBtn {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+  }
+
+  .ds-perm-closeBtn:hover {
+    border-color: var(--color-border);
+    background-color: var(--shell-hover-wash);
+    color: var(--color-text-primary);
+  }
+
+  /* Thanh 4 Tab chia đều có thanh trượt xanh Đèo Cả + vạch đỏ thương hiệu dưới đáy */
+  .ds-perm-tabSticky {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    padding: 0 26px 14px;
+    background-color: var(--color-background-surface);
+  }
+
+  .ds-perm-tabs {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: 100%;
+    padding: 4px;
+    border-radius: 13px;
+    border: 1px solid var(--shell-sidebar-edge);
+    background-color: color-mix(in srgb, var(--shell-well) 72%, var(--color-background-surface));
+    box-shadow: inset 0 1px 2px var(--shell-shadow-soft);
+  }
+
+  .ds-perm-tabMarker {
+    position: absolute;
+    z-index: 0;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc((100% - 8px) / 4);
+    border-radius: 9px;
+    background: linear-gradient(
+      135deg,
+      var(--shell-wedge-start) 0%,
+      var(--shell-wedge-mid) 62%,
+      var(--shell-wedge-end) 100%
+    );
+    box-shadow:
+      0 6px 16px -6px var(--shell-shadow-strong),
+      inset 0 1px 0 color-mix(in srgb, var(--shell-on-wedge) 20%, transparent);
+    pointer-events: none;
+    transition: transform 200ms cubic-bezier(0.22, 0.8, 0.25, 1);
+  }
+
+  .ds-perm-tabMarker::after {
+    content: "";
+    position: absolute;
+    bottom: 3px;
+    left: calc(50% - 11px);
+    width: 22px;
+    height: 2.5px;
+    border-radius: 999px;
+    background-color: var(--deoca-red);
+  }
+
+  .ds-perm-tab {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 0;
+    min-height: 40px;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: color 150ms ease, background-color 150ms ease;
+  }
+
+  .ds-perm-tab:hover:not(:disabled):not([aria-selected="true"]) {
+    color: var(--color-text-primary);
+    background-color: var(--shell-hover-wash);
+  }
+
+  .ds-perm-tab[aria-selected="true"] {
+    color: var(--shell-on-wedge);
+    font-weight: 700;
+  }
+
+  .ds-perm-tab:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+  }
+
+  .ds-perm-tabCount {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 21px;
+    height: 19px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background-color: color-mix(in srgb, var(--color-text-secondary) 12%, transparent);
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ds-perm-tab[aria-selected="true"] .ds-perm-tabCount {
+    background-color: color-mix(in srgb, var(--shell-on-wedge) 20%, transparent);
+    color: var(--shell-on-wedge);
+  }
+
+  /* Lưới thẻ gán quyền 2 cột (Màn hình / Vai trò) & 1 cột giàu thông tin (Người dùng) */
+  .ds-perm-panelBody {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 14px;
+    padding: 4px 26px 24px;
+  }
+
+  .ds-perm-assignGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .ds-perm-assignGrid[data-kind="users"] {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .ds-perm-tile {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    min-height: 58px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-background-surface);
+    color: var(--color-text-primary);
+    text-align: left;
+    cursor: pointer;
+    outline: none;
+    transition:
+      border-color 150ms ease,
+      background-color 150ms ease,
+      box-shadow 160ms ease,
+      transform 120ms ease;
+  }
+
+  .ds-perm-tile:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--deoca-blue) 42%, var(--color-border));
+    background-color: color-mix(in srgb, var(--shell-hover-wash) 70%, var(--color-background-surface));
+  }
+
+  .ds-perm-tile:focus-visible {
+    box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--deoca-blue) 28%, transparent);
+  }
+
+  .ds-perm-tile[data-assigned="true"] {
+    border-color: var(--ribbon-blue-border);
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--ribbon-blue-bg) 68%, var(--color-background-surface)) 0%,
+      color-mix(in srgb, var(--ribbon-blue-bg) 32%, var(--color-background-surface)) 100%
+    );
+    box-shadow: 0 4px 12px -8px var(--shell-shadow-strong);
+  }
+
+  .ds-perm-tile[data-busy="true"] {
+    opacity: 0.72;
+    cursor: progress;
+  }
+
+  .ds-perm-tileIcon {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    background-color: color-mix(in srgb, var(--shell-well) 70%, var(--color-background-surface));
+    color: var(--color-text-secondary);
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+  }
+
+  .ds-perm-tile[data-assigned="true"] .ds-perm-tileIcon {
+    border-color: var(--ribbon-blue-border);
+    background-color: var(--ribbon-blue-bg);
+    color: var(--ribbon-blue-ink);
+  }
+
+  .ds-perm-check {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    border: 1.5px solid var(--color-border-emphasized);
+    background-color: var(--color-background-surface);
+    color: var(--shell-on-wedge);
+    transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+  }
+
+  .ds-perm-tile[data-assigned="true"] .ds-perm-check {
+    border-color: var(--deoca-blue);
+    background: linear-gradient(135deg, var(--deoca-navy) 0%, var(--deoca-blue) 100%);
+    box-shadow: 0 3px 8px -3px color-mix(in srgb, var(--deoca-blue) 55%, transparent);
+  }
+
+  .ds-perm-tile[data-busy="true"] .ds-perm-check {
+    color: var(--color-text-accent);
+    background: var(--color-background-surface);
+    border-color: var(--ribbon-blue-border);
+  }
+
+  .ds-perm-stateTag {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    background-color: color-mix(in srgb, var(--shell-well) 72%, transparent);
+  }
+
+  .ds-perm-tile[data-assigned="true"] .ds-perm-stateTag {
+    background-color: var(--ribbon-blue-bg);
+    color: var(--ribbon-blue-ink);
+  }
+
+  .ds-perm-backBtn {
+    display: none;
+  }
+
+  /* Responsive bàn làm việc phân quyền */
+  @media (max-width: 1180px) {
+    .ds-perm-workbench {
+      grid-template-columns: 292px minmax(0, 1fr);
+    }
+
+    .ds-perm-assignGrid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 860px) {
+    .ds-perm-workbench {
+      display: block;
+    }
+
+    .ds-perm-library,
+    .ds-perm-inspector {
+      height: auto;
+      max-height: none;
+      min-height: 460px;
+      border-right: 0;
+    }
+
+    .ds-perm-workbench[data-mobile-view="catalog"] .ds-perm-inspector {
+      display: none;
+    }
+
+    .ds-perm-workbench[data-mobile-view="detail"] .ds-perm-library {
+      display: none;
+    }
+
+    .ds-perm-backBtn {
+      display: inline-flex;
+      margin-bottom: 12px;
+    }
+
+    .ds-perm-context {
+      padding: 18px 18px 14px;
+    }
+
+    .ds-perm-tabSticky {
+      padding: 0 18px 12px;
+    }
+
+    .ds-perm-panelBody {
+      padding: 4px 18px 20px;
+    }
+
+    .ds-perm-tab {
+      font-size: 12px;
+      gap: 4px;
+      padding: 6px 4px;
+    }
+  }
+
+  /* =========================================================================
    * 2. THANH ĐẦU TRANG NỔI EXECUTIVE HEADER (Mảng vát chéo xanh Đèo Cả + sọc đỏ)
    * ========================================================================= */
   .dcg-shell {
