@@ -356,7 +356,7 @@ export function ReviewedEvaluationsView({ level }: { level: ReviewRole }) {
       {
         key: "actions",
         header: "Thao tác",
-        width: pixel(114),
+        width: pixel(128),
         align: "end",
         renderCell: (row) => (
           <AppButton

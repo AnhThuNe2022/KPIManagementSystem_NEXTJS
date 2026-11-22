@@ -1,4 +1,4 @@
-import { request } from "@/lib/http/request";
+ import { request } from "@/lib/http/request";
 import { unwrapApiData, type ApiResponse } from "@/server/api/types";
 import type { DepartmentDraft, DepartmentDto } from "../types";
 

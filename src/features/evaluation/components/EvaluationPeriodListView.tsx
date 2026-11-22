@@ -257,7 +257,7 @@ export function EvaluationPeriodListView() {
       key: "actions",
       header: "Thao tác",
       align: "end",
-      width: pixel(112),
+      width: pixel(120),
       renderCell: (row) => (
         <div className="flex items-center justify-end gap-1">
           <AppIconButton

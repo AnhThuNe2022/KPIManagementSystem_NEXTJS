@@ -506,7 +506,7 @@ export function GeneralHrEvaluationsView() {
       {
         key: "actions",
         header: "Thao tác",
-        width: pixel(156),
+        width: pixel(184),
         align: "end",
         renderCell: (row) => {
           const isCurrentTracked = isTrackingOpen && trackedEval?.id === row.id;

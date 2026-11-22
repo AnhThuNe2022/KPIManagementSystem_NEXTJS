@@ -1,3 +1,11 @@
+/* =============================================================================
+ * FILE CSS DUY NHẤT TOÀN DỰ ÁN (src/styles/globals.css)
+ * =============================================================================
+ * - Thứ tự @layer cố định: @layer components đứng SAU astryx-base / astryx-theme
+ *   nên mọi tùy biến bên dưới tự ghi đè giao diện mặc định của Astryx mà không cần !important.
+ * - Mọi mã màu phải lấy qua biến CSS từ src/design-system/theme/deoca.source.ts.
+ * - Tuyệt đối không tạo thêm file .css lẻ trong src/features/.
+ * ============================================================================= */
 @layer reset, theme, base, astryx-base, astryx-theme, components, utilities;
 
 @import "tailwindcss/theme.css" layer(theme);
@@ -8,6 +16,7 @@
 @import "@astryxdesign/core/tailwind-theme.css";
 @import "tailwindcss/utilities.css" layer(utilities);
 
+/* Font chữ chính Manrope (nạp file cục bộ, hỗ trợ đầy đủ tiếng Việt & độ đậm 200-800) */
 @font-face {
   font-family: "Manrope";
   src: url("/fonts/manrope.ttf") format("truetype");
@@ -16,6 +25,7 @@
   font-display: swap;
 }
 
+/* Nền trang & màu chữ mặc định toàn ứng dụng */
 @layer base {
   html,
   body {
@@ -30,7 +40,7 @@
 
 @layer components {
   /* =========================================================================
-   * 1. SHARED MOTION & BRAND PRIMITIVES (Token-driven from deoca.source.ts)
+   * 1. HIỆU ỨNG CHUYỂN ĐỘNG DÙNG CHUNG & DẢI MÀU THƯƠNG HIỆU (Lấy biến từ deoca.source.ts)
    * ========================================================================= */
   .ds-fade-in {
     animation: dsFadeSlideIn var(--duration-medium, 260ms) var(--ease-entrance, cubic-bezier(0.2, 0, 0, 1)) backwards;
@@ -70,7 +80,7 @@
     animation: dsFloatUp var(--duration-medium, 260ms) var(--ease-entrance, cubic-bezier(0.2, 0, 0, 1)) both;
   }
 
-  /* Floating bottom selection pill (Single Source of Truth for ALL DataTables) */
+  /* Thanh nổi kính mờ ở cạnh dưới màn hình khi tick chọn nhiều dòng (dùng chung cho mọi DataTable) */
   .ds-selection-dock {
     position: fixed;
     inset: auto 16px 16px;
@@ -154,7 +164,7 @@
   }
 
   /* =========================================================================
-   * 1B. ARCHITECTURAL PAGE HEADER (CRISP VECTOR PATTERNS — ZERO AI SLOP)
+   * 1B. BANNER ĐẦU TRANG 3D (<PageHeader> — 6 chủ đề artwork theo nhóm màn hình)
    * ========================================================================= */
   .ds-page-header {
     --art-start: var(--art-dashboard-start);
@@ -202,7 +212,7 @@
     --art-glow: var(--art-personal-glow);
   }
 
-  /* Subtle per-section structural accents (vertical rail for evaluation/summary, hairline dot-grid for org/admin) */
+  /* Đường nhấn cấu trúc riêng từng nhóm trang (vạch đứng trái cho Đánh giá/Tổng hợp, lưới chấm cho Quản trị, vạch đỉnh cho Tổng quan) */
   .ds-page-header-accent {
     position: absolute;
     z-index: 1;
@@ -365,7 +375,7 @@
   }
 
   /* =========================================================================
-   * 1C. VIBRANT METRIC CARDS, RIBBON STATUS TAGS, SCORE PAIRS & TABLE CELLS
+   * 1C. THẺ CHỈ SỐ KPI, HUY HIỆU RIBBON, XẾP LOẠI, CẶP ĐIỂM, Ô BẢNG & NÚT BẤM
    * ========================================================================= */
   .ds-metric-card {
     --metric-start: var(--metric-blue-start);
@@ -432,7 +442,7 @@
     box-shadow: 0 8px 18px -6px var(--metric-glow), inset 0 1px 0 rgba(255, 255, 255, 0.32);
   }
 
-  /* Ribbon Status Badge — vibrant chevron-tag style with status ring */
+  /* Huy hiệu trạng thái Ribbon vát mũi tên + chấm tròn (tự nhấp nháy khi data-reviewing="true") */
   .ds-status-ribbon {
     --rb-bg: var(--ribbon-neutral-bg);
     --rb-border: var(--ribbon-neutral-border);
@@ -525,7 +535,7 @@
     --rb-dot: var(--ribbon-cyan-dot);
   }
 
-  /* Vibrant KPI Band Chip (A+, A, B+, C, D) */
+  /* Thẻ xếp loại điểm KPI (A+, A, B+, B, C, D) */
   .ds-band-chip {
     --bc-bg: var(--ribbon-neutral-bg);
     --bc-border: var(--ribbon-neutral-border);
@@ -569,7 +579,7 @@
     --bc-ink: var(--ribbon-red-ink);
   }
 
-  /* Soft Period Calendar Tile + Label */
+  /* Ô icon lịch kỳ đánh giá KPI */
   .ds-period-tile {
     display: inline-grid;
     place-items: center;
@@ -582,7 +592,7 @@
     color: var(--vibrant-period-ink);
   }
 
-  /* Dual KPI Score Pair (94 | 93) */
+  /* Cặp điểm KPI hiển thị song song (Tự chấm | Quản lý chấm) */
   .ds-score-pair {
     display: inline-flex;
     align-items: center;
@@ -619,13 +629,13 @@
     background-color: var(--color-border);
   }
 
-  /* Approver + Amber Clock Timestamp */
+  /* Biểu tượng đồng hồ màu cam cho thời gian phê duyệt */
   .ds-clock-icon {
     color: var(--vibrant-clock-ink);
     flex-shrink: 0;
   }
 
-  /* Vibrant Identity Avatar & Company Tag */
+  /* Avatar chữ cái gradient 6 màu tự sinh theo tên & viên thuốc mã công ty */
   .ds-avatar-grad {
     --av-start: var(--avatar-0-start);
     --av-end: var(--avatar-0-end);
@@ -673,7 +683,7 @@
     line-height: 1;
   }
 
-  /* Prevent Astryx buttons & status badges anywhere in the app from crushing labels to "X..." */
+  /* Chuẩn hóa nút bấm Astryx toàn hệ thống: chống bóp chữ thành "...", cao 34/38/44px, nút chính gradient Đèo Cả */
   .astryx-button {
     flex-shrink: 0;
     white-space: nowrap;
@@ -729,8 +739,8 @@
   }
 
   /* =========================================================================
-   * 1C-2. GLOBAL TACTILE FORM CONTROLS (Inputs, Selects, Password, Popovers)
-   * Single Source of Truth upgrading all 19 screens cleanly at once.
+   * 1C-2. TOÀN BỘ Ô NHẬP LIỆU, TÌM KIẾM, MẬT KHẨU, SELECT, TAB LỌC & KHUNG BẢNG
+   * Sửa tại đây sẽ cập nhật đồng bộ toàn bộ 19 màn hình cùng lúc.
    * ========================================================================= */
   .astryx-field-label {
     font-size: 12.5px;
@@ -855,6 +865,7 @@
     color: var(--color-text-accent);
   }
 
+  /* Ô tìm kiếm có kính lúp (ẩn nút X mặc định của trình duyệt để dùng nút Clear riêng) */
   .astryx-text-input.ds-search-input {
     padding-inline: 11px;
   }
@@ -873,7 +884,7 @@
     appearance: none;
   }
 
-  /* Seamless Unified Password Input (no grey square divider block) */
+  /* Ô nhập mật khẩu liền khối (ghép ô nhập + nút con mắt ẩn/hiện trong cùng 1 khung, không chia ô xám thô) */
   .astryx-input-group.ds-password-group {
     align-items: center;
     height: auto;
@@ -934,7 +945,7 @@
     color: var(--color-text-accent);
   }
 
-  /* Refined Dropdown & Select Popovers */
+  /* Khung xổ xuống Select / Multi-Select / Dropdown Menu */
   :is(.astryx-popover, .astryx-dropdown-menu) {
     border-radius: 12px;
     border-color: var(--shell-sidebar-edge);
@@ -947,6 +958,7 @@
     background-color: var(--shell-hover-wash);
   }
 
+  /* Thanh Tab lọc trạng thái khay lõm có badge số riêng (Tất cả / Đang xử lý / Hoàn thành...) */
   .ds-filter-tabs {
     display: inline-flex;
     flex-wrap: wrap;
@@ -1061,7 +1073,7 @@
     color: var(--ribbon-green-ink);
   }
 
-  /* Vibrant DataTable Shell: crisp thead gradient + brand hover/selected row accents */
+  /* Khung bảng dữ liệu DataTable: nền header gradient, vạch xanh cạnh trái khi hover, vạch đỏ khi tick chọn */
   .ds-table-shell {
     box-shadow: 0 10px 30px -20px var(--shell-shadow-strong), 0 2px 8px -4px var(--shell-shadow-soft);
   }
@@ -1098,7 +1110,7 @@
   }
 
   /* =========================================================================
-   * 1D. STRUCTURED FORM MODAL SECTIONS (REUSABLE BENTO FORM CARDS)
+   * 1D. KHỐI BIỂU MẪU BENTO TRONG MODAL & HỘP THOẠI XÁC NHẬN (ConfirmDialog)
    * ========================================================================= */
   .ds-form-section {
     border-radius: 14px;
@@ -1207,7 +1219,7 @@
     background-color: var(--ribbon-green-bg);
   }
 
-  /* Confirm Dialog Icon Tile & Solid Crimson Destructive Action */
+  /* Ô icon cảnh báo của hộp thoại xác nhận (ConfirmDialog) & nút xóa màu đỏ Đèo Cả */
   .ds-confirm-icon {
     display: inline-grid;
     place-items: center;
@@ -1238,7 +1250,7 @@
   }
 
   /* =========================================================================
-   * 1E. EXECUTIVE DIALOG HERO, RICH APPROVAL TIMELINE & STATUS TRANSITION CARDS
+   * 1E. ĐẦU MODAL XANH GRADIENT HR, DÒNG THỜI GIAN DUYỆT 2 CỘT & THẺ CHUYỂN TRẠNG THÁI
    * ========================================================================= */
   .ds-dialog-hero {
     position: relative;
@@ -1320,7 +1332,7 @@
     background-color: rgba(255, 255, 255, 0.16);
   }
 
-  /* Rich 2-column Approval Timeline (matching legacy reference) */
+  /* Dòng thời gian lịch sử phê duyệt 2 cột chi tiết (trong modal quản trị HR) */
   .ds-timeline-rich {
     display: flex;
     flex-direction: column;
@@ -1459,7 +1471,7 @@
     color: var(--ribbon-blue-ink);
   }
 
-  /* Interactive Status Transition Radio Cards */
+  /* Thẻ radio chọn chuyển đổi trạng thái bản đánh giá KPI */
   .ds-status-option {
     position: relative;
     display: flex;
@@ -1548,7 +1560,7 @@
   }
 
   /* =========================================================================
-   * 1F. FULL-BLEED SLIDE-OVER FORM DRAWER (Visual Wave Header & Token Surfaces)
+   * 1F. NGĂN KÉO TRƯỢT NGANG FORM DRAWER (Đỉnh lượn sóng 3 lớp — màn Phòng ban)
    * ========================================================================= */
   .ds-drawer-sheet {
     border-radius: 16px 0 0 16px;
@@ -1690,7 +1702,7 @@
   }
 
   /* =========================================================================
-   * 1G. EXECUTIVE PROFILE IDENTITY & 3D DEOCA STAFF CREDENTIAL CARD
+   * 1G. TRANG HỒ SƠ CÁ NHÂN (/user-infor) & THẺ NHÂN SỰ 3D NGHIÊNG PHẢN QUANG
    * ========================================================================= */
   .ds-profile-card {
     position: relative;
@@ -1929,7 +1941,7 @@
   }
 
   /* =========================================================================
-   * 1H. COMPACT APPROVAL TIMELINE & TRACKING PANEL QUICK SHORTCUTS
+   * 1H. DÒNG THỜI GIAN THEO DÕI GỌN (CỘT PHẢI HR) & 3 NÚT PHÍM TẮT NHANH
    * ========================================================================= */
   .ds-compact-timeline {
     display: flex;
@@ -2075,7 +2087,7 @@
   }
 
   /* =========================================================================
-   * 2. EXECUTIVE FLOATING HEADER (Deoca Diagonal Wedge + Red Ribbon)
+   * 2. THANH ĐẦU TRANG NỔI EXECUTIVE HEADER (Mảng vát chéo xanh Đèo Cả + sọc đỏ)
    * ========================================================================= */
   .dcg-shell {
     min-height: 100vh;
@@ -2268,7 +2280,7 @@
   }
 
   /* =========================================================================
-   * 3. FLOATING EXECUTIVE SIDEBAR + LIQUID CONCAVE CUTOUT NOTCH
+   * 3. THANH SIDEBAR NỔI (256px / thu gọn 82px) & RÃNH KHUYẾT LÕM TRƯỢT
    * ========================================================================= */
   .dcg-sidebar {
     --brand-width: clamp(268px, 19.5vw, 298px);
@@ -2333,7 +2345,7 @@
     transform: translateX(-24px);
   }
 
-  /* Dark-mode signature diagonal header wash echoing the Deoca Header wedge */
+  /* Dải vát chéo màu xanh-đỏ đặc trưng ở Chế độ Tối nối tiếp từ mảng Header phía trên */
   .dcg-sidebar-frame::before,
   .dcg-sidebar-frame::after {
     content: "";
@@ -2492,7 +2504,7 @@
     transform: rotate(180deg);
   }
 
-  /* Quick menu filter inside expanded sidebar */
+  /* Ô tìm nhanh menu bên trong Sidebar (tự ẩn khi thu gọn) */
   .dcg-sidebar-searchWrap {
     flex-shrink: 0;
     padding: 2px 14px 10px;
@@ -2530,7 +2542,7 @@
     background-color: var(--shell-paper);
   }
 
-  /* Liquid Sliding Cutout Indicator */
+  /* Rãnh khuyết lõm trượt theo mục đang chọn/di chuột (Liquid Cutout) */
   .dcg-sidebar-nav {
     position: relative;
     display: flex;
@@ -2566,7 +2578,7 @@
     );
   }
 
-  /* Option 1A: Curved liquid rim hugging the exact 18px radius (soft on hover, crisp on active) */
+  /* Viền cung 18px đỏ → xanh ôm sát mép cong rãnh khuyết (dịu khi hover, đậm khi trang đang active) */
   .dcg-sidebar-cutoutAccent {
     position: absolute;
     inset: 0 auto 0 0;
@@ -2733,7 +2745,7 @@
     transform: translateX(6px);
   }
 
-  /* Submenus (shared by accordion, flyout, dock popup) */
+  /* Danh sách menu con nhiều cấp & vạch dẫn dọc (dùng chung cho Accordion, Flyout, Dock popup) */
   .dcg-sidebar-submenu {
     display: grid;
     grid-template-rows: 0fr;
@@ -2817,7 +2829,7 @@
     cursor: default;
   }
 
-  /* Bridge Artwork Footer */
+  /* Chân Sidebar: ảnh cầu Đèo Cả (bản Sáng & bản Tối) + khẩu hiệu thương hiệu */
   .dcg-sidebar-footer {
     position: relative;
     flex-shrink: 0;
@@ -2906,7 +2918,7 @@
     bottom: 64px;
   }
 
-  /* DCG Spark Fullscreen Focus Button */
+  /* Biểu tượng sao DCG Spark — nút bật chế độ Toàn màn hình (chuyển sang Thanh Dock đáy) */
   .dcg-spark-red {
     fill: var(--shell-spark-red);
   }
@@ -2953,7 +2965,7 @@
     transform: translateX(-50%) scale(1.06);
   }
 
-  /* Collapsed Rail Flyout Submenu */
+  /* Menu con bật ngang (Flyout) khi di chuột vào icon lúc Sidebar đang thu gọn */
   .dcg-sidebar-flyout {
     position: absolute;
     top: 0;
@@ -2979,7 +2991,7 @@
     transition-delay: 0s;
   }
 
-  /* Invisible hover bridge so moving from rail to flyout never closes it */
+  /* Cầu nối hover vô hình 18px giữa thanh Sidebar và Flyout để rê chuột sang không bị đóng mất menu */
   .dcg-sidebar-flyout::after {
     content: "";
     position: absolute;
@@ -2996,7 +3008,7 @@
   }
 
   /* =========================================================================
-   * 4. FULLSCREEN GLASSMORPHIC BOTTOM DOCK
+   * 4. THANH DOCK KÍNH MỜ DƯỚI ĐÁY (Khi bật chế độ Toàn màn hình)
    * ========================================================================= */
   .dcg-dock {
     position: fixed;
@@ -3117,7 +3129,7 @@
       0 18px 36px -14px var(--shell-shadow-strong);
   }
 
-  /* Responsive Header & Sidebar breakpoints */
+  /* Điểm ngắt Responsive cho Header & Sidebar (Tablet < 1024px ẩn Sidebar sang Drawer, Mobile <= 700px gọn chữ logo) */
   @media (max-width: 1023px) {
     .dcg-header {
       --brand-width: 278px;
@@ -3149,7 +3161,7 @@
   }
 
   /* =========================================================================
-   * 5. EXECUTIVE AUTH VISUAL EFFECTS (100% Token-Driven from deoca.source.ts)
+   * 5. TRANG ĐĂNG NHẬP & ĐẶT LẠI MẬT KHẨU (Nền khí quyển, kính mờ, form 52px)
    * ========================================================================= */
   .ds-auth-canvas {
     background: linear-gradient(
@@ -3324,6 +3336,7 @@
       inset 2px 2px 3px var(--shell-bevel-light);
   }
 
+  /* Tỷ lệ form trang Đăng nhập: nhãn rõ, ô nhập liệu / ô mật khẩu & nút Đăng nhập cao 52px */
   .ds-auth-panel .astryx-field-label {
     font-size: 13.5px;
     font-weight: 650;
@@ -3409,6 +3422,9 @@
   }
 }
 
+/* =============================================================================
+ * 6. CÁC HOẠT ẢNH (@keyframes) & QUY TẮC GIẢM CHUYỂN ĐỘNG (ACCESSIBILITY)
+ * ============================================================================= */
 @keyframes dsAuthOrbDrift {
   from {
     transform: translateY(0);
@@ -3469,6 +3485,7 @@
   }
 }
 
+/* Tự động tắt toàn bộ hoạt ảnh và chuyển động khi người dùng bật Reduce Motion trên hệ điều hành */
 @media (prefers-reduced-motion: reduce) {
   .ds-fade-in,
   .ds-floating-bar,

@@ -2,11 +2,17 @@ import { defineTheme, type TokenValue } from "@astryxdesign/core/theme";
 import { neutralTheme } from "@astryxdesign/theme-neutral/built";
 
 /**
- * OFFICIAL DEOCA GROUP BRAND PALETTE — SINGLE SOURCE OF TRUTH
- * Logo colors (deoca-group.svg, deoca-icon.svg, bgls.svg, tlmt.svg) are NEVER modified.
+ * =============================================================================
+ * NGUỒN GỐC DUY NHẤT (SINGLE SOURCE OF TRUTH) CHO TOÀN BỘ GIAO DIỆN ĐÈO CẢ
+ * =============================================================================
+ * - Chứa toàn bộ màu sắc, font chữ, cỡ chữ, bo góc, tốc độ hiệu ứng (Sáng & Tối).
+ * - QUY TẮC BẮT BUỘC: KHÔNG sửa tay các file sinh tự động (deoca.css / deoca.js / deoca.d.ts).
+ *   Mỗi khi sửa file này, chạy lại: `npm run theme:build`
+ * - Quy ước mảng 2 màu: ["Màu_Chế_Độ_Sáng", "Màu_Chế_Độ_Tối"].
+ * - Tuyệt đối không dùng CSS đổi màu logo gốc (deoca-group.svg, deoca-icon.svg, bgls.svg, tlmt.svg).
  */
 export const DEOCA_PALETTE = {
-  // Primary brand colors + 4 lighter tint steps (80%, 60%, 40%, 20%)
+  // Màu đỏ thương hiệu chính + 4 mức sắc độ nhạt (80%, 60%, 40%, 20%) và đỏ đậm
   red: {
     base: "#ED1C24", // Pantone 485 C
     tint80: "#F14950",
@@ -40,6 +46,7 @@ export const DEOCA_PALETTE = {
 } as const;
 
 const deocaLocalTokens: Record<string, TokenValue> = {
+  // Biến màu thương hiệu nội bộ (--deoca-*) dùng trong globals.css
   "--deoca-red": DEOCA_PALETTE.red.base,
   "--deoca-red-80": DEOCA_PALETTE.red.tint80,
   "--deoca-red-60": DEOCA_PALETTE.red.tint60,
@@ -66,7 +73,7 @@ const deocaLocalTokens: Record<string, TokenValue> = {
   "--deoca-beige": DEOCA_PALETTE.neutral.beigeLight,
   "--deoca-cool-gray": DEOCA_PALETTE.neutral.coolLight,
 
-  // Executive Shell (Floating Header, Liquid-Cutout Sidebar & Glass Dock) — Single Source of Truth
+  // Khung ứng dụng Executive Shell (Thanh Header vát chéo, Sidebar rãnh lõm & Thanh Dock đáy kính mờ)
   "--shell-header-height": "76px",
   "--shell-paper": ["#FFFFFF", "#15192B"],
   "--shell-well": ["#EAEFF7", "#0D1020"],
@@ -96,7 +103,7 @@ const deocaLocalTokens: Record<string, TokenValue> = {
   "--shell-spark-red": [DEOCA_PALETTE.red.base, DEOCA_PALETTE.red.tint60],
   "--shell-spark-blue": [DEOCA_PALETTE.blue.base, DEOCA_PALETTE.blue.skyLight],
 
-  // Vibrant Enterprise UI Primitives (Single Source of Truth — Light & Dark)
+  // Màu bảng dữ liệu, dòng đã tick chọn, thẻ kỳ đánh giá, đồng hồ, ô nhân sự, điểm số & pill công ty
   "--vibrant-table-head-start": ["#F7F9FE", "#1A2036"],
   "--vibrant-table-head-end": ["#EEF2FB", "#151A2C"],
   "--vibrant-row-selected-bg": ["rgba(46, 49, 146, 0.065)", "rgba(122, 134, 236, 0.14)"],
@@ -111,7 +118,7 @@ const deocaLocalTokens: Record<string, TokenValue> = {
   "--vibrant-company-pill-bg": ["#F4F6FC", "#1F2640"],
   "--vibrant-company-pill-border": ["#D4DCEB", "#364063"],
 
-  // Ribbon Status Tag Tones (Vibrant & Crisp like reference)
+  // 8 tông màu Thẻ trạng thái Ribbon vát mũi tên (-bg: nền, -border: viền, -ink: chữ, -dot: chấm tròn)
   "--ribbon-blue-bg": ["#EAF0FF", "rgba(59, 130, 246, 0.20)"],
   "--ribbon-blue-border": ["#B9CEFF", "rgba(96, 165, 250, 0.42)"],
   "--ribbon-blue-ink": ["#1D4ED8", "#93C5FD"],
@@ -152,7 +159,7 @@ const deocaLocalTokens: Record<string, TokenValue> = {
   "--ribbon-neutral-ink": ["#475569", "#CBD5E1"],
   "--ribbon-neutral-dot": ["#64748B", "#94A3B8"],
 
-  // Header 3D Artwork Themes (6 screen groups)
+  // 6 tông màu Banner 3D đầu trang <PageHeader> (Tổng quan, Đánh giá, Tổng hợp, Tổ chức, Quản trị, Cá nhân)
   "--art-dashboard-start": ["#262262", "#3B44B8"],
   "--art-dashboard-end": ["#3D71B8", "#2563EB"],
   "--art-dashboard-accent": ["#ED1C24", "#F4777C"],
@@ -183,7 +190,7 @@ const deocaLocalTokens: Record<string, TokenValue> = {
   "--art-personal-accent": ["#0EA5E9", "#7DD3FC"],
   "--art-personal-glow": ["rgba(14, 165, 233, 0.26)", "rgba(56, 189, 248, 0.34)"],
 
-  // Metric Card Vibrant Gradients
+  // 5 tông màu Gradient cho Thẻ chỉ số KPI (<MetricStrip> / .ds-metric-card)
   "--metric-blue-start": ["#2E3192", "#4338CA"],
   "--metric-blue-end": ["#3B82F6", "#38BDF8"],
   "--metric-blue-glow": ["rgba(46, 49, 146, 0.28)", "rgba(59, 130, 246, 0.36)"],
@@ -204,7 +211,7 @@ const deocaLocalTokens: Record<string, TokenValue> = {
   "--metric-neutral-end": ["#64748B", "#94A3B8"],
   "--metric-neutral-glow": ["rgba(71, 85, 105, 0.22)", "rgba(148, 163, 184, 0.28)"],
 
-  // Deterministic Vibrant User Avatar Gradients (6 pairs)
+  // 6 cặp màu Gradient tự động cho Avatar chữ cái nhân viên (băm cố định theo tên)
   "--avatar-0-start": ["#262262", "#3B44B8"],
   "--avatar-0-end": ["#3D71B8", "#60A5FA"],
   "--avatar-1-start": ["#0F766E", "#0D9488"],
@@ -218,7 +225,7 @@ const deocaLocalTokens: Record<string, TokenValue> = {
   "--avatar-5-start": ["#BE123C", "#E11D48"],
   "--avatar-5-end": ["#F43F5E", "#FB7185"],
 
-  // Executive Auth / Login Atmospheric Canvas & Frosted Glass (Light & Dark)
+  // Nền khí quyển, thẻ kính mờ, quả cầu 3D & tiêu đề trang Đăng nhập / Đặt lại mật khẩu
   "--auth-canvas-start": ["#F3F6FC", "#0B1220"],
   "--auth-canvas-mid": ["#E7EDF9", "#14223A"],
   "--auth-canvas-end": ["#F9F1F3", "#241821"],
@@ -240,6 +247,7 @@ export const deocaTheme = defineTheme({
   extends: neutralTheme,
   localTokens: deocaLocalTokens,
 
+  // Cấu hình font chữ toàn hệ thống (nạp font Manrope cục bộ từ public/fonts/manrope.ttf)
   typography: {
     scale: { base: 14, ratio: 1.2 },
     body: {
@@ -257,6 +265,7 @@ export const deocaTheme = defineTheme({
     },
   },
 
+  // Tốc độ hiệu ứng chuyển động chuẩn (đơn vị ms)
   motion: {
     tempo: 0.9,
     character: "crisp",
@@ -267,29 +276,28 @@ export const deocaTheme = defineTheme({
   },
 
   tokens: {
-    // Refined Type Scale — slightly larger & crisper than default Astryx (10/12px -> 11.5/13px)
-    // while staying compact and balanced just below legacy's 12/14px scale.
-    "--font-size-xs": "0.71875rem",   // 11.5px (was 10px)
-    "--font-size-sm": "0.8125rem",    // 13px   (was 12px)
-    "--font-size-base": "0.875rem",   // 14px   (body / inputs / buttons)
-    "--font-size-xl": "1.3125rem",    // 21px   (H2, was 20px)
-    "--font-size-2xl": "1.5625rem",   // 25px   (H1, was 24px)
+    // Thang cỡ chữ chuẩn toàn ứng dụng — muốn tăng/giảm cỡ chữ toàn web, chỉ cần chỉnh 5 dòng này
+    "--font-size-xs": "0.71875rem",   // 11.5px (nhãn phụ, badge nhỏ)
+    "--font-size-sm": "0.8125rem",    // 13px   (chữ bảng, mô tả, tab lọc)
+    "--font-size-base": "0.875rem",   // 14px   (nội dung chính, ô nhập liệu, nút bấm)
+    "--font-size-xl": "1.3125rem",    // 21px   (tiêu đề H2)
+    "--font-size-2xl": "1.5625rem",   // 25px   (tiêu đề H1 đầu trang)
 
-    // Surfaces & Canvas
+    // Màu nền trang & các bề mặt thẻ (Sáng / Tối)
     "--color-background-body": ["#F2F4F9", "#0E111D"],
     "--color-background-surface": ["#FFFFFF", "#15192B"],
     "--color-background-card": ["#FFFFFF", "#15192B"],
     "--color-background-popover": ["#FFFFFF", "#1D2238"],
     "--color-background-muted": ["#ECF0F7", "#20253D"],
 
-    // Brand Primary Accent (Deoca Dark Blue #2E3192 -> accessible light/dark pair)
+    // Màu nhấn chủ đạo thương hiệu Đèo Cả (Xanh #2E3192 bản Sáng / Xanh sáng #7A86EC bản Tối)
     "--color-accent": [DEOCA_PALETTE.blue.base, "#7A86EC"],
     "--color-accent-muted": [DEOCA_PALETTE.blue.tint20, "#2E31924D"],
     "--color-on-accent": ["#FFFFFF", "#0F1020"],
     "--color-text-accent": [DEOCA_PALETTE.blue.base, "#AEC5E7"],
     "--color-icon-accent": [DEOCA_PALETTE.blue.base, "#AEC5E7"],
 
-    // Text & Icon Hierarchy (from official neutral palette)
+    // Phân cấp màu chữ & icon (Chính / Phụ / Vô hiệu hóa)
     "--color-text-primary": [DEOCA_PALETTE.neutral.charcoal, "#F1F3F8"],
     "--color-text-secondary": [DEOCA_PALETTE.neutral.plumDark, DEOCA_PALETTE.neutral.coolLight],
     "--color-text-disabled": [DEOCA_PALETTE.neutral.plumMuted, "#7A727A"],
@@ -297,11 +305,11 @@ export const deocaTheme = defineTheme({
     "--color-icon-secondary": [DEOCA_PALETTE.neutral.plumDark, DEOCA_PALETTE.neutral.coolLight],
     "--color-icon-disabled": [DEOCA_PALETTE.neutral.plumMuted, "#7A727A"],
 
-    // Borders & Dividers (cool executive slate-blue aligned with Deoca surfaces)
+    // Viền khung, đường phân cách & viền ô nhập liệu (tông xanh-xám lạnh đồng bộ nền Đèo Cả)
     "--color-border": ["#D3DDEA", "#2B324C"],
     "--color-border-emphasized": ["#B9C6DF", "#3E4768"],
 
-    // Semantic Statuses harmonized with official Deoca Red / Orange / Blue
+    // Màu trạng thái ngữ nghĩa (Thông tin / Lỗi / Cảnh báo — đồng bộ Đỏ, Cam, Xanh Đèo Cả)
     "--color-info": [DEOCA_PALETTE.blue.sky, DEOCA_PALETTE.blue.skyLight],
     "--color-info-muted": ["#AEC5E755", "#3D71B83D"],
     "--color-on-info": ["#FFFFFF", "#121524"],
@@ -320,7 +328,7 @@ export const deocaTheme = defineTheme({
     "--color-text-warning": ["#A84E0B", DEOCA_PALETTE.warm.gold],
     "--color-on-warning-muted": ["#7C3806", DEOCA_PALETTE.warm.gold],
 
-    // Palette tints aligned with Deoca hues for Badges & Tokens
+    // 7 bảng màu phụ cho Huy hiệu (Badge) & ô icon — ánh xạ sang class Tailwind: bg-{màu}-subtle, border-{màu}-ring, text-{màu}-vivid
     "--color-background-red": ["#FEEBEC", "#4B161B"],
     "--color-border-red": ["#FBBEC2", DEOCA_PALETTE.red.tint80],
     "--color-icon-red": [DEOCA_PALETTE.red.dark, DEOCA_PALETTE.red.tint60],
@@ -356,7 +364,7 @@ export const deocaTheme = defineTheme({
     "--color-icon-orange": ["#C2410C", DEOCA_PALETTE.warm.gold],
     "--color-text-orange": ["#B45309", "#FDBA74"],
 
-    // Radius (clean modern executive rounding)
+    // Thang độ bo góc chuẩn toàn ứng dụng (--radius-*)
     "--radius-none": "0px",
     "--radius-inner": "0.375rem",
     "--radius-element": "0.5rem",

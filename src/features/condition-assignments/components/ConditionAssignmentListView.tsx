@@ -455,7 +455,7 @@ export function ConditionAssignmentListView() {
       {
         key: "actions",
         header: "Thao tác",
-        width: pixel(112),
+        width: pixel(120),
         align: "end",
         renderCell: (row) => (
           <div className="inline-flex items-center gap-1">

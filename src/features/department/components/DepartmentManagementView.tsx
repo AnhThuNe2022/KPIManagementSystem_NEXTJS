@@ -404,7 +404,7 @@ export function DepartmentManagementView() {
       {
         key: "actions",
         header: "Thao tác",
-        width: pixel(144),
+        width: pixel(156),
         align: "end",
         renderCell: (row) => (
           <div className="inline-flex items-center gap-1">
