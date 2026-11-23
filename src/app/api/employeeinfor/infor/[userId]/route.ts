@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { BACKEND_PATHS } from "@/server/adapters/backendContracts";
-import { proxyApiRequest } from "@/server/api/proxy";
+import { proxyApiRequest, readJsonBody } from "@/server/api/proxy";
 
 export async function GET(request: Request, context: { params: Promise<{ userId: string }> }) {
   const { userId } = await context.params;
@@ -8,4 +8,29 @@ export async function GET(request: Request, context: { params: Promise<{ userId:
     return NextResponse.json({ message: "userId is required" }, { status: 400 });
   }
   return proxyApiRequest(request, BACKEND_PATHS.employeeInfor(userId), { method: "GET" });
+}
+
+export async function PATCH(request: Request, context: { params: Promise<{ userId: string }> }) {
+  const { userId } = await context.params;
+  if (!userId?.trim()) {
+    return NextResponse.json({ message: "userId is required" }, { status: 400 });
+  }
+  let body: unknown;
+  try {
+    body = await readJsonBody(request);
+  } catch {
+    return NextResponse.json({ message: "Invalid JSON body" }, { status: 400 });
+  }
+  return proxyApiRequest(request, BACKEND_PATHS.employeeInfor(userId), {
+    method: "PATCH",
+    body: JSON.stringify(body ?? {}),
+  });
+}
+
+export async function DELETE(request: Request, context: { params: Promise<{ userId: string }> }) {
+  const { userId } = await context.params;
+  if (!userId?.trim()) {
+    return NextResponse.json({ message: "userId is required" }, { status: 400 });
+  }
+  return proxyApiRequest(request, BACKEND_PATHS.employeeInfor(userId), { method: "DELETE" });
 }

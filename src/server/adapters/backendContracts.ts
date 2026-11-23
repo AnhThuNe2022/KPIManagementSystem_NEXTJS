@@ -24,11 +24,17 @@ export const BACKEND_PATHS = {
   conditionGetAllPaged: "/ConditionAssignments/get-all-paged",
   conditionCreate: "/ConditionAssignments",
   conditionById: (id: string) => `/ConditionAssignments/${encodeURIComponent(id)}`,
+  conditionResponsibleHr: "/ConditionAssignments/responsible-hr",
+  conditionDetailSync: "/ConditionAssignmentDetail/sync",
 
   // Employee Info (mixed casing preserved)
   employeeByFilter: "/employeeInfor/get-user-by-filter",
+  employeeInforRoot: "/employeeinfor/infor",
+  employeeInforPaged: "/employeeinfor/infor/paged",
   employeeInfor: (userId: string) => `/employeeinfor/infor/${encodeURIComponent(userId)}`,
   employeePassword: (userId: string) => `/employeeinfor/password/${encodeURIComponent(userId)}`,
+  jobPosition: "/jobposition",
+  role: "/role",
 
   // User Organizations
   userOrgGetPage: "/userorganizations/get-page",
@@ -51,6 +57,8 @@ export const BACKEND_PATHS = {
   exportEvaluationZip: "/ExportFile/ExportEvaluationZip",
   exportListEvaluation: "/ExportFile/ExportListEvaluation",
   exportSummaryEvaluation: "/ExportFile/ExportSummaryEvaluation",
+  exportEmployees: "/ExportFile/ExportEmployee",
+  exportEmployeeTemplate: "/ExportFile/download-template",
 
   // KPI Periods, Types, Templates (trailing slash on update-period/ preserved)
   periodCreate: "/kpi-evaluation-periods/create",
