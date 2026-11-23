@@ -24,6 +24,7 @@ import {
   AppButton,
   AppIconButton,
   AppMultiSelect,
+  AppPagination,
   ApproverTimeCell,
   AppSelect,
   AppTabs,
@@ -156,6 +157,7 @@ export function GeneralHrEvaluationsView() {
   });
   const exportCtrlRef = useRef<AbortController | null>(null);
   const fetchCtrlRef = useRef<AbortController | null>(null);
+  const trackingPanelRef = useRef<HTMLDivElement | null>(null);
 
   const isDirty = !filtersEqual(draft, applied);
 
@@ -282,6 +284,11 @@ export function GeneralHrEvaluationsView() {
   const handleOpenTracking = useCallback((row: GeneralHrEvaluationDto) => {
     setTrackedEval(row);
     setIsTrackingOpen(true);
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      window.requestAnimationFrame(() => {
+        trackingPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+    }
   }, []);
 
   const handleDeleteConfirm = async () => {
@@ -580,6 +587,7 @@ export function GeneralHrEvaluationsView() {
   );
 
   const trackingPanel = (
+    <div ref={trackingPanelRef}>
     <Card padding={4} elevation="low">
       <div className="flex flex-col gap-3.5">
         <div className="flex items-start justify-between gap-2 border-b border-border pb-3">
@@ -698,10 +706,10 @@ export function GeneralHrEvaluationsView() {
               <span className="text-[11px] font-bold uppercase tracking-wider text-secondary">
                 Thao tác nhanh
               </span>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <button
                   type="button"
-                  className="ds-track-shortcut flex w-full min-w-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-2 py-2 text-left text-xs font-semibold text-primary"
+                  className="ds-track-shortcut flex min-h-[40px] w-full min-w-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-2.5 py-2 text-left text-xs font-semibold text-primary"
                   data-tone="blue"
                   onClick={() => setApproversTarget(trackedEval)}
                 >
@@ -712,7 +720,7 @@ export function GeneralHrEvaluationsView() {
                 </button>
                 <button
                   type="button"
-                  className="ds-track-shortcut flex w-full min-w-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-2 py-2 text-left text-xs font-semibold text-primary"
+                  className="ds-track-shortcut flex min-h-[40px] w-full min-w-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-2.5 py-2 text-left text-xs font-semibold text-primary"
                   data-tone="purple"
                   onClick={() => setChangeStatusTarget(trackedEval)}
                 >
@@ -724,7 +732,7 @@ export function GeneralHrEvaluationsView() {
               </div>
               <button
                 type="button"
-                className="ds-track-shortcut flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold"
+                className="ds-track-shortcut flex min-h-[40px] w-full min-w-0 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold"
                 data-tone="danger"
                 onClick={() => setDeleteTarget(trackedEval)}
               >
@@ -738,6 +746,7 @@ export function GeneralHrEvaluationsView() {
         )}
       </div>
     </Card>
+    </div>
   );
 
   return (
@@ -791,7 +800,7 @@ export function GeneralHrEvaluationsView() {
       <FilterBar
         primaryControls={
           <>
-            <div className="min-w-[200px] flex-1">
+            <div className="w-full sm:min-w-[200px] sm:flex-1">
               <AppTextInput
                 label="Tìm kiếm"
                 value={draft.keyword}
@@ -883,29 +892,138 @@ export function GeneralHrEvaluationsView() {
       <MasterDetailFrame
         isDetailOpen={isTrackingOpen}
         main={
-          <DataTable
-            data={items}
-            columns={columns}
-            idKey={(row) => String(row.id)}
-            isLoading={isLoading}
-            error={error}
-            isUnauthorized={isUnauthorized}
-            loginNextPath="/admin/evaluationList"
-            onRetry={() => setReloadTick((t) => t + 1)}
-            emptyTitle="Chưa có bản đánh giá nào"
-            emptyDescription="Không có hồ sơ nào phù hợp với tiêu chí lọc hiện tại."
-            pagination={{
-              page,
-              pageSize,
-              totalItems: total,
-              onPageChange: setPage,
-              onPageSizeChange: (nextSize) => {
-                setPageSize(nextSize);
-                setPage(1);
-              },
-              itemLabel: "hồ sơ",
-            }}
-          />
+          <>
+            <div className={!isLoading && !error && items.length > 0 ? "hidden md:block" : "block"}>
+              <DataTable
+                data={items}
+                columns={columns}
+                idKey={(row) => String(row.id)}
+                isLoading={isLoading}
+                error={error}
+                isUnauthorized={isUnauthorized}
+                loginNextPath="/admin/evaluationList"
+                onRetry={() => setReloadTick((t) => t + 1)}
+                emptyTitle="Chưa có bản đánh giá nào"
+                emptyDescription="Không có hồ sơ nào phù hợp với tiêu chí lọc hiện tại."
+                pagination={{
+                  page,
+                  pageSize,
+                  totalItems: total,
+                  onPageChange: setPage,
+                  onPageSizeChange: (nextSize) => {
+                    setPageSize(nextSize);
+                    setPage(1);
+                  },
+                  itemLabel: "hồ sơ",
+                }}
+              />
+            </div>
+
+            {!isLoading && !error && items.length > 0 ? (
+              <div className="flex flex-col gap-3 md:hidden ds-fade-in">
+                {items.map((row) => {
+                  const isCurrentTracked = isTrackingOpen && trackedEval?.id === row.id;
+                  return (
+                    <Card key={row.id} padding={4} elevation="low">
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-start justify-between gap-2 border-b border-border pb-3">
+                          <div className="min-w-0 flex-1">
+                            <UserIdentityCell
+                              name={row.name}
+                              subtitle={[row.systemCode, row.email].filter(Boolean).join(" · ") || undefined}
+                            />
+                          </div>
+                          <span className="ds-timeline-pill shrink-0 font-mono text-[10.5px]">
+                            #{row.id}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <PeriodBadgeCell label={row.period} sublabel={row.templateName} />
+                          <ApproverTimeCell timestamp={formatDateTime(row.submitDate)} />
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-2.5 border-t border-border pt-2.5 sm:grid-cols-2">
+                          <div className="flex min-w-0 flex-col gap-1">
+                            <CompanyChip companyCode={row.companyCode} />
+                            <span className="break-words text-xs text-secondary">
+                              {row.departmentName || "—"}
+                            </span>
+                            {row.strDirectManager ? (
+                              <span className="text-xs text-secondary">
+                                QLTT: <strong className="font-medium text-primary">{row.strDirectManager}</strong>
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="flex flex-col items-start gap-1.5 sm:items-end">
+                            <EvaluationStatusBadge status={row.status} compact />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 border-t border-border pt-3">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenTracking(row)}
+                            className={`inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border px-2.5 py-2 text-xs font-semibold transition-colors ${
+                              isCurrentTracked
+                                ? "border-accent bg-blue-subtle text-accent"
+                                : "border-border bg-surface text-primary hover:bg-muted/40"
+                            }`}
+                          >
+                            <Activity className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                            <span>Theo dõi</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setHistoryTarget(row)}
+                            className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-border bg-surface px-2.5 py-2 text-xs font-semibold text-primary transition-colors hover:bg-muted/40"
+                          >
+                            <History className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                            <span>Quá trình</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setApproversTarget(row)}
+                            className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-border bg-surface px-2.5 py-2 text-xs font-semibold text-primary transition-colors hover:bg-muted/40"
+                          >
+                            <UserCheck className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                            <span>Người duyệt</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setChangeStatusTarget(row)}
+                            className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-border bg-surface px-2.5 py-2 text-xs font-semibold text-primary transition-colors hover:bg-muted/40"
+                          >
+                            <ArrowRightLeft className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                            <span>Chuyển TT</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteTarget(row)}
+                            className="col-span-2 inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-border bg-surface px-2.5 py-2 text-xs font-semibold text-error transition-colors hover:bg-muted/40"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                            <span>Xóa bản đánh giá</span>
+                          </button>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+                <AppPagination
+                  page={page}
+                  pageSize={pageSize}
+                  totalItems={total}
+                  onPageChange={setPage}
+                  onPageSizeChange={(nextSize) => {
+                    setPageSize(nextSize);
+                    setPage(1);
+                  }}
+                  itemLabel="hồ sơ"
+                />
+              </div>
+            ) : null}
+          </>
         }
         detail={trackingPanel}
       />
