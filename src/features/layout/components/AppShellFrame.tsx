@@ -20,6 +20,7 @@ const FALLBACK_BREADCRUMBS: Record<string, HeaderBreadcrumb[]> = {
   "/condition-assignments": [{ label: "Quản lý" }, { label: "Phân quyền điều kiện" }],
   "/admin/menu": [{ label: "Quản trị" }, { label: "Quản lý Menu" }],
   "/admin/permission": [{ label: "Quản trị" }, { label: "Phân quyền RBAC" }],
+  "/admin/userinfor": [{ label: "Quản trị hệ thống" }, { label: "Quản lý nhân viên" }],
   "/admin/evaluationlist": [{ label: "Nhân sự" }, { label: "Danh sách đánh giá toàn hệ thống" }],
   "/manager/pending": [{ label: "Quản lý" }, { label: "Chờ quản lý duyệt" }],
   "/manager/reviewed": [{ label: "Quản lý" }, { label: "Quản lý đã duyệt" }],

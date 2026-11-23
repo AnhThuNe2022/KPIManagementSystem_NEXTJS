@@ -23,9 +23,13 @@ type PasswordMethod = "kpi" | "cms";
 export function PasswordChangeView({
   userId,
   isAdmin = false,
+  bare = false,
+  onPasswordSubmit,
 }: {
   userId: string;
   isAdmin?: boolean;
+  bare?: boolean;
+  onPasswordSubmit?: (payload: ChangePasswordDto) => Promise<void>;
 }) {
   const showToast = useAppToast();
 
@@ -110,8 +114,12 @@ export function PasswordChangeView({
 
     setIsSaving(true);
     try {
-      await userApi.changePassword(userId, payload);
-      showToast("success", "Đã đổi mật khẩu thành công.");
+      if (onPasswordSubmit) {
+        await onPasswordSubmit(payload);
+      } else {
+        await userApi.changePassword(userId, payload);
+        showToast("success", "Đã đổi mật khẩu thành công.");
+      }
       // Clear all inputs on success (fixes legacy leftover input state)
       setCmsUsername("");
       setCmsPassword("");
@@ -128,20 +136,21 @@ export function PasswordChangeView({
     }
   };
 
-  return (
-    <Card padding={5} elevation="low">
-      <form onSubmit={handleSubmit} className="mx-auto flex max-w-xl flex-col gap-5">
-        <div className="flex items-start gap-3 border-b border-border pb-4">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-subtle text-blue-vivid">
-            <Lock className="h-5 w-5" />
-          </span>
-          <div>
-            <Heading level={4}>Đổi mật khẩu tài khoản</Heading>
-            <Text type="supporting">
-              Xác thực tài khoản bằng mật khẩu KPI hiện tại hoặc tài khoản CMS trước khi đặt mật khẩu mới.
-            </Text>
-          </div>
+  const formContent = (
+    <form onSubmit={handleSubmit} className={bare ? "flex flex-col gap-5" : "mx-auto flex max-w-xl flex-col gap-5"}>
+      <div className="flex items-start gap-3 border-b border-border pb-4">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-subtle text-blue-vivid">
+          <Lock className="h-5 w-5" />
+        </span>
+        <div>
+          <Heading level={4}>{isAdmin ? "Đặt lại mật khẩu nhân viên" : "Đổi mật khẩu tài khoản"}</Heading>
+          <Text type="supporting">
+            {isAdmin
+              ? "Cấp mật khẩu mới trực tiếp cho tài khoản nhân viên với quyền Quản trị viên."
+              : "Xác thực tài khoản bằng mật khẩu KPI hiện tại hoặc tài khoản CMS trước khi đặt mật khẩu mới."}
+          </Text>
         </div>
+      </div>
 
         {serverError ? <InlineErrorBanner title="Đổi mật khẩu thất bại" message={serverError} /> : null}
 
@@ -270,17 +279,18 @@ export function PasswordChangeView({
           />
         </AppForm>
 
-        <div className="flex justify-end border-t border-border pt-4">
-          <AppButton
-            type="submit"
-            label="Cập nhật mật khẩu"
-            variant="primary"
-            icon={<ShieldCheck className="h-4 w-4" />}
-            isLoading={isSaving}
-            isDisabled={isSaving}
-          />
-        </div>
-      </form>
-    </Card>
+      <div className="flex justify-end border-t border-border pt-4">
+        <AppButton
+          type="submit"
+          label={isAdmin ? "Đặt lại mật khẩu" : "Cập nhật mật khẩu"}
+          variant="primary"
+          icon={<ShieldCheck className="h-4 w-4" />}
+          isLoading={isSaving}
+          isDisabled={isSaving}
+        />
+      </div>
+    </form>
   );
+
+  return bare ? formContent : <Card padding={5} elevation="low">{formContent}</Card>;
 }

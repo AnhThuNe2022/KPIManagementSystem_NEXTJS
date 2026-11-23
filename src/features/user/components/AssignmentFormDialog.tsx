@@ -41,6 +41,7 @@ export function AssignmentFormDialog({
   onOpenChange,
   userId,
   model,
+  editableDetails = false,
   hasPrimaryAssignment,
   companies,
   isDirector,
@@ -50,13 +51,14 @@ export function AssignmentFormDialog({
   onOpenChange: (open: boolean) => void;
   userId: string;
   model: UserOrganizationDto | null;
+  editableDetails?: boolean;
   hasPrimaryAssignment: boolean;
   companies: CompanyDto[];
   isDirector: boolean;
   onSubmit: (value: UserOrganizationDto) => void;
 }) {
-  // Saved DB records lock structural fields; unsaved drafts remain fully editable
-  const isSavedRecord = Boolean(model?.id && model.id > 0);
+  // Saved DB records lock structural fields unless admin editableDetails is enabled
+  const readOnlyDetails = Boolean(model?.id && model.id > 0) && !editableDetails;
 
   const [form, setForm] = useState<UserOrganizationDto | null>(null);
   const [initialSnapshot, setInitialSnapshot] = useState<string>("");
@@ -79,14 +81,14 @@ export function AssignmentFormDialog({
   }, [hasPrimaryAssignment, isOpen, model, userId]);
 
   useEffect(() => {
-    if (!isOpen || !form?.companyId || isSavedRecord) {
+    if (!isOpen || !form?.companyId || readOnlyDetails) {
       setDepartments([]);
       return;
     }
     const ctrl = new AbortController();
     setLoadingDepts(true);
     departmentApi
-      .getAll(form.companyId, { signal: ctrl.signal })
+      .getAll(form.companyId, { byScope: editableDetails, signal: ctrl.signal })
       .then((list) => {
         if (!ctrl.signal.aborted) setDepartments(list);
       })
@@ -100,7 +102,7 @@ export function AssignmentFormDialog({
         if (!ctrl.signal.aborted) setLoadingDepts(false);
       });
     return () => ctrl.abort();
-  }, [form?.companyId, isOpen, isSavedRecord]);
+  }, [editableDetails, form?.companyId, isOpen, readOnlyDetails]);
 
   const selectedManagerItem = useMemo<SearchableItem<ManagerAux> | null>(() => {
     if (!form?.managerID) return null;
@@ -127,7 +129,7 @@ export function AssignmentFormDialog({
 
   const handleManagerSearch = useCallback(
     async (query: string, signal: AbortSignal): Promise<SearchableItem<ManagerAux>[]> => {
-      const results = await userOrganizationApi.searchManagers(userId, query, signal);
+      const results = await userOrganizationApi.searchManagers(userId || "1", query, signal);
       return results
         .filter((item) => Boolean(item.userId))
         .map((item) => {
@@ -200,7 +202,7 @@ export function AssignmentFormDialog({
       onOpenChange={onOpenChange}
       title={model?.id || model?._localKey ? "Cập nhật đơn vị công tác" : "Thêm đơn vị công tác"}
       subtitle={
-        isSavedRecord
+        readOnlyDetails
           ? "Bản ghi đã lưu chỉ cho phép cập nhật Mã nhân viên và Quản lý trực tiếp."
           : "Điền đầy đủ thông tin đơn vị công tác và chọn quản lý trực tiếp."
       }
@@ -212,7 +214,7 @@ export function AssignmentFormDialog({
       {form ? (
         <AppForm>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {isSavedRecord ? (
+            {readOnlyDetails ? (
               <AppTextInput
                 label="Loại đơn vị công tác"
                 value={
@@ -252,7 +254,7 @@ export function AssignmentFormDialog({
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {isSavedRecord ? (
+            {readOnlyDetails ? (
               <AppTextInput
                 label="Công ty"
                 value={form.companyName ?? ""}
@@ -298,7 +300,7 @@ export function AssignmentFormDialog({
               />
             )}
 
-            {isSavedRecord ? (
+            {readOnlyDetails ? (
               <AppTextInput
                 label="Phòng ban"
                 value={form.departmentName ?? ""}
@@ -353,7 +355,7 @@ export function AssignmentFormDialog({
             }}
             placeholder="VD: Chuyên viên Phân tích nghiệp vụ"
             isRequired
-            isReadOnly={isSavedRecord}
+            isReadOnly={readOnlyDetails}
             error={errors.jobTitle}
           />
 
