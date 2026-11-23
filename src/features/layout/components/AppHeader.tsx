@@ -16,6 +16,7 @@ import "./AppHeader.css";
 // Only for routes not directly listed in /api/menus/my or dynamic detail pages.
 const fallbackPages: Record<string, readonly string[]> = {
   "/dashboard": ["Dashboard"],
+  "/admin/UserInfor": ["Quản trị hệ thống", "Quản lý nhân viên"],
   "/user-infor": ["Thông tin chung", "Thông tin tài khoản cá nhân"],
   "/my-evaluation": ["Đánh giá", "Bản đánh giá của tôi"],
   "/notifications": ["Thông báo"],
