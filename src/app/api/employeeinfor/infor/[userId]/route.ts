@@ -4,3 +4,13 @@ export async function GET(request: Request, context: { params: Promise<{ userId:
   const { userId } = await context.params;
   return proxyApiRequest(request, `/employeeinfor/infor/${encodeURIComponent(userId)}`);
 }
+
+export async function PATCH(request: Request, context: { params: Promise<{ userId: string }> }) {
+  const { userId } = await context.params;
+  return proxyApiRequest(request, `/employeeinfor/infor/${encodeURIComponent(userId)}`);
+}
+
+export async function DELETE(request: Request, context: { params: Promise<{ userId: string }> }) {
+  const { userId } = await context.params;
+  return proxyApiRequest(request, `/employeeinfor/infor/${encodeURIComponent(userId)}`);
+}
