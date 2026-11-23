@@ -574,42 +574,44 @@ html.dark .general-hr-evaluations__dangerButton { background: #ffafba; color: #3
 
 @container hrWorkspace (max-width: 1100px) {
   .general-hr-evaluations__recordsLayout, .general-hr-evaluations__recordsLayout[data-tracking="true"] { grid-template-columns: minmax(0, 1fr); gap: 18px; }
-  .general-hr-evaluations__recordsLayout[data-tracking="true"] .general-hr-evaluations__table { min-width: 0; }
-  .general-hr-evaluations__trackingPanel { position: static; grid-column: 1; grid-row: 1; width: auto; max-height: 420px; }
-}
-
-@container hrWorkspace (max-width: 1050px) {
-  .general-hr-evaluations__table { min-width: 960px; }
-  .general-hr-evaluations__hero h1 { font-size: 28px; }
-  .general-hr-evaluations__heroActions > span { max-width: 180px; text-align: right; }
-}
-@container hrWorkspace (max-width: 940px) {
+  .general-hr-evaluations__recordsLayout .general-hr-evaluations__rowActions, .general-hr-evaluations__trackingPanel, .general-hr-evaluations__actionMenu:popover-open { display: none; }
+  .general-hr-evaluations__recordsLayout[data-tracking="true"] .general-hr-evaluations__submitted { display: block; }
   .general-hr-evaluations__recordsLayout .general-hr-evaluations__table td, .general-hr-evaluations__recordsLayout .general-hr-evaluations__table td:first-child, .general-hr-evaluations__recordsLayout .general-hr-evaluations__table td:last-child { padding: 0; }
-  .general-hr-evaluations__hero { min-height: 140px; padding: 8px 0 22px; }
-  .general-hr-evaluations__hero h1 { font-size: 27px; }
-  .general-hr-evaluations__table { min-width: 0; table-layout: auto; }
+  .general-hr-evaluations__table, .general-hr-evaluations__recordsLayout[data-tracking="true"] .general-hr-evaluations__table { min-width: 0; table-layout: auto; }
   .general-hr-evaluations__table thead, .general-hr-evaluations__table colgroup { display: none; }
   .general-hr-evaluations__table, .general-hr-evaluations__table tbody { display: block; }
-  .general-hr-evaluations__table tbody { padding: 0 24px; }
-  .general-hr-evaluations__table tbody tr { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; padding: 24px 0; border-bottom: 1px solid var(--hr-line); }
+  .general-hr-evaluations__table tbody { padding: 0; }
+  .general-hr-evaluations__table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 24px; padding: 20px 24px; border-bottom: 1px solid var(--hr-line); }
   .general-hr-evaluations__table tbody tr:last-child { border-bottom: 0; }
   .general-hr-evaluations__table td, .general-hr-evaluations__table td:first-child, .general-hr-evaluations__table td:last-child { padding: 0; border: 0; min-width: 0; }
   .general-hr-evaluations__table td::before { content: attr(data-label); display: block; margin-bottom: 8px; color: var(--hr-muted); font-size: var(--text-label); }
   .general-hr-evaluations__employeeCell { grid-column: 1; grid-row: 1; }
   .general-hr-evaluations__table .general-hr-evaluations__employeeCell::before { display: none; }
-  .general-hr-evaluations__evaluationCell { grid-column: 1; grid-row: 2 / 4; }
-  .general-hr-evaluations__organizationCell { grid-column: 2; grid-row: 2; }
   .general-hr-evaluations__progressCell { grid-column: 2; grid-row: 1; }
   .general-hr-evaluations__table .general-hr-evaluations__progressCell::before { display: none; }
-  .general-hr-evaluations__actionCell { grid-column: 1 / -1; }
+  .general-hr-evaluations__evaluationCell { grid-column: 1; grid-row: 2; }
+  .general-hr-evaluations__organizationCell { grid-column: 2; grid-row: 2; }
+  .general-hr-evaluations__actionCell { grid-column: 1 / -1; grid-row: 3; padding-top: 2px; }
   .general-hr-evaluations__table .general-hr-evaluations__actionCell::before { display: none; }
-  .general-hr-evaluations__rowActions { justify-content: flex-start; }
-  .general-hr-evaluations__rowActions > .general-hr-evaluations__iconButton { width: 40px; height: 40px; }
-  .general-hr-evaluations__trackButton { min-height: 40px; padding-inline: 12px; font-size: var(--text-body) !important; }
+  .general-hr-evaluations__mobileActions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .general-hr-evaluations__mobileActions button { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; min-height: 42px; padding: 8px 10px; border: 1px solid var(--hr-line); border-radius: 8px; color: var(--hr-action); background: transparent; font: inherit; font-size: var(--text-body); line-height: 1.45; text-align: center; overflow-wrap: anywhere; }
+  .general-hr-evaluations__mobileActions button svg { width: var(--icon-control); height: var(--icon-control); flex-shrink: 0; }
+  .general-hr-evaluations__mobileActions .general-hr-evaluations__dangerMenuItem { color: var(--hr-danger); }
+  .general-hr-evaluations__mobileActions button:not(:disabled):active { background: var(--hr-soft); }
   .general-hr-evaluations__template { -webkit-line-clamp: 3; }
 }
+
+@container hrWorkspace (max-width: 1050px) {
+  .general-hr-evaluations__hero h1 { font-size: 28px; }
+  .general-hr-evaluations__heroActions > span { max-width: 180px; text-align: right; }
+}
+@container hrWorkspace (max-width: 940px) {
+  .general-hr-evaluations__hero { min-height: 140px; padding: 20px 22px; }
+  .general-hr-evaluations__hero h1 { font-size: 27px; }
+  .general-hr-evaluations__mobileActions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+}
 @container hrWorkspace (max-width: 600px) {
-  .general-hr-evaluations__hero { align-items: flex-start; flex-direction: row; gap: 12px; min-height: 0; padding: 8px 0 20px; }
+  .general-hr-evaluations__hero { align-items: flex-start; flex-direction: row; gap: 12px; min-height: 0; padding: 18px 20px; }
   .general-hr-evaluations__recordsTools > span { display: none; }
   .general-hr-evaluations__heroScope { align-items: flex-start; font-size: var(--text-body); }
   .general-hr-evaluations__heroScope svg { margin-top: 3px; }
@@ -627,13 +629,14 @@ html.dark .general-hr-evaluations__dangerButton { background: #ffafba; color: #3
   .general-hr-evaluations__recordsHeader { padding: 12px 20px; }
   .general-hr-evaluations__recordsHeader h2 { font-size: var(--text-body); }
   .general-hr-evaluations__appliedCount { display: none; }
-  .general-hr-evaluations__table tbody { padding: 0 20px; }
-  .general-hr-evaluations__table tbody tr { gap: 18px 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .general-hr-evaluations__table tbody { padding: 0; }
+  .general-hr-evaluations__table tbody tr { gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 18px 20px; }
   .general-hr-evaluations__employeeCell { grid-column: 1 / -1; grid-row: 1; }
   .general-hr-evaluations__evaluationCell { grid-column: 1 / -1; grid-row: 2; }
   .general-hr-evaluations__organizationCell { grid-column: 1; grid-row: 3; }
   .general-hr-evaluations__progressCell { grid-column: 2; grid-row: 3; text-align: right; }
-  .general-hr-evaluations__progressCell .general-hr-evaluations__status, .general-hr-evaluations__progressCell .general-hr-evaluations__statusGroup, .general-hr-evaluations__progressCell .general-hr-evaluations__reviewerLink { margin-left: auto; }
+  .general-hr-evaluations__progressCell .general-hr-evaluations__statusGroup { justify-content: flex-end; margin-left: auto; }
+  .general-hr-evaluations__progressCell .general-hr-evaluations__status, .general-hr-evaluations__progressCell .general-hr-evaluations__reviewerLink { margin-left: auto; }
   .general-hr-evaluations__progressCell .general-hr-evaluations__status { text-align: left; }
   .general-hr-evaluations__progressCell .general-hr-evaluations__reviewerLink { justify-content: flex-end; text-align: right; }
   .general-hr-evaluations__progressCell .general-hr-evaluations__reviewerLink svg { flex-shrink: 0; }
@@ -642,15 +645,9 @@ html.dark .general-hr-evaluations__dangerButton { background: #ffafba; color: #3
   .general-hr-evaluations__organizationCell { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
   .general-hr-evaluations__table .general-hr-evaluations__organizationCell::before { display: none; }
   .general-hr-evaluations__organizationCell .general-hr-evaluations__department { margin-top: 0; overflow-wrap: anywhere; }
-  .general-hr-evaluations__table .general-hr-evaluations__employeeCell { padding-bottom: 15px; border-bottom: 1px solid var(--hr-line); }
+  .general-hr-evaluations__table .general-hr-evaluations__employeeCell { padding-bottom: 14px; border-bottom: 1px solid var(--hr-line); }
   .general-hr-evaluations__table .general-hr-evaluations__actionCell { padding-top: 3px; }
-  .general-hr-evaluations__recordsLayout .general-hr-evaluations__rowActions, .general-hr-evaluations__trackingPanel, .general-hr-evaluations__actionMenu:popover-open { display: none; }
-  .general-hr-evaluations__recordsLayout[data-tracking="true"] .general-hr-evaluations__submitted { display: block; }
-  .general-hr-evaluations__mobileActions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .general-hr-evaluations__mobileActions button { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; min-height: 44px; padding: 10px; border: 1px solid var(--hr-line); border-radius: 8px; color: var(--hr-action); background: transparent; font: inherit; font-size: var(--text-body); line-height: 1.5; text-align: center; overflow-wrap: anywhere; }
-  .general-hr-evaluations__mobileActions button svg { width: var(--icon-control); height: var(--icon-control); flex-shrink: 0; }
-  .general-hr-evaluations__mobileActions .general-hr-evaluations__dangerMenuItem { color: var(--hr-danger); }
-  .general-hr-evaluations__mobileActions button:not(:disabled):active { background: var(--hr-soft); }
+  .general-hr-evaluations__mobileActions button { min-height: 44px; padding: 10px; }
   .general-hr-evaluations__organizationCell { flex-wrap: wrap; text-align: left; }
   .general-hr-evaluations__recordsLayout .general-hr-evaluations__employee strong, .general-hr-evaluations__recordsLayout .general-hr-evaluations__employee > div > span { white-space: normal; overflow-wrap: anywhere; }
   .general-hr-evaluations__pageNote { align-items: flex-start; font-size: var(--text-body); line-height: 1.8; }
@@ -660,10 +657,10 @@ html.dark .general-hr-evaluations__dangerButton { background: #ffafba; color: #3
   .general-hr-evaluations__period { font-size: var(--text-body); }
 }
 @container hrWorkspace (max-width: 380px) {
-  .general-hr-evaluations__hero { padding: 8px 0 20px; }
+  .general-hr-evaluations__hero { padding: 16px; }
   .general-hr-evaluations__hero h1 { font-size: 25px; }
   .general-hr-evaluations__recordsHeader { padding-inline: 16px; }
-  .general-hr-evaluations__table tbody { padding-inline: 16px; }
+  .general-hr-evaluations__table tbody tr { padding-inline: 16px; }
 }
 @media (max-width: 700px) {
   .general-hr-evaluations__dialog { width: calc(100vw - 24px); max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); border-radius: 14px; }
