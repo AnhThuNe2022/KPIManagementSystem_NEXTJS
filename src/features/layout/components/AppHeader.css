@@ -66,7 +66,6 @@
   outline-offset: 6px;
 }
 .app-header__logo {
-  position: relative;
   display: grid;
   flex-shrink: 0;
   place-items: center;
@@ -75,16 +74,6 @@
   border-radius: 12px;
   background: #fff;
   box-shadow: 0 5px 14px rgb(4 12 43 / .25), inset 0 -2px 0 #dfe5ef;
-}
-.app-header__santaHat {
-  position: absolute;
-  top: -6px;
-  left: -2px;
-  z-index: 2;
-  width: 48px;
-  height: 33px;
-  filter: drop-shadow(0 2px 4px rgb(0 0 0 / .28));
-  pointer-events: none;
 }
 .app-header__logo img {
   display: block;
