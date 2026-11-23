@@ -306,6 +306,16 @@ export function ConditionAssignmentListView() {
     return Array.from(map.values());
   }, [items]);
 
+  const changeScope = useCallback((scopeType: string) => {
+    setFilters((p) => ({
+      ...p,
+      scopeType,
+      companyId: scopeType ? p.companyId : "",
+      departmentId: "",
+    }));
+    setPage(1);
+  }, []);
+
   const handleReset = () => {
     setKeywordInput("");
     setFilters(INITIAL_FILTERS);
@@ -361,7 +371,7 @@ export function ConditionAssignmentListView() {
       chips.push({
         key: "scopeType",
         label: `Phạm vi: ${filters.scopeType === "2" ? "Phòng ban" : "Công ty"}`,
-        onRemove: () => setFilters((p) => ({ ...p, scopeType: "", departmentId: "" })),
+        onRemove: () => changeScope(""),
       });
     }
     if (filters.userId) {
@@ -391,7 +401,7 @@ export function ConditionAssignmentListView() {
       });
     }
     return chips;
-  }, [companyById, filterDepartments, filterUsers, filters]);
+  }, [changeScope, companyById, filterDepartments, filterUsers, filters]);
 
   const columns = useMemo<TableColumn<ConditionAssignmentDto>[]>(
     () => [
@@ -558,10 +568,7 @@ export function ConditionAssignmentListView() {
               <AppSelect
                 label="Loại phạm vi"
                 value={filters.scopeType}
-                onChange={(scopeType) => {
-                  setFilters((p) => ({ ...p, scopeType, departmentId: "" }));
-                  setPage(1);
-                }}
+                onChange={changeScope}
                 options={SCOPE_OPTIONS}
                 placeholder="Tất cả phạm vi"
                 hasSearch={false}
@@ -592,7 +599,9 @@ export function ConditionAssignmentListView() {
                 setPage(1);
               }}
               options={companies.map((c) => ({ value: String(c.id), label: c.companyName }))}
-              placeholder="Tất cả công ty"
+              placeholder={filters.scopeType ? "Tất cả công ty" : "Chọn loại phạm vi trước"}
+              isDisabled={!filters.scopeType}
+              disabledMessage="Chọn loại phạm vi trước để lọc theo công ty"
             />
             <AppSelect
               label="Phòng ban"
