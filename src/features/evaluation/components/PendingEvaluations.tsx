@@ -254,7 +254,7 @@ export function PendingEvaluations({
   }
 
   function openReject(targets: PendingEvaluationDto[]) {
-    if (hr || !targets.length) return;
+    if (!targets.length) return;
     setRejectReason("");
     setRejectError("");
     setRejectTargets(targets);
@@ -279,7 +279,7 @@ export function PendingEvaluations({
     let completed = 0;
     try {
       for (const item of rejectTargets) {
-        await pendingEvaluationApi.reviewAction(item.id, { Action: 2, Level: hr ? UserRoleSystem.HR : UserRoleSystem.ManagerMid, Comment: rejectReason.trim(), StepId: item.stepId });
+        await pendingEvaluationApi.reviewAction(item.id, { Action: 2, Level: level, Comment: rejectReason.trim(), StepId: item.stepId });
         completed += 1;
       }
       setRejectTargets(null);
