@@ -344,6 +344,10 @@ export function ConditionAssignmentList() {
     setPage(1);
   }
 
+  function changeScope(scopeType: string) {
+    updateAndApply({ scopeType, companyId: scopeType ? filters.companyId : "", departmentId: "" });
+  }
+
   function applyFilters(event: FormEvent) {
     event.preventDefault();
     setApplied({ ...filters, keyword: filters.keyword.trim() });
@@ -359,7 +363,7 @@ export function ConditionAssignmentList() {
 
   function removeFilterChip(key: keyof ConditionAssignmentFilters) {
     if (key === "scopeType") {
-      updateAndApply({ scopeType: "", departmentId: "" });
+      changeScope("");
     } else if (key === "companyId") {
       updateAndApply({ companyId: "", departmentId: "" });
     } else {
@@ -542,13 +546,7 @@ export function ConditionAssignmentList() {
                     placeholder="Phạm vi"
                     value={filters.scopeType}
                     options={SCOPE_TYPE_OPTIONS}
-                    onChange={(scopeType) =>
-                      updateAndApply({
-                        scopeType,
-                        departmentId:
-                          scopeType === String(AssignmentScopeType.Department) ? filters.departmentId : "",
-                      })
-                    }
+                    onChange={changeScope}
                   />
                 </div>
 
@@ -557,9 +555,10 @@ export function ConditionAssignmentList() {
                   <SearchableSelect
                     id="ca-filter-company"
                     label="Công ty"
-                    placeholder="Công ty"
+                    placeholder={filters.scopeType ? "Công ty" : "Chọn loại phạm vi trước"}
                     value={filters.companyId}
                     options={companyOptions}
+                    disabled={!filters.scopeType}
                     onChange={(companyId) => updateAndApply({ companyId, departmentId: "" })}
                   />
                 </div>
