@@ -1,0 +1,48 @@
+.emp-admin-modal { width: min(740px, calc(100vw - 28px)); }
+.emp-admin-tabs { display: flex; gap: 20px; padding-inline: 22px; border-bottom: 1px solid var(--emp-border); background: var(--emp-bg); }
+.emp-admin-tabs > button { position: relative; display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 10px 2px; border: 0; background: transparent; color: var(--emp-muted); font: 600 13.5px/1.4 var(--font-ui); white-space: nowrap; cursor: pointer; transition: color 160ms ease; }
+.emp-admin-tabs > button svg { width: 15px; height: 15px; opacity: .8; }
+.emp-admin-tabs > button::after { content: ""; position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; background: var(--emp-brand); transform: scaleX(0); transition: transform 200ms var(--emp-ease); }
+.emp-admin-tabs > button[aria-selected="true"] { color: var(--emp-brand); font-weight: 700; }
+.emp-admin-tabs > button[aria-selected="true"]::after { transform: scaleX(1); }
+.emp-admin-tabs > button:hover:not(:disabled) { color: var(--emp-ink); }
+.emp-admin-tabCount { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding-inline: 6px; border-radius: 999px; background: var(--emp-hover); color: var(--emp-muted); font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.emp-admin-tabCount[data-ready="true"] { background: var(--emp-blue-soft); color: var(--emp-brand); }
+
+.emp-admin-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; min-width: 0; padding: 0; margin: 0; border: 0; }
+.emp-admin-fullRow { grid-column: 1 / -1; }
+.emp-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.emp-field > label { display: inline-flex; align-items: center; gap: 3px; font-size: 13px; font-weight: 600; color: var(--emp-ink-2); }
+.emp-req { color: var(--emp-danger); margin-left: 2px; }
+.emp-field input { width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--emp-border-strong); border-radius: var(--emp-radius-sm); background: var(--emp-bg); color: var(--emp-ink); font: 500 14px/1.4 var(--font-ui); outline: none; transition: border-color 150ms ease, box-shadow 150ms ease; }
+.emp-field input::placeholder { color: var(--emp-muted); opacity: 1; }
+.emp-field input:focus { border-color: var(--emp-focus); box-shadow: 0 0 0 3px var(--emp-focus-ring); }
+.emp-password-wrap { position: relative; display: flex; align-items: center; }
+.emp-password-wrap input { padding-right: 40px; }
+.emp-password-toggle { position: absolute; right: 5px; display: inline-grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 6px; background: transparent; color: var(--emp-muted); cursor: pointer; }
+.emp-password-toggle:hover { color: var(--emp-ink); background: var(--emp-hover); }
+.emp-password-toggle svg { width: 16px; height: 16px; }
+
+.emp-admin-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.emp-admin-toolbar h3 { margin: 0; font-size: 14.5px; font-weight: 700; color: var(--emp-ink); }
+.emp-admin-hint { margin: 12px 0 0; padding: 10px 12px; border: 1px solid var(--emp-border); border-radius: var(--emp-radius-sm); background: var(--emp-subtle); color: var(--emp-muted); font-size: 13px; line-height: 1.5; }
+.emp-admin-empty { margin: 14px 0 0; padding: 24px 16px; border: 1px dashed var(--emp-border-strong); border-radius: 10px; background: var(--emp-subtle); color: var(--emp-muted); text-align: center; font-size: 13.5px; }
+.emp-admin-assignments { margin: 12px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.emp-admin-assignments li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--emp-border); border-radius: 10px; background: var(--emp-subtle); overflow-wrap: anywhere; }
+.emp-admin-assignments strong { display: block; font-size: 14px; font-weight: 650; color: var(--emp-ink); }
+.emp-admin-assignments p { margin: 2px 0 0; color: var(--emp-muted); font-size: 12.5px; }
+
+.emp-admin-passwordPanel .user-common__passwordForm { padding: 0; gap: 16px; }
+.emp-hr-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.emp-hr-tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border: 1px solid rgb(var(--color-brand) / .24); border-radius: 6px; background: var(--emp-blue-soft); color: var(--emp-brand); font-size: 12.5px; font-weight: 600; }
+.emp-hr-tag button { display: inline-grid; place-items: center; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; opacity: .75; }
+.emp-hr-tag button:hover { opacity: 1; }
+.emp-hr-tag svg { width: 13px; height: 13px; }
+
+@media (max-width: 560px) {
+  .emp-admin-tabs { gap: 12px; padding-inline: 16px; }
+  .emp-admin-tabs > button svg { display: none; }
+  .emp-admin-fields { grid-template-columns: 1fr; }
+  .emp-admin-assignments li { grid-template-columns: 1fr auto; }
+  .emp-admin-assignments .emp-row-actions { grid-column: 1 / -1; justify-self: end; }
+}

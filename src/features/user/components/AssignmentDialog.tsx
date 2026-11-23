@@ -40,6 +40,8 @@ interface AssignmentDialogProps {
 
   isEdit: boolean;
 
+  editableDetails?: boolean;
+
   hasPrimaryAssignment: boolean;
 
   companies: CompanyDto[];
@@ -67,6 +69,7 @@ export default function AssignmentDialog({
   userId,
   model,
   isEdit,
+  editableDetails = false,
   hasPrimaryAssignment,
   companies,
   isDirector,
@@ -74,6 +77,7 @@ export default function AssignmentDialog({
   onSubmit,
 }: AssignmentDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const readOnlyDetails = isEdit && !editableDetails;
 
   useEffect(() => {
     if (!open) return;
@@ -122,7 +126,7 @@ const initialManager: ManagerOption | null =
     if (!open || !form.companyId) return;
 
     let active = true;
-    departmentApi.getAll(form.companyId)
+    departmentApi.getAll(form.companyId, { byScope: editableDetails })
       .then(result => {
         if (active) setDepartmentOptions(result ?? []);
       })
@@ -132,7 +136,7 @@ const initialManager: ManagerOption | null =
         setErrors(prev => ({ ...prev, departmentId: "Không thể tải danh sách phòng ban." }));
       });
     return () => { active = false; };
-  }, [open, form.companyId]);
+  }, [open, form.companyId, editableDetails]);
 
   /**
    * ==========================================
@@ -440,7 +444,7 @@ return (
                 <span className="ml-0.5 text-red-500">*</span>
               </label>
 
-              {isEdit ? (
+              {readOnlyDetails ? (
                 /* EDIT: READONLY */
                 <input
                   id="assignmentType"
@@ -639,7 +643,7 @@ return (
                 <span className="ml-0.5 text-red-500">*</span>
               </label>
 
-              {isEdit ? (
+              {readOnlyDetails ? (
                 /* EDIT: READONLY */
                 <input
                   id="companyId"
@@ -700,7 +704,7 @@ return (
                 <span className="ml-0.5 text-red-500">*</span>
               </label>
 
-              {isEdit ? (
+              {readOnlyDetails ? (
                 /* EDIT: READONLY */
                 <input
                   id="departmentId"
@@ -763,7 +767,7 @@ return (
               <span className="ml-0.5 text-red-500">*</span>
             </label>
 
-            {isEdit ? (
+            {readOnlyDetails ? (
               /* EDIT: READONLY */
               <input
                 id="jobTitle"
@@ -869,7 +873,7 @@ return (
 
                 <div className="px-3 pb-1 pt-2">
                   <ManagerSearch
-                    userId={userId}
+                    userId={userId || "1"}
                     value={form.managerID}
                     initialManager={initialManager}
                     disabled={!form.departmentId}
