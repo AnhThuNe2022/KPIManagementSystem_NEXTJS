@@ -1,3 +1,4 @@
+import { ConditionStatus } from "@/design-system/registries";
 import { request } from "@/lib/http/request";
 import { unwrapApiData, type ApiResponse, type PagedResult } from "@/server/api/types";
 import type {
@@ -6,6 +7,18 @@ import type {
   ConditionAssignmentFilterState,
   ConditionAssignmentUserOption,
 } from "../types";
+
+export interface ResponsibleHrUser {
+  id: string;
+  fullName?: string;
+  systemCode?: string;
+  userOrganizationId?: number;
+}
+
+export interface ResponsibleHrResponse {
+  assignmentSourceType: number;
+  users: ResponsibleHrUser[];
+}
 
 export const conditionAssignmentApi = {
   async getAll(
@@ -33,7 +46,9 @@ export const conditionAssignmentApi = {
     const idValue =
       filters.scopeType === "2"
         ? filters.departmentId
-        : filters.companyId;
+        : filters.scopeType === "1"
+          ? filters.companyId
+          : "";
 
     const payload = {
       Keyword: filters.keyword.trim() || undefined,
@@ -106,6 +121,32 @@ export const conditionAssignmentApi = {
         SystemCodeUser: draft.systemCodeUser,
         IsActive: draft.isActive,
         ScopeType: draft.scopeType,
+      }),
+    });
+  },
+
+  async getResponsibleHr(employeeId: string, signal?: AbortSignal): Promise<ResponsibleHrResponse> {
+    const params = new URLSearchParams({
+      employeeId,
+      statusCondition: ConditionStatus.ByUnitHR,
+    });
+    const raw = await request<ResponsibleHrResponse | ApiResponse<ResponsibleHrResponse>>(
+      `/conditionassignments/responsible-hr?${params.toString()}`,
+      { signal },
+    );
+    const unwrapped = unwrapApiData(raw);
+    return {
+      assignmentSourceType: Number(unwrapped?.assignmentSourceType ?? 1),
+      users: Array.isArray(unwrapped?.users) ? unwrapped.users : [],
+    };
+  },
+
+  async syncDetail(employeeUserId: string, conditionAssignmentIds: number[]): Promise<void> {
+    await request("/conditionassignmentdetail/sync", {
+      method: "POST",
+      body: JSON.stringify({
+        ConditionAssignmentIds: conditionAssignmentIds,
+        EmployeeUserId: employeeUserId,
       }),
     });
   },

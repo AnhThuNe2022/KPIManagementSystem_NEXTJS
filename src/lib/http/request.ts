@@ -54,15 +54,25 @@ function extractMessage(payload: unknown): string | null {
       : null;
   }
   const record = payload as Record<string, unknown>;
-  for (const key of ["message", "Message", "error", "Error", "title", "detail"]) {
+  const rawErrors = Array.isArray(payload) ? payload : record.errors;
+  if (rawErrors && typeof rawErrors === "object") {
+    const items = (Array.isArray(rawErrors) ? rawErrors : Object.values(rawErrors)).flat();
+    const messages = items
+      .map((item) => {
+        if (typeof item === "string") return item.trim();
+        if (item && typeof item === "object") {
+          const obj = item as Record<string, unknown>;
+          const text = obj.description ?? obj.Description ?? obj.message ?? obj.Message;
+          return typeof text === "string" ? text.trim() : "";
+        }
+        return "";
+      })
+      .filter(Boolean);
+    if (messages.length > 0) return messages.join(" • ");
+  }
+  for (const key of ["message", "Message", "error", "Error", "detail", "title"]) {
     const val = record[key];
     if (typeof val === "string" && val.trim()) return val.trim();
-  }
-  if (record.errors && typeof record.errors === "object") {
-    const first = Object.values(record.errors as Record<string, unknown>)
-      .flatMap((v) => (Array.isArray(v) ? v : [v]))
-      .find((v) => typeof v === "string" && v.trim());
-    if (typeof first === "string") return first.trim();
   }
   return null;
 }

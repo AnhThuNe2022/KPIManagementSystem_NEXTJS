@@ -2,6 +2,25 @@ import { request } from "@/lib/http/request";
 import type { PagedResult } from "@/server/api/types";
 import type { AvailableManager, UserOrganizationDto } from "../types";
 
+export type UserOrganizationUpsertItem = Omit<
+  UserOrganizationDto,
+  | "id"
+  | "managerID"
+  | "managerName"
+  | "managerJobTitle"
+  | "managerDepartmentName"
+  | "managerCompanyName"
+  | "managerOrganizationId"
+> & {
+  id?: number | null;
+  managerID?: string | null;
+  managerName?: string | null;
+  managerJobTitle?: string | null;
+  managerDepartmentName?: string | null;
+  managerCompanyName?: string | null;
+  managerOrganizationId?: number | null;
+};
+
 export const userOrganizationApi = {
   async getPaged(userId: string, signal?: AbortSignal): Promise<PagedResult<UserOrganizationDto>> {
     const data = await request<PagedResult<UserOrganizationDto>>("/userorganizations/get-page", {
@@ -60,7 +79,7 @@ export const userOrganizationApi = {
 
   async upsert(
     userId: string,
-    assignments: UserOrganizationDto[],
+    assignments: Array<UserOrganizationDto | UserOrganizationUpsertItem>,
   ): Promise<{ success?: boolean; message?: string }> {
     const sanitized = assignments.map((item) => {
       const copy = { ...item };
