@@ -59,6 +59,10 @@ const labels: Record<string, string> = {
   Over: "Hoàn tất", HRDepartmentReviewing: "Phòng/Ban NS đang duyệt",
 };
 
+const lowerLabels = Object.fromEntries(
+  Object.entries(labels).map(([key, label]) => [key.toLowerCase(), label]),
+);
+
 // The BE Status enum is numeric; map known backend values explicitly so enum additions don't shift indices.
 const numericStatusKeys: Record<number, string> = {
   0: EvaluationStatus.Unknown,
@@ -83,10 +87,18 @@ const numericStatusKeys: Record<number, string> = {
   21: EvaluationStatus.Over,
 };
 export function statusKey(value: string | number) {
-  return typeof value === "number" ? numericStatusKeys[value] ?? "Unknown" : value;
+  if (typeof value === "number") return numericStatusKeys[value] ?? "Unknown";
+  const trimmed = value.trim();
+  if (/^\d+$/.test(trimmed)) return numericStatusKeys[Number(trimmed)] ?? "Unknown";
+  return trimmed;
 }
-export function hrStatusLabel(value: string | number) {
+export function hrStatusLabel(value: string | number, separator = " / ") {
   const key = statusKey(value);
-  if (key.includes(";")) return key.split(";").filter(Boolean).map((part) => labels[part] ?? part).join(" / ");
-  return labels[key] ?? key;
+  const labelOf = (part: string) => {
+    const clean = part.trim();
+    const resolved = /^\d+$/.test(clean) ? (numericStatusKeys[Number(clean)] ?? clean) : clean;
+    return labels[resolved] ?? lowerLabels[resolved.toLowerCase()] ?? resolved;
+  };
+  if (key.includes(";")) return key.split(";").filter(Boolean).map(labelOf).join(separator);
+  return labelOf(key);
 }

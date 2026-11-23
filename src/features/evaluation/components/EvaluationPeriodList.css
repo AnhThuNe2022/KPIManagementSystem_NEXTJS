@@ -362,91 +362,6 @@ html.dark .period-workspace {
   margin-right: 20px;
 }
 
-.period-search-box {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  width: 230px;
-  height: 36px;
-  padding: 0 10px;
-  border: 1px solid var(--d-line);
-  border-radius: 9px;
-  background: var(--d-paper);
-  color: rgb(var(--color-muted));
-  transition: width 180ms ease, border-color 150ms ease, box-shadow 150ms ease;
-}
-
-.period-search-box:focus-within {
-  width: 268px;
-  border-color: var(--d-blue);
-  box-shadow: 0 0 0 3px rgb(var(--color-brand) / .1);
-}
-
-.period-search-icon {
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
-}
-
-.period-search-box input {
-  width: 100%;
-  min-width: 0;
-  height: 100%;
-  padding: 0;
-  border: 0;
-  outline: none;
-  background: transparent;
-  color: rgb(var(--color-text));
-  font-size: var(--text-label);
-}
-
-.period-search-box input::placeholder {
-  color: rgb(var(--color-muted));
-  opacity: .85;
-}
-
-.period-search-box input::-webkit-search-cancel-button {
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-.period-search-box kbd {
-  display: inline-grid;
-  place-items: center;
-  flex-shrink: 0;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
-  border: 1px solid var(--d-line);
-  border-radius: 5px;
-  background: var(--d-stone);
-  color: rgb(var(--color-muted));
-  font: 600 var(--text-meta)/1 var(--font-ui);
-}
-
-.period-search-box:focus-within kbd {
-  display: none;
-}
-
-.period-search-clear {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: 0;
-  border-radius: 5px;
-  background: var(--d-stone);
-  color: rgb(var(--color-muted));
-  cursor: pointer;
-}
-
-.period-search-clear:hover {
-  color: rgb(var(--color-text));
-}
-
 /* 10-column KPI period table */
 .department-table.period-table {
   table-layout: auto;
@@ -817,17 +732,10 @@ html.dark .period-workspace {
     width: 100%;
     margin: 0 16px 12px;
   }
-
-  .period-search-box,
-  .period-search-box:focus-within {
-    flex: 1;
-    width: auto;
-  }
 }
 
 @media (max-width: 640px) {
-  .period-hero-primary kbd,
-  .period-search-box kbd {
+  .period-hero-primary kbd {
     display: none;
   }
 

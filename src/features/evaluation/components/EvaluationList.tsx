@@ -8,17 +8,23 @@ import { useRouter } from "next/navigation";
 import { notify } from "@/components/ui/Toaster";
 
 import { evaluationApi } from "@/features/evaluation/services/evaluationApi";
-import { requestMessage } from "../evaluationDisplay";
+import { hrStatusLabel, requestMessage, statusKey as resolveStatusKey } from "../evaluationDisplay";
 import type { EvaluationDto } from "@/features/evaluation/types";
 
 type StatusGroup = "all" | "waiting" | "done" | "other";
 
-function statusTone(status: string): "danger" | "success" | "waiting" | "neutral" {
-  const key = (status || "").toLowerCase();
-  if (key === "rejected") return "danger";
-  if (key === "over" || key === "compilehrlist" || key === "senthr") return "success";
-  if (key.includes("review")) return "waiting";
-  return "neutral";
+function statusTone(status: string | number): "danger" | "success" | "waiting" | "neutral" {
+  const parts = resolveStatusKey(status)
+    .toLowerCase()
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (!parts.length || parts.some((part) => ["drafted", "unknown", "imported"].includes(part))) {
+    return "neutral";
+  }
+  if (parts.some((part) => part === "rejected")) return "danger";
+  if (parts.every((part) => ["over", "compilehrlist", "senthr"].includes(part))) return "success";
+  return "waiting";
 }
 
 export default function EvaluationList() {
@@ -82,7 +88,7 @@ export default function EvaluationList() {
     return (
       (item.templateName || "").toLowerCase().includes(normalizedQuery) ||
       (item.period || "").toLowerCase().includes(normalizedQuery) ||
-      convertStatusToDisplay(item.status).toLowerCase().includes(normalizedQuery)
+      hrStatusLabel(item.status, " và ").toLowerCase().includes(normalizedQuery)
     );
   });
 
@@ -361,7 +367,7 @@ export default function EvaluationList() {
                         data-status={item.status?.toLowerCase()}
                         data-tone={statusTone(item.status)}
                       >
-                        {convertStatusToDisplay(item.status)}
+                        {hrStatusLabel(item.status, " và ")}
                       </span>
                     </td>
 
@@ -461,68 +467,6 @@ function formatShortDate(value?: string | null) {
   const year = date.getFullYear();
 
   return `${day}/${month}/${year}`;
-}
-
-/* =========================================================
-   STATUS
-========================================================= */
-
-function convertStatusToDisplay(status: string) {
-  switch (status?.toLowerCase()) {
-    case "unknown":
-      return "Không xác định";
-
-    case "drafted":
-      return "Lưu nháp";
-
-    case "submitted":
-      return "Đã gửi";
-
-    case "managermidreviewing":
-      return "Quản lý đang duyệt";
-
-    case "hrreviewing":
-      return "HR đang duyệt";
-
-    case "managerseniorreviewing":
-      return "Quản lý cấp cao đang duyệt";
-
-    case "chairmanreviewing":
-      return "Chủ tịch đang duyệt";
-
-    case "rejected":
-      return "Bị từ chối";
-
-    case "senthr":
-      return "QLCC đã duyệt";
-
-    case "compilehrlist":
-      return "Đã đánh giá xong";
-
-    case "directorreviewcompilehrlist":
-      return "Giám đốc đang duyệt";
-
-    case "directmanagerreviewing":
-      return "Quản lý trực tiếp đang duyệt";
-
-    case "compilechiefofstafflist":
-      return "Chánh VP đang tổng hợp";
-
-    case "chairmanreviewcompile":
-      return "Chủ tịch đang duyệt";
-
-    case "departmentheadreviewing":
-      return "Giám đốc ban đang duyệt";
-
-    case "imported":
-      return "Đã được import";
-
-    case "hrdepartmentreviewing":
-      return "Phòng/Ban NS đang duyệt";
-
-    default:
-      return "Không xác định";
-  }
 }
 
 /* =========================================================

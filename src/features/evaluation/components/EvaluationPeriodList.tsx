@@ -15,13 +15,11 @@ import {
   CaretSortIcon,
   CheckCircledIcon,
   ClockIcon,
-  Cross2Icon,
   DashboardIcon,
   ExclamationTriangleIcon,
   FileTextIcon,
   IdCardIcon,
   LayersIcon,
-  MagnifyingGlassIcon,
   MixerHorizontalIcon,
   Pencil2Icon,
   PlusIcon,
@@ -105,14 +103,12 @@ export function EvaluationPeriodList() {
   const [introPhase, setIntroPhase] = useState<"pending" | "playing" | "done">("pending");
   const [status, setStatus] = useState<Status>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [search, setSearch] = useState("");
   const [descending, setDescending] = useState(false);
   const [editor, setEditor] = useState<EvaluationPeriod | "new" | null>(null);
   const [deleting, setDeleting] = useState<EvaluationPeriod | null>(null);
   const [view, setView] = useState<"table" | "grid">("table");
   const [nowMs, setNowMs] = useState<number | null>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const [tabIndicator, setTabIndicator] = useState<{ left: number; width: number } | null>(null);
 
   const current = result?.query === query ? result : undefined;
@@ -136,9 +132,6 @@ export function EvaluationPeriodList() {
       if (event.key.toLowerCase() === "n") {
         event.preventDefault();
         setEditor("new");
-      } else if (event.key === "/") {
-        event.preventDefault();
-        searchInputRef.current?.focus();
       }
     }
     window.addEventListener("keydown", onKey);
@@ -211,32 +204,15 @@ export function EvaluationPeriodList() {
   }
 
   const visible = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
     const filtered = items.filter((item) => {
       if (status !== "all" && item.isActive !== (status === "active")) return false;
       const normalizedType = normalizePeriodType(item.periodType);
       if (typeFilter !== "all" && normalizedType !== typeFilter) return false;
-      if (keyword) {
-        const name = (item.name ?? "").toLowerCase();
-        const idText = item.id != null ? String(item.id) : "";
-        const codeText = item.id != null ? `#${item.id}` : "";
-        const yearText = item.year != null ? String(item.year) : "";
-        const typeLabel = (getPeriodTypeMeta(item.periodType)?.label ?? "").toLowerCase();
-        if (
-          !name.includes(keyword) &&
-          !idText.includes(keyword) &&
-          !codeText.includes(keyword) &&
-          !yearText.includes(keyword) &&
-          !typeLabel.includes(keyword)
-        ) {
-          return false;
-        }
-      }
       return true;
     });
     if (!descending) return filtered;
     return [...filtered].sort((a, b) => (b.name ?? "").localeCompare(a.name ?? "", "vi"));
-  }, [items, status, typeFilter, search, descending]);
+  }, [items, status, typeFilter, descending]);
 
   const activeCount = items.filter((item) => item.isActive === true).length;
   const inactiveCount = items.filter((item) => item.isActive === false).length;
@@ -258,12 +234,11 @@ export function EvaluationPeriodList() {
     [items],
   );
 
-  const hasFilters = status !== "all" || typeFilter !== "all" || search.trim() !== "";
+  const hasFilters = status !== "all" || typeFilter !== "all";
 
   function clearFilters() {
     setStatus("all");
     setTypeFilter("all");
-    setSearch("");
   }
 
   return (
@@ -392,39 +367,6 @@ export function EvaluationPeriodList() {
           </div>
 
           <div className="department-toolbar period-toolbar">
-            <label className="period-search-box">
-              <MagnifyingGlassIcon className="period-search-icon" aria-hidden="true" />
-              <input
-                ref={searchInputRef}
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") {
-                    if (search) setSearch("");
-                    else searchInputRef.current?.blur();
-                  }
-                }}
-                placeholder="Tìm tên kỳ, mã #..."
-                aria-label="Tìm kiếm nhanh kỳ đánh giá"
-              />
-              {search ? (
-                <button
-                  type="button"
-                  className="period-search-clear"
-                  onClick={() => {
-                    setSearch("");
-                    searchInputRef.current?.focus();
-                  }}
-                  aria-label="Xóa từ khóa tìm kiếm"
-                >
-                  <Cross2Icon aria-hidden="true" />
-                </button>
-              ) : (
-                <kbd aria-hidden="true">/</kbd>
-              )}
-            </label>
-
             <div className="department-view-toggle" role="group" aria-label="Kiểu hiển thị">
               <button
                 type="button"
@@ -825,7 +767,7 @@ export function EvaluationPeriodList() {
                 {error
                   ? "Thử tải lại để xem thông tin kỳ đánh giá."
                   : hasFilters
-                    ? "Thử điều chỉnh từ khóa tìm kiếm hoặc đặt lại bộ lọc trạng thái và loại kỳ."
+                    ? "Thử đặt lại bộ lọc trạng thái hoặc loại kỳ."
                     : "Bắt đầu bằng việc thêm kỳ đánh giá đầu tiên."}
               </p>
               <button
