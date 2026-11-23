@@ -18,8 +18,9 @@ import {
   type TableColumn,
 } from "@/components/ds";
 import {
+  formatEvaluationStatusLabel,
   isEditableEvaluationStatus,
-  resolveEvaluationStatus,
+  resolveEvaluationStatusGroup,
 } from "@/design-system/registries";
 import { formatDate, normalizeVietnamese } from "@/lib/format/formatters";
 import { ApiRequestError, getErrorMessage, isAbortError } from "@/lib/http/request";
@@ -85,7 +86,7 @@ export function MyEvaluationListView() {
   const groupCounts = useMemo(() => {
     const counts = { all: pageItems.length, waiting: 0, done: 0, other: 0 };
     for (const item of pageItems) {
-      const group = resolveEvaluationStatus(item.status).group;
+      const group = resolveEvaluationStatusGroup(item.status);
       if (group === "waiting") counts.waiting += 1;
       else if (group === "done") counts.done += 1;
       else counts.other += 1;
@@ -96,12 +97,13 @@ export function MyEvaluationListView() {
   const filteredItems = useMemo<EvaluationRow[]>(() => {
     const needle = normalizeVietnamese(search);
     return pageItems.filter((item) => {
-      const spec = resolveEvaluationStatus(item.status);
-      if (statusGroup === "waiting" && spec.group !== "waiting") return false;
-      if (statusGroup === "done" && spec.group !== "done") return false;
-      if (statusGroup === "other" && (spec.group === "waiting" || spec.group === "done")) return false;
+      const group = resolveEvaluationStatusGroup(item.status);
+      if (statusGroup === "waiting" && group !== "waiting") return false;
+      if (statusGroup === "done" && group !== "done") return false;
+      if (statusGroup === "other" && (group === "waiting" || group === "done")) return false;
       if (needle) {
-        const hay = [item.templateName, item.period, spec.label]
+        const statusLabel = formatEvaluationStatusLabel(item.status, " và ");
+        const hay = [item.templateName, item.period, statusLabel]
           .map(normalizeVietnamese)
           .join(" ");
         if (!hay.includes(needle)) return false;

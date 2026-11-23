@@ -17,7 +17,6 @@ import {
   ActiveStatus,
   AppButton,
   AppIconButton,
-  AppTextInput,
   ConfirmDialog,
   DataTable,
   MetricStrip,
@@ -32,8 +31,8 @@ import {
   useAppToast,
   type TableColumn,
 } from "@/components/ds";
-import { ACTIVE_FILTER_OPTIONS, normalizePeriodType, resolvePeriodType } from "@/design-system/registries";
-import { formatDate, normalizeVietnamese } from "@/lib/format/formatters";
+import { ACTIVE_FILTER_OPTIONS, normalizePeriodType } from "@/design-system/registries";
+import { formatDate } from "@/lib/format/formatters";
 import { ApiRequestError, getErrorMessage, isAbortError } from "@/lib/http/request";
 import { evaluationPeriodApi } from "../services/evaluationPeriodApi";
 import type { EvaluationPeriodDto } from "../types";
@@ -75,7 +74,6 @@ export function EvaluationPeriodListView() {
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("");
-  const [search, setSearch] = useState("");
   const [sortDescName, setSortDescName] = useState(false);
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
 
@@ -147,25 +145,17 @@ export function EvaluationPeriodListView() {
     pageItems.length > 0 ? Math.round((activeCountOnPage / pageItems.length) * 100) : 0;
 
   const filteredItems = useMemo<PeriodRow[]>(() => {
-    const needle = normalizeVietnamese(search);
     const list = pageItems.filter((item) => {
       if (statusFilter === "active" && !item.isActive) return false;
       if (statusFilter === "inactive" && item.isActive) return false;
       if (typeFilter && normalizePeriodType(item.periodType) !== typeFilter) return false;
-      if (needle) {
-        const typeLabel = resolvePeriodType(item.periodType).label;
-        const haystack = [item.name, String(item.id), `#${item.id}`, String(item.year ?? ""), typeLabel]
-          .map(normalizeVietnamese)
-          .join(" ");
-        if (!haystack.includes(needle)) return false;
-      }
       return true;
     });
     if (sortDescName) {
       return [...list].sort((a, b) => (b.name ?? "").localeCompare(a.name ?? "", "vi")) as PeriodRow[];
     }
     return list as PeriodRow[];
-  }, [pageItems, search, sortDescName, statusFilter, typeFilter]);
+  }, [pageItems, sortDescName, statusFilter, typeFilter]);
 
   const handleConfirmDelete = async () => {
     if (!deletingPeriod) return;
@@ -378,19 +368,6 @@ export function EvaluationPeriodListView() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="w-60">
-            <AppTextInput
-              label="Tìm kỳ đánh giá"
-              isLabelHidden
-              type="search"
-              startIcon="search"
-              size="sm"
-              placeholder="Tìm tên, #mã, năm..."
-              value={search}
-              onChange={setSearch}
-              hasClear
-            />
-          </div>
           <AppButton
             label={sortDescName ? "Tên: Z → A" : "Mặc định"}
             variant="secondary"
@@ -412,7 +389,11 @@ export function EvaluationPeriodListView() {
         loginNextPath="/manager/kpi-evaluation-periods"
         onRetry={() => setRevision((v) => v + 1)}
         emptyTitle="Chưa có kỳ đánh giá phù hợp"
-        emptyDescription="Thử bỏ bộ lọc hoặc tạo kỳ đánh giá mới."
+        emptyDescription={
+          statusFilter !== "all" || typeFilter
+            ? "Thử đặt lại bộ lọc trạng thái hoặc loại kỳ."
+            : "Bắt đầu bằng việc thêm kỳ đánh giá đầu tiên."
+        }
         viewMode={viewMode}
         renderCard={(row) => (
           <Card padding={4} elevation="low">

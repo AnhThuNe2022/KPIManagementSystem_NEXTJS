@@ -312,7 +312,48 @@ export function splitEvaluationStatuses(raw: string | null | undefined): string[
     .filter(Boolean);
 }
 
-export function isEditableEvaluationStatus(status: string | null | undefined): boolean {
-  const lower = String(status ?? "").trim().toLowerCase();
-  return lower === "drafted" || lower === "rejected";
+export function resolveEvaluationStatuses(
+  status: string | number | null | undefined,
+): EvaluationStatusSpec[] {
+  if (typeof status === "number") {
+    return [resolveEvaluationStatus(status)];
+  }
+  const parts = splitEvaluationStatuses(status);
+  if (parts.length === 0) {
+    return [EVALUATION_STATUS_REGISTRY[EvaluationStatus.Unknown]];
+  }
+  return parts.map((part) => resolveEvaluationStatus(part));
+}
+
+export function resolveEvaluationStatusGroup(
+  status: string | number | null | undefined,
+): EvaluationStatusGroup {
+  const specs = resolveEvaluationStatuses(status);
+  if (specs.length === 0 || specs.some((spec) => spec.group === "other")) {
+    return "other";
+  }
+  if (specs.some((spec) => spec.group === "rejected")) {
+    return "rejected";
+  }
+  if (specs.every((spec) => spec.group === "done")) {
+    return "done";
+  }
+  return "waiting";
+}
+
+export function formatEvaluationStatusLabel(
+  status: string | number | null | undefined,
+  separator = " và ",
+): string {
+  return resolveEvaluationStatuses(status)
+    .map((spec) => spec.label)
+    .join(separator);
+}
+
+export function isEditableEvaluationStatus(status: string | number | null | undefined): boolean {
+  const specs = resolveEvaluationStatuses(status);
+  return (
+    specs.length === 1 &&
+    (specs[0].key === EvaluationStatus.Drafted || specs[0].key === EvaluationStatus.Rejected)
+  );
 }
