@@ -23,6 +23,25 @@ export type AvailableManager = {
   departmentName?: string;
 };
 
+export type UserOrganizationUpsertItem = Omit<
+  UserOrganizationDto,
+  | "id"
+  | "managerID"
+  | "managerName"
+  | "managerJobTitle"
+  | "managerDepartmentName"
+  | "managerCompanyName"
+  | "managerOrganizationId"
+> & {
+  id?: number | null;
+  managerID?: string | null;
+  managerName?: string | null;
+  managerJobTitle?: string | null;
+  managerDepartmentName?: string | null;
+  managerCompanyName?: string | null;
+  managerOrganizationId?: number | null;
+};
+
 export const userOrganizationApi = {
   getAvailableManagers(signal?: AbortSignal) {
     return request<PagedResponse<AvailableManager>>("/userorganizations/get-page", {
@@ -34,7 +53,7 @@ export const userOrganizationApi = {
   /**
    * Load các đơn vị công tác của user
    */
-async getPaged(userId: string) {
+async getPaged(userId: string, signal?: AbortSignal) {
   return request<{
     items: UserOrganizationDto[];
     total?: number;
@@ -42,6 +61,7 @@ async getPaged(userId: string) {
     pageSize?: number;
   }>("/userorganizations/get-page", {
     method: "POST",
+    signal,
     body: JSON.stringify({
       Filters: {
         userid: userId,
@@ -83,7 +103,7 @@ async searchManagers(
    */
 async upsert(
   userId: string,
-  assignments: UserOrganizationDto[]
+  assignments: UserOrganizationUpsertItem[]
 ) {
   return request<{
     success: boolean;

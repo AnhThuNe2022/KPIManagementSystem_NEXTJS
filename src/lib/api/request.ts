@@ -1,3 +1,28 @@
+function extractErrorMessage(data: unknown, fallback: string): string {
+  if (typeof data === "string") return data.trim() || fallback;
+  if (!data || typeof data !== "object") return fallback;
+
+  const record = data as Record<string, unknown>;
+  const rawErrors = Array.isArray(data) ? data : record.errors;
+  if (rawErrors && typeof rawErrors === "object") {
+    const items = (Array.isArray(rawErrors) ? rawErrors : Object.values(rawErrors)).flat();
+    const messages = items
+      .map((item) => {
+        if (typeof item === "string") return item.trim();
+        if (item && typeof item === "object") {
+          const text = (item as Record<string, unknown>).description ?? (item as Record<string, unknown>).message;
+          return typeof text === "string" ? text.trim() : "";
+        }
+        return "";
+      })
+      .filter(Boolean);
+    if (messages.length) return messages.join(" • ");
+  }
+
+  const text = record.message ?? record.detail ?? record.title;
+  return typeof text === "string" && text.trim() ? text.trim() : fallback;
+}
+
 export async function request<T = unknown>(endpoint: string, options: RequestInit = {}, responseType?: "response"): Promise<T> {
   const headers = new Headers(options.headers);
   if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
@@ -12,7 +37,7 @@ export async function request<T = unknown>(endpoint: string, options: RequestIni
     : response.headers.get("content-type")?.includes("json") ? await response.json() : await response.text();
   if (!response.ok || data?.success === false) {
     const fallback = response.ok ? "API_OPERATION_FAILED" : "API_ERROR_" + response.status;
-    throw new Error(typeof data === "string" ? data || fallback : data?.message || fallback);
+    throw new Error(extractErrorMessage(data, fallback));
   }
   return data as T;
 }

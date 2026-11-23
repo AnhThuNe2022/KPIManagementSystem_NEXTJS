@@ -1,6 +1,7 @@
 import { request } from "@/lib/api/request";
 import {
   AssignmentScopeType,
+  ConditionStatus,
   type ConditionAssignmentDraft,
   type ConditionAssignmentDto,
   type ConditionAssignmentFilters,
@@ -11,6 +12,18 @@ export interface ConditionAssigneeOption {
   id: string;
   fullName: string;
   systemCode?: string;
+}
+
+export interface ResponsibleHrUser {
+  id: string;
+  fullName?: string;
+  systemCode?: string;
+  userOrganizationId?: number;
+}
+
+export interface ResponsibleHrResponse {
+  assignmentSourceType: number;
+  users: ResponsibleHrUser[];
 }
 
 export const conditionAssignmentApi = {
@@ -40,7 +53,7 @@ export const conditionAssignmentApi = {
     const idValue =
       filters.scopeType === String(AssignmentScopeType.Department)
         ? filters.departmentId
-        : filters.departmentId || filters.companyId;
+        : filters.scopeType === String(AssignmentScopeType.Company) ? filters.companyId : "";
 
     const response = await request<
       PagedResult<ConditionAssignmentDto> | ApiResponse<PagedResult<ConditionAssignmentDto>>
@@ -114,6 +127,27 @@ export const conditionAssignmentApi = {
         SystemCodeUser: draft.systemCodeUser,
         IsActive: draft.isActive,
         ScopeType: draft.scopeType,
+      }),
+    });
+  },
+
+  getResponsibleHr(employeeId: string, signal?: AbortSignal): Promise<ResponsibleHrResponse> {
+    const params = new URLSearchParams({
+      employeeId,
+      statusCondition: ConditionStatus.ByUnitHR,
+    });
+    return request<ResponsibleHrResponse>(
+      `/conditionassignments/responsible-hr?${params}`,
+      { signal },
+    );
+  },
+
+  syncDetail(employeeUserId: string, conditionAssignmentIds: number[]) {
+    return request("/conditionassignmentdetail/sync", {
+      method: "POST",
+      body: JSON.stringify({
+        ConditionAssignmentIds: conditionAssignmentIds,
+        EmployeeUserId: employeeUserId,
       }),
     });
   },
