@@ -495,7 +495,7 @@ export function SummaryListDetailView({
       {
         key: "status",
         header: "Trạng thái",
-        width: pixel(190),
+        width: pixel(206),
         renderCell: (row) => (
           <div className="flex flex-col items-start gap-0.5">
             <EvaluationStatusBadge
@@ -508,7 +508,7 @@ export function SummaryListDetailView({
               <span className="truncate text-xs text-secondary">{row.userDoing}</span>
             ) : null}
             {!row.isCanApprove ? (
-              <span className="text-[11px] font-medium text-status-warning">
+              <span className="text-xs font-medium text-status-warning">
                 Không có quyền chuyển
               </span>
             ) : null}

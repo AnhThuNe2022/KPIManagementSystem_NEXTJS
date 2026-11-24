@@ -160,13 +160,13 @@ export function NotificationBell({ triggerClassName }: { triggerClassName?: stri
                       className="flex flex-1 flex-col gap-1 text-left disabled:cursor-default"
                     >
                       <span
-                        className={`text-xs leading-relaxed ${
+                        className={`text-sm leading-relaxed ${
                           item.isRead ? "text-secondary" : "font-semibold text-primary"
                         }`}
                       >
                         {item.message}
                       </span>
-                      <span className="text-[11px] text-disabled">
+                      <span className="text-xs text-disabled">
                         {formatDateTime(item.createdAt)}
                       </span>
                     </button>

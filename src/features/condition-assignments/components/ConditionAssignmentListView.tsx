@@ -459,7 +459,7 @@ export function ConditionAssignmentListView() {
       {
         key: "status",
         header: "Trạng thái",
-        width: pixel(165),
+        width: pixel(178),
         renderCell: (row) => <ActiveStatus isActive={row.isActive} />,
       },
       {

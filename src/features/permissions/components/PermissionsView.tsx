@@ -1136,10 +1136,10 @@ export function PermissionsView() {
                                       )}
                                     </span>
                                     <div className="min-w-0 flex-1">
-                                      <div className="truncate text-[13.5px] font-semibold leading-snug text-primary">
+                                      <div className="truncate text-sm font-semibold leading-snug text-primary">
                                         {label}
                                       </div>
-                                      <div className="mt-0.5 text-[11.5px] text-secondary">
+                                      <div className="mt-0.5 text-xs text-secondary">
                                         {isBusy
                                           ? "Đang lưu..."
                                           : item.isAssigned

@@ -507,13 +507,13 @@ export function GeneralHrEvaluationsView() {
       {
         key: "status",
         header: "Trạng thái",
-        width: pixel(196),
+        width: pixel(212),
         renderCell: (row) => <EvaluationStatusBadge status={row.status} compact />,
       },
       {
         key: "actions",
         header: "Thao tác",
-        width: pixel(184),
+        width: pixel(198),
         align: "end",
         renderCell: (row) => {
           const isCurrentTracked = isTrackingOpen && trackedEval?.id === row.id;
@@ -596,7 +596,7 @@ export function GeneralHrEvaluationsView() {
               <Activity className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span>Theo dõi hồ sơ</span>
               {trackedEval ? (
-                <span className="ds-timeline-pill ml-1 font-mono text-[10.5px]">
+                <span className="ds-timeline-pill ml-1 font-mono text-xs">
                   #{trackedEval.id}
                 </span>
               ) : null}
@@ -703,7 +703,7 @@ export function GeneralHrEvaluationsView() {
 
             {/* Quick action shortcuts for the tracked record */}
             <div className="flex flex-col gap-2 border-t border-border pt-3.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-secondary">
+              <span className="text-xs font-bold uppercase tracking-wider text-secondary">
                 Thao tác nhanh
               </span>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -933,7 +933,7 @@ export function GeneralHrEvaluationsView() {
                               subtitle={[row.systemCode, row.email].filter(Boolean).join(" · ") || undefined}
                             />
                           </div>
-                          <span className="ds-timeline-pill shrink-0 font-mono text-[10.5px]">
+                          <span className="ds-timeline-pill shrink-0 font-mono text-xs">
                             #{row.id}
                           </span>
                         </div>

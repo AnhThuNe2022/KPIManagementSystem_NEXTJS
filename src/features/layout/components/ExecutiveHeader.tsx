@@ -197,10 +197,10 @@ export function ExecutiveHeader({
               >
                 <Avatar name={getInitials(userName)} size="sm" shape="circle" />
                 <div className="hidden min-w-0 flex-col sm:flex">
-                  <span className="max-w-[140px] truncate text-xs font-bold text-primary">
+                  <span className="max-w-[160px] truncate text-sm font-bold leading-tight text-primary">
                     {userName}
                   </span>
-                  <span className="text-[11px] leading-tight text-secondary">Tài khoản DCG</span>
+                  <span className="text-xs leading-tight text-secondary">Tài khoản DCG</span>
                 </div>
                 <ChevronDown className="hidden h-3.5 w-3.5 text-secondary sm:block" />
               </button>

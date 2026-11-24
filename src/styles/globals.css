@@ -118,13 +118,13 @@
   .ds-selection-badge {
     display: inline-grid;
     place-items: center;
-    min-width: 24px;
-    height: 24px;
-    padding: 0 7px;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 8px;
     border-radius: 999px;
     background-color: var(--deoca-red);
     color: var(--shell-on-wedge);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     box-shadow: 0 4px 10px -2px color-mix(in srgb, var(--deoca-red) 45%, transparent);
@@ -333,7 +333,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 11px;
+    font-size: 12.5px;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -454,12 +454,12 @@
     gap: 6px;
     width: fit-content;
     max-width: 100%;
-    height: 25px;
-    padding: 0 11px 0 14px;
+    height: 28px;
+    padding: 0 12px 0 15px;
     border-radius: 3px 6px 6px 3px;
     background-color: var(--rb-bg);
     color: var(--rb-ink);
-    font-size: 11.5px;
+    font-size: 13px;
     font-weight: 700;
     line-height: 1;
     white-space: nowrap;
@@ -542,14 +542,14 @@
     --bc-ink: var(--ribbon-neutral-ink);
     display: inline-grid;
     place-items: center;
-    min-width: 44px;
-    height: 26px;
-    padding: 0 9px;
+    min-width: 48px;
+    height: 28px;
+    padding: 0 10px;
     border-radius: 7px;
     border: 1px solid var(--bc-border);
     background-color: var(--bc-bg);
     color: var(--bc-ink);
-    font-size: 12px;
+    font-size: 13.5px;
     font-weight: 800;
     letter-spacing: -0.01em;
     font-variant-numeric: tabular-nums;
@@ -608,7 +608,7 @@
   }
 
   .ds-score-value {
-    font-size: 15px;
+    font-size: 16.5px;
     font-weight: 800;
     line-height: 1.2;
     letter-spacing: -0.02em;
@@ -617,7 +617,7 @@
 
   .ds-score-caption {
     margin-top: 2px;
-    font-size: 11px;
+    font-size: 12.5px;
     font-weight: 500;
     color: var(--color-text-secondary);
     white-space: nowrap;
@@ -671,19 +671,19 @@
   .ds-company-pill {
     display: inline-flex;
     align-items: center;
-    height: 18px;
-    padding: 0 6px;
+    height: 21px;
+    padding: 0 7px;
     border-radius: 5px;
     border: 1px solid var(--vibrant-company-pill-border);
     background-color: var(--vibrant-company-pill-bg);
     color: var(--color-text-primary);
-    font-size: 10.5px;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.02em;
     line-height: 1;
   }
 
-  /* Chuẩn hóa nút bấm Astryx toàn hệ thống: chống bóp chữ thành "...", cao 34/38/44px, nút chính gradient Đèo Cả */
+  /* Chuẩn hóa nút bấm Astryx toàn hệ thống: chống bóp chữ thành "...", cao 36/40/46px, nút chính gradient Đèo Cả */
   .astryx-button {
     flex-shrink: 0;
     white-space: nowrap;
@@ -693,18 +693,18 @@
 
   .astryx-button[data-size="sm"] {
     height: auto;
-    min-height: 34px;
+    min-height: 36px;
     border-radius: 9px;
   }
 
   .astryx-button[data-size="md"] {
     height: auto;
-    min-height: 38px;
+    min-height: 40px;
   }
 
   .astryx-button[data-size="lg"] {
     height: auto;
-    min-height: 44px;
+    min-height: 46px;
     border-radius: 12px;
   }
 
@@ -743,7 +743,7 @@
    * Sửa tại đây sẽ cập nhật đồng bộ toàn bộ 19 màn hình cùng lúc.
    * ========================================================================= */
   .astryx-field-label {
-    font-size: 12.5px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--color-text-secondary);
     letter-spacing: -0.005em;
@@ -777,7 +777,7 @@
     .astryx-date-input
   ) {
     height: auto;
-    min-height: 38px;
+    min-height: 40px;
   }
 
   :is(
@@ -788,7 +788,7 @@
     .astryx-number-input,
     .astryx-date-input
   )[data-size="sm"] {
-    min-height: 34px;
+    min-height: 36px;
     border-radius: 9px;
   }
 
@@ -975,13 +975,13 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    min-height: 31px;
-    padding: 4px 11px;
+    min-height: 34px;
+    padding: 5px 12px;
     border: 1px solid transparent;
     border-radius: 9px;
     background: transparent;
     color: var(--color-text-secondary);
-    font-size: 13px;
+    font-size: 14.5px;
     font-weight: 600;
     line-height: 1.25;
     white-space: nowrap;
@@ -995,8 +995,8 @@
   }
 
   .ds-filter-tabs[data-size="md"] .ds-filter-tab {
-    min-height: 35px;
-    padding: 5px 13px;
+    min-height: 38px;
+    padding: 6px 14px;
   }
 
   .ds-filter-tab:hover:not([aria-selected="true"]) {
@@ -1036,14 +1036,14 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 20px;
-    height: 19px;
-    padding: 0 6px;
+    min-width: 22px;
+    height: 21px;
+    padding: 0 7px;
     border-radius: 999px;
     border: 1px solid transparent;
     background-color: color-mix(in srgb, var(--color-text-secondary) 11%, transparent);
     color: var(--color-text-secondary);
-    font-size: 11px;
+    font-size: 12.5px;
     font-weight: 700;
     line-height: 1;
     font-variant-numeric: tabular-nums;
@@ -1103,9 +1103,9 @@
     flex-shrink: 0;
     white-space: nowrap;
     min-height: 0;
-    height: 22px;
-    padding: 0 8px;
-    font-size: 11px;
+    height: 25px;
+    padding: 0 9px;
+    font-size: 12.5px;
     line-height: 1.2;
   }
 
@@ -1162,13 +1162,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 24px;
-    padding: 0 10px;
+    height: 26px;
+    padding: 0 11px;
     border-radius: 999px;
     border: 1px solid var(--ribbon-purple-border);
     background-color: var(--ribbon-purple-bg);
     color: var(--ribbon-purple-ink);
-    font-size: 11.5px;
+    font-size: 13px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
@@ -1301,13 +1301,13 @@
     display: inline-grid;
     place-items: center;
     flex-shrink: 0;
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.24);
     background-color: rgba(255, 255, 255, 0.14);
     color: var(--shell-on-wedge);
-    font-size: 13px;
+    font-size: 14.5px;
     font-weight: 800;
   }
 
@@ -1345,7 +1345,7 @@
   .ds-timeline-row {
     position: relative;
     display: grid;
-    grid-template-columns: 82px 28px minmax(0, 1fr);
+    grid-template-columns: 92px 28px minmax(0, 1fr);
     gap: 12px;
     align-items: start;
   }
@@ -1355,7 +1355,7 @@
     position: absolute;
     top: 30px;
     bottom: -16px;
-    left: 107px;
+    left: 117px;
     width: 1.5px;
     background-color: var(--color-border);
   }
@@ -1365,7 +1365,7 @@
     flex-direction: column;
     align-items: flex-end;
     padding-top: 4px;
-    font-size: 11.5px;
+    font-size: 13px;
     line-height: 1.35;
     font-variant-numeric: tabular-nums;
     color: var(--color-text-secondary);
@@ -1419,13 +1419,13 @@
   .ds-timeline-latestTag {
     display: inline-flex;
     align-items: center;
-    height: 22px;
+    height: 24px;
     padding: 0 9px;
     border-radius: 999px;
     border: 1px solid var(--ribbon-blue-border);
     background-color: var(--color-background-surface);
     color: var(--ribbon-blue-ink);
-    font-size: 11px;
+    font-size: 12.5px;
     font-weight: 700;
   }
 
@@ -1435,19 +1435,19 @@
     border-radius: 9px;
     background-color: color-mix(in srgb, var(--color-background-muted) 72%, var(--color-background-surface));
     color: var(--color-text-primary);
-    font-size: 12.5px;
+    font-size: 14px;
     line-height: 1.5;
   }
 
   .ds-timeline-pill {
     display: inline-flex;
     align-items: center;
-    height: 22px;
-    padding: 0 8px;
+    height: 24px;
+    padding: 0 9px;
     border-radius: 6px;
     background-color: var(--ribbon-neutral-bg);
     color: var(--ribbon-neutral-ink);
-    font-size: 11px;
+    font-size: 12.5px;
     font-weight: 600;
   }
 
@@ -1695,7 +1695,7 @@
     top: 1px;
     right: 0;
     z-index: 1;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 400;
     color: var(--color-text-secondary);
     pointer-events: none;
@@ -1757,7 +1757,7 @@
       inset 2px 3px 4px color-mix(in srgb, var(--shell-on-wedge) 24%, transparent),
       inset -3px -4px 6px var(--shell-shadow-soft),
       0 14px 24px -14px var(--shell-shadow-strong);
-    font-size: 27px;
+    font-size: 29px;
     font-weight: 800;
     letter-spacing: -0.02em;
   }
@@ -1778,12 +1778,12 @@
     align-items: center;
     gap: 6px;
     max-width: 100%;
-    padding: 4px 10px;
+    padding: 4px 11px;
     border-radius: 999px;
     border: 1px solid var(--ribbon-blue-border);
     background-color: var(--ribbon-blue-bg);
     color: var(--ribbon-blue-ink);
-    font-size: 12px;
+    font-size: 13.5px;
     font-weight: 600;
   }
 
@@ -1930,12 +1930,12 @@
     display: inline-flex;
     align-items: center;
     width: fit-content;
-    padding: 2px 9px;
+    padding: 2px 10px;
     border-radius: 6px;
     border: 1px solid var(--ribbon-cyan-border);
     background-color: var(--ribbon-cyan-bg);
     color: var(--ribbon-cyan-ink);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
@@ -2143,7 +2143,7 @@
     align-items: center;
     gap: 8px;
     margin: 12px 6px 6px;
-    font-size: 11px;
+    font-size: 12.5px;
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -2226,7 +2226,7 @@
 
   .ds-perm-itemCode {
     font-family: var(--font-family-code);
-    font-size: 11.5px;
+    font-size: 13px;
     color: var(--color-text-secondary);
   }
 
@@ -2242,7 +2242,7 @@
     align-items: center;
     gap: 8px;
     margin-top: 3px;
-    font-size: 11px;
+    font-size: 12.5px;
     font-variant-numeric: tabular-nums;
     color: var(--color-text-secondary);
   }
@@ -2267,18 +2267,18 @@
     padding: 10px 14px;
     border-top: 1px solid var(--color-border);
     background-color: color-mix(in srgb, var(--color-background-surface) 82%, transparent);
-    font-size: 12px;
+    font-size: 13.5px;
     color: var(--color-text-secondary);
   }
 
   .ds-perm-pageSelect {
-    height: 30px;
-    padding: 0 6px;
+    height: 32px;
+    padding: 0 7px;
     border-radius: 8px;
     border: 1px solid var(--color-border-emphasized);
     background-color: var(--color-background-surface);
     color: var(--color-text-primary);
-    font-size: 12px;
+    font-size: 13.5px;
     font-weight: 600;
     outline: none;
   }
@@ -2377,13 +2377,13 @@
   .ds-perm-moduleBadge {
     display: inline-flex;
     align-items: center;
-    height: 22px;
+    height: 24px;
     padding: 0 9px;
     border-radius: 6px;
     border: 1px solid var(--ribbon-blue-border);
     background-color: var(--ribbon-blue-bg);
     color: var(--ribbon-blue-ink);
-    font-size: 11px;
+    font-size: 12.5px;
     font-weight: 700;
     letter-spacing: 0.03em;
   }
@@ -2391,14 +2391,14 @@
   .ds-perm-codeBadge {
     display: inline-flex;
     align-items: center;
-    height: 22px;
-    padding: 0 8px;
+    height: 24px;
+    padding: 0 9px;
     border-radius: 6px;
     border: 1px solid var(--color-border);
     background-color: color-mix(in srgb, var(--shell-well) 70%, var(--color-background-surface));
     color: var(--color-text-secondary);
     font-family: var(--font-family-code);
-    font-size: 11.5px;
+    font-size: 13px;
     font-weight: 600;
   }
 
@@ -2486,13 +2486,13 @@
     justify-content: center;
     gap: 6px;
     min-width: 0;
-    min-height: 40px;
+    min-height: 42px;
     padding: 6px 8px;
     border: 0;
     border-radius: 9px;
     background: transparent;
     color: var(--color-text-secondary);
-    font-size: 13px;
+    font-size: 14.5px;
     font-weight: 600;
     cursor: pointer;
     outline: none;
@@ -2518,13 +2518,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 21px;
-    height: 19px;
-    padding: 0 6px;
+    min-width: 22px;
+    height: 21px;
+    padding: 0 7px;
     border-radius: 999px;
     background-color: color-mix(in srgb, var(--color-text-secondary) 12%, transparent);
     color: var(--color-text-secondary);
-    font-size: 11px;
+    font-size: 12.5px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
@@ -2646,9 +2646,9 @@
 
   .ds-perm-stateTag {
     flex-shrink: 0;
-    padding: 2px 8px;
+    padding: 3px 9px;
     border-radius: 999px;
-    font-size: 11px;
+    font-size: 12.5px;
     font-weight: 600;
     color: var(--color-text-secondary);
     background-color: color-mix(in srgb, var(--shell-well) 72%, transparent);
@@ -2713,7 +2713,7 @@
     }
 
     .ds-perm-tab {
-      font-size: 12px;
+      font-size: 13px;
       gap: 4px;
       padding: 6px 4px;
     }
@@ -2827,18 +2827,18 @@
 
   .dcg-header-company {
     color: var(--shell-brand-subtitle);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
-    line-height: 15px;
+    line-height: 16px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
   }
 
   .dcg-header-title {
     color: var(--shell-on-wedge);
-    font-size: 19px;
+    font-size: 20.5px;
     font-weight: 800;
-    line-height: 24px;
+    line-height: 25px;
     letter-spacing: -0.025em;
   }
 
@@ -3063,7 +3063,7 @@
     align-items: center;
     gap: 10px;
     color: var(--shell-sidebar-muted);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.14em;
@@ -3155,12 +3155,12 @@
 
   .dcg-sidebar-searchInput {
     width: 100%;
-    height: 34px;
+    height: 36px;
     border-radius: 10px;
     border: 1px solid var(--shell-sidebar-line);
     background-color: color-mix(in srgb, var(--color-background-body) 65%, transparent);
     padding: 0 10px 0 32px;
-    font-size: 12.5px;
+    font-size: 14px;
     color: var(--color-text-primary);
     outline: none;
     transition: border-color 150ms ease, background-color 150ms ease;
@@ -3328,9 +3328,9 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     min-width: 0;
-    font-size: 13.5px;
+    font-size: 15px;
     font-weight: 500;
-    line-height: 20px;
+    line-height: 22px;
     transition: opacity 150ms ease, transform var(--travel) var(--motion);
   }
 
@@ -3412,13 +3412,13 @@
     align-items: center;
     gap: 9px;
     width: 100%;
-    min-height: 36px;
+    min-height: 38px;
     padding: 6px 10px;
     border: 1px solid transparent;
     border-radius: 10px;
     background: transparent;
     color: var(--shell-sidebar-ink);
-    font-size: 13px;
+    font-size: 14.5px;
     font-weight: 500;
     text-align: left;
     text-decoration: none;
@@ -3510,7 +3510,7 @@
     bottom: 34px;
     margin: 0;
     color: var(--shell-sidebar-ink);
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.65;
     white-space: nowrap;
     transition: opacity 160ms ease;
@@ -3528,7 +3528,7 @@
     bottom: 40px;
     text-align: center;
     color: var(--shell-sidebar-muted);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.14em;
     opacity: 0;
@@ -3795,14 +3795,45 @@
 
   /* =========================================================================
    * 5. TRANG ĐĂNG NHẬP & ĐẶT LẠI MẬT KHẨU (Nền khí quyển, kính mờ, form 52px)
+   *    Khóa riêng thang cỡ chữ v2.1 tại .ds-auth-canvas để không bị ảnh hưởng khi
+   *    tăng cỡ chữ tổng thể toàn ứng dụng.
    * ========================================================================= */
   .ds-auth-canvas {
+    --font-size-xs: 0.71875rem;
+    --font-size-sm: 0.8125rem;
+    --font-size-base: 0.875rem;
+    --font-size-lg: 1.0625rem;
+    --font-size-xl: 1.3125rem;
+    --font-size-2xl: 1.5625rem;
+    --text-heading-1-size: var(--font-size-2xl);
+    --text-heading-2-size: var(--font-size-xl);
+    --text-heading-3-size: var(--font-size-lg);
+    --text-heading-4-size: var(--font-size-base);
+    --text-heading-5-size: var(--font-size-sm);
+    --text-heading-6-size: var(--font-size-xs);
+    --text-body-size: var(--font-size-base);
+    --text-large-size: var(--font-size-lg);
+    --text-label-size: var(--font-size-base);
+    --text-code-size: var(--font-size-base);
+    --text-supporting-size: var(--font-size-sm);
     background: linear-gradient(
       135deg,
       var(--auth-canvas-start) 0%,
       var(--auth-canvas-mid) 48%,
       var(--auth-canvas-end) 100%
     );
+  }
+
+  .ds-auth-canvas .astryx-button[data-size="sm"] {
+    min-height: 34px;
+  }
+
+  .ds-auth-canvas .astryx-button[data-size="md"] {
+    min-height: 38px;
+  }
+
+  .ds-auth-canvas .astryx-button[data-size="lg"] {
+    min-height: 44px;
   }
 
   .ds-auth-aura-blue {

@@ -235,8 +235,8 @@ export function ApprovalTimeline({
               ) : null}
 
               {entry.timestamp ? (
-                <div className="mt-2 flex items-center gap-1 text-[11px] tabular-nums text-secondary">
-                  <Clock className="h-3 w-3 opacity-70" aria-hidden="true" />
+                <div className="mt-2 flex items-center gap-1 text-xs tabular-nums text-secondary">
+                  <Clock className="h-3.5 w-3.5 opacity-70" aria-hidden="true" />
                   <span>{formatDateTime(entry.timestamp)}</span>
                 </div>
               ) : null}

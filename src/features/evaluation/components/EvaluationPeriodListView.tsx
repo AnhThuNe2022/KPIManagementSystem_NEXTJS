@@ -234,13 +234,13 @@ export function EvaluationPeriodListView() {
     {
       key: "statusPeriod",
       header: "Trạng thái mở",
-      width: pixel(150),
+      width: pixel(164),
       renderCell: (row) => <PeriodStatusBadge status={row.statusPeriod} />,
     },
     {
       key: "isActive",
       header: "Kích hoạt",
-      width: pixel(145),
+      width: pixel(160),
       renderCell: (row) => <ActiveStatus isActive={row.isActive} compact />,
     },
     {

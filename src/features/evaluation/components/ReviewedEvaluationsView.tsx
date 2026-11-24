@@ -318,7 +318,7 @@ export function ReviewedEvaluationsView({ level }: { level: ReviewRole }) {
       {
         key: "status",
         header: "Trạng thái",
-        width: pixel(192),
+        width: pixel(208),
         renderCell: (row) => <EvaluationStatusBadge status={row.status} compact />,
       },
       {
@@ -349,7 +349,7 @@ export function ReviewedEvaluationsView({ level }: { level: ReviewRole }) {
       {
         key: "band",
         header: "Xếp loại",
-        width: pixel(104),
+        width: pixel(112),
         align: "center",
         renderCell: (row) => <BandBadge band={row.band} />,
       },

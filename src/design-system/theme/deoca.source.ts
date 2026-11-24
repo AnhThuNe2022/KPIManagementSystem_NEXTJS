@@ -249,7 +249,7 @@ export const deocaTheme = defineTheme({
 
   // Cấu hình font chữ toàn hệ thống (nạp font Manrope cục bộ từ public/fonts/manrope.ttf)
   typography: {
-    scale: { base: 14, ratio: 1.2 },
+    scale: { base: 16, ratio: 1.2 },
     body: {
       family: "Manrope",
       fallbacks: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
@@ -276,12 +276,14 @@ export const deocaTheme = defineTheme({
   },
 
   tokens: {
-    // Thang cỡ chữ chuẩn toàn ứng dụng — muốn tăng/giảm cỡ chữ toàn web, chỉ cần chỉnh 5 dòng này
-    "--font-size-xs": "0.71875rem",   // 11.5px (nhãn phụ, badge nhỏ)
-    "--font-size-sm": "0.8125rem",    // 13px   (chữ bảng, mô tả, tab lọc)
-    "--font-size-base": "0.875rem",   // 14px   (nội dung chính, ô nhập liệu, nút bấm)
-    "--font-size-xl": "1.3125rem",    // 21px   (tiêu đề H2)
-    "--font-size-2xl": "1.5625rem",   // 25px   (tiêu đề H1 đầu trang)
+    // Thang cỡ chữ chuẩn toàn ứng dụng — muốn tăng/giảm cỡ chữ toàn web, chỉ cần chỉnh các dòng này
+    // (Trang Đăng nhập .ds-auth-canvas được khóa riêng cỡ chữ trong globals.css để giữ nguyên tỷ lệ)
+    "--font-size-xs": "0.8125rem",    // 13px   (nhãn phụ, badge nhỏ, metadata)
+    "--font-size-sm": "0.90625rem",   // 14.5px (chữ bảng, mô tả, tab lọc, sidebar)
+    "--font-size-base": "1rem",       // 16px   (nội dung chính, ô nhập liệu, nút bấm)
+    "--font-size-lg": "1.1875rem",    // 19px   (tiêu đề H3, mục nhỏ)
+    "--font-size-xl": "1.5rem",       // 24px   (tiêu đề H2 đầu trang / modal)
+    "--font-size-2xl": "1.75rem",     // 28px   (tiêu đề H1, số KPI nổi bật)
 
     // Màu nền trang & các bề mặt thẻ (Sáng / Tối)
     "--color-background-body": ["#F2F4F9", "#0E111D"],

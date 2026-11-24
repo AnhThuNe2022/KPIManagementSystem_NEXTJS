@@ -403,7 +403,7 @@ export function PendingEvaluationsView({ level }: { level: ReviewRole }) {
       key: "actions",
       header: "Thao tác",
       align: "end",
-      width: pixel(236),
+      width: pixel(252),
       renderCell: (row) => (
         <div className="flex flex-nowrap items-center justify-end gap-1.5">
           <AppButton

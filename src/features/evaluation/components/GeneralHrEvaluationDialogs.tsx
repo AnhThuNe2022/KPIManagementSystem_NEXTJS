@@ -189,7 +189,7 @@ export function EvaluationHistoryDialog({
               </div>
 
               <div className="flex flex-col items-end gap-1 shrink-0">
-                <span className="ds-dialog-hero-muted text-[11px] font-medium">
+                <span className="ds-dialog-hero-muted text-xs font-medium">
                   Trạng thái hiện tại
                 </span>
                 <EvaluationStatusBadge status={evaluation.status} />
@@ -198,20 +198,20 @@ export function EvaluationHistoryDialog({
 
             <dl className="ds-dialog-hero-divider relative z-10 mt-4 grid grid-cols-1 gap-3 border-t pt-3.5 sm:grid-cols-3">
               <div className="min-w-0">
-                <dt className="ds-dialog-hero-muted text-[11px] font-medium">Kỳ đánh giá</dt>
-                <dd className="mt-0.5 truncate text-xs font-bold">
+                <dt className="ds-dialog-hero-muted text-xs font-medium">Kỳ đánh giá</dt>
+                <dd className="mt-0.5 truncate text-sm font-bold">
                   {evaluation.period || "Chưa có kỳ đánh giá"}
                 </dd>
               </div>
               <div className="min-w-0">
-                <dt className="ds-dialog-hero-muted text-[11px] font-medium">Phòng ban</dt>
-                <dd className="mt-0.5 line-clamp-2 text-xs font-bold">
+                <dt className="ds-dialog-hero-muted text-xs font-medium">Phòng ban</dt>
+                <dd className="mt-0.5 line-clamp-2 text-sm font-bold">
                   {evaluation.departmentName || "Chưa có phòng ban"}
                 </dd>
               </div>
               <div className="min-w-0">
-                <dt className="ds-dialog-hero-muted text-[11px] font-medium">Ngày nộp</dt>
-                <dd className="mt-0.5 text-xs font-bold tabular-nums">{effectiveSubmitDate}</dd>
+                <dt className="ds-dialog-hero-muted text-xs font-medium">Ngày nộp</dt>
+                <dd className="mt-0.5 text-sm font-bold tabular-nums">{effectiveSubmitDate}</dd>
               </div>
             </dl>
           </div>
@@ -590,7 +590,7 @@ export function ChangeEvaluationStatusDialog({
           {/* LEFT EXECUTIVE CONTEXT COLUMN */}
           <aside className="ds-dialog-hero flex flex-col justify-between gap-4">
             <div className="relative z-10 flex flex-col gap-4">
-              <span className="ds-dialog-hero-muted inline-flex items-center gap-1.5 text-[11px] font-semibold">
+              <span className="ds-dialog-hero-muted inline-flex items-center gap-1.5 text-xs font-semibold">
                 <FileText className="h-3.5 w-3.5" aria-hidden="true" />
                 Hồ sơ #{evaluation.id}
               </span>
@@ -609,7 +609,7 @@ export function ChangeEvaluationStatusDialog({
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <span className="ds-dialog-hero-muted text-[11px] font-medium">
+                <span className="ds-dialog-hero-muted text-xs font-medium">
                   Trạng thái hiện tại
                 </span>
                 <EvaluationStatusBadge status={evaluation.status} />
@@ -617,14 +617,14 @@ export function ChangeEvaluationStatusDialog({
 
               <dl className="ds-dialog-hero-divider flex flex-col gap-2.5 border-t pt-3">
                 <div>
-                  <dt className="ds-dialog-hero-muted text-[11px]">Kỳ đánh giá</dt>
-                  <dd className="mt-0.5 text-xs font-bold">
+                  <dt className="ds-dialog-hero-muted text-xs">Kỳ đánh giá</dt>
+                  <dd className="mt-0.5 text-sm font-bold">
                     {evaluation.period || "Chưa có kỳ đánh giá"}
                   </dd>
                 </div>
                 <div>
-                  <dt className="ds-dialog-hero-muted text-[11px]">Phòng ban</dt>
-                  <dd className="mt-0.5 text-xs font-bold">
+                  <dt className="ds-dialog-hero-muted text-xs">Phòng ban</dt>
+                  <dd className="mt-0.5 text-sm font-bold">
                     {evaluation.departmentName || "Chưa có phòng ban"}
                   </dd>
                 </div>
@@ -635,11 +635,11 @@ export function ChangeEvaluationStatusDialog({
               className="ds-dialog-hero-dest relative z-10 flex flex-col gap-1"
               data-selected={selectedOption ? "true" : "false"}
             >
-              <span className="ds-dialog-hero-muted inline-flex items-center gap-1 text-[11px] font-medium">
+              <span className="ds-dialog-hero-muted inline-flex items-center gap-1 text-xs font-medium">
                 <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                 Chuyển đến
               </span>
-              <span className="text-xs font-bold">
+              <span className="text-sm font-bold">
                 {selectedOption ? selectedOption.label : "Chọn trạng thái mới"}
               </span>
             </div>
@@ -740,7 +740,7 @@ export function ChangeEvaluationStatusDialog({
                                 displayLabel={opt.name?.trim() || spec.label}
                                 compact
                               />
-                              <span className="text-[11.5px] text-secondary">{hint}</span>
+                              <span className="text-xs text-secondary">{hint}</span>
                             </div>
                             <span className="ds-status-radio" aria-hidden="true">
                               {isSelected ? <Check className="h-3 w-3" /> : null}
