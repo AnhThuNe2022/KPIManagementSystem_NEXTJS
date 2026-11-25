@@ -3,6 +3,7 @@
 import {
   Fragment,
   useEffect,
+  useId,
   useRef,
   useState,
   type FormEvent,
@@ -12,12 +13,12 @@ import {
   ChatBubbleIcon,
   ChevronDownIcon,
   Cross2Icon,
+  FileTextIcon,
   InfoCircledIcon,
   PaperPlaneIcon,
   ReloadIcon,
 } from "@radix-ui/react-icons";
 import { useAuth } from "@/features/auth/AuthProvider";
-import { notify } from "@/components/ui/Toaster";
 import { notificationApi } from "../services/notificationApi";
 import { EnumCodeNoti, type NotificationItem } from "../types";
 import "./NotificationConversationDialog.css";
@@ -106,7 +107,7 @@ function AdminNotice({ message }: { message: string }) {
               .map((item) => item.trim())
               .filter(Boolean);
 
-            if (items.length >= 3) {
+            if (label.toLocaleLowerCase("vi") === "đã gửi tới" && items.length >= 3) {
               return (
                 <div key={index} className="notification-conv__adminRecipients">
                   <button
@@ -158,11 +159,14 @@ export function NotificationConversationDialog({ notification, onClose }: Props)
   const dialogRef = useRef<HTMLDialogElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const contextId = useId();
 
   const [messages, setMessages] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reply, setReply] = useState("");
+  const [replyError, setReplyError] = useState("");
+  const [contextExpanded, setContextExpanded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [revision, setRevision] = useState(0);
 
@@ -225,6 +229,7 @@ export function NotificationConversationDialog({ notification, onClose }: Props)
     if (submitting || !message || !currentUserId || !notification.senderUserId) return;
 
     setSubmitting(true);
+    setReplyError("");
     try {
       await notificationApi.sendMessage({
         alertGroupId,
@@ -238,8 +243,7 @@ export function NotificationConversationDialog({ notification, onClose }: Props)
       setReply("");
       setRevision((value) => value + 1);
     } catch (cause: unknown) {
-      notify(
-        "error",
+      setReplyError(
         cause instanceof Error && cause.message === "UNAUTHORIZED"
           ? "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
           : "Không gửi được nội dung. Vui lòng thử lại."
@@ -272,6 +276,9 @@ export function NotificationConversationDialog({ notification, onClose }: Props)
   const peerLabel = peer
     ? [peer.userName, peer.userSystemCode].filter(Boolean).join(" · ")
     : "";
+  const openingNotice = messages.find((item) => item.codeNoti === EnumCodeNoti.COMPLAINT_ADMIN);
+  const thread = openingNotice ? messages.filter((item) => item !== openingNotice) : messages;
+  const openedOn = openingNotice ? parseDate(openingNotice.createdAt) : null;
 
   return (
     <dialog
@@ -322,161 +329,185 @@ export function NotificationConversationDialog({ notification, onClose }: Props)
         </div>
       </header>
 
-      <div ref={bodyRef} className="notification-conv__body" aria-busy={loading}>
-        {loading && !messages.length ? (
-          <div className="notification-conv__skeletons" role="status" aria-label="Đang tải tin nhắn">
-            <div className="notification-conv__skeletonRow">
-              <span className="notification-conv__skeletonAvatar" />
-              <div className="notification-conv__skeletonBubble" data-size="md" />
+      <div className="notification-conv__workspace" data-has-notice={Boolean(openingNotice)}>
+        {openingNotice && (
+          <aside className="notification-conv__context" aria-label="Thông tin khiếu nại" data-expanded={contextExpanded}>
+            <div className="notification-conv__contextHeading">
+              <FileTextIcon aria-hidden="true" />
+              <h3>Thông tin khiếu nại</h3>
+              <button
+                type="button"
+                className="notification-conv__contextToggle"
+                aria-label="Chi tiết khiếu nại"
+                aria-expanded={contextExpanded}
+                aria-controls={contextId}
+                onClick={() => setContextExpanded((open) => !open)}
+              >
+                <ChevronDownIcon aria-hidden="true" />
+              </button>
             </div>
-            <div className="notification-conv__skeletonNotice" />
-            <div className="notification-conv__skeletonRow" data-mine="true">
-              <div className="notification-conv__skeletonBubble" data-size="sm" />
+            {openedOn && (
+              <time className="notification-conv__contextDate" dateTime={openingNotice.createdAt ?? undefined}>
+                {dayFormatter.format(openedOn)} · {clockFormatter.format(openedOn)}
+              </time>
+            )}
+            <div id={contextId} className="notification-conv__contextDetails">
+              <AdminNotice message={openingNotice.message} />
             </div>
-            <div className="notification-conv__skeletonRow">
-              <span className="notification-conv__skeletonAvatar" />
-              <div className="notification-conv__skeletonBubble" data-size="lg" />
-            </div>
-          </div>
-        ) : error ? (
-          <div className="notification-conv__errorBox" role="alert">
-            <span>{error}</span>
-            <button
-              type="button"
-              className="notification-conv__retryBtn"
-              onClick={() => setRevision((value) => value + 1)}
-            >
-              Thử lại
-            </button>
-          </div>
-        ) : !messages.length ? (
-          <div className="notification-conv__empty">
-            <span className="notification-conv__emptyIcon" aria-hidden="true">
-              <ChatBubbleIcon />
-            </span>
-            <p>Chưa có nội dung trao đổi nào.</p>
-          </div>
-        ) : (
-          <ol className="notification-conv__list">
-            {messages.map((entry, index) => {
-              const prev = messages[index - 1];
-              const next = messages[index + 1];
-              const entryDate = parseDate(entry.createdAt);
-              const prevDate = prev ? parseDate(prev.createdAt) : null;
-              const nextDate = next ? parseDate(next.createdAt) : null;
-              const dayKey = getDayKey(entryDate);
-              const prevDayKey = getDayKey(prevDate);
-              const nextDayKey = getDayKey(nextDate);
-              const showDayDivider = Boolean(dayKey) && dayKey !== prevDayKey;
-
-              if (entry.codeNoti === EnumCodeNoti.COMPLAINT_ADMIN) {
-                return (
-                  <Fragment key={entry.id}>
-                    {showDayDivider && (
-                      <li className="notification-conv__dayDivider" aria-hidden="true">
-                        <span>{formatDayLabel(entryDate)}</span>
-                      </li>
-                    )}
-                    <li className="notification-conv__msg" data-admin-info="true">
-                      <AdminNotice message={entry.message} />
-                    </li>
-                  </Fragment>
-                );
-              }
-
-              const isMine = entry.senderUserId === currentUserId;
-              const sameAsPrev =
-                !showDayDivider &&
-                Boolean(prev) &&
-                prev.codeNoti !== EnumCodeNoti.COMPLAINT_ADMIN &&
-                prev.senderUserId === entry.senderUserId;
-              const sameAsNext =
-                Boolean(next) &&
-                next.codeNoti !== EnumCodeNoti.COMPLAINT_ADMIN &&
-                next.senderUserId === entry.senderUserId &&
-                dayKey === nextDayKey;
-
-              const senderName = entry.userName?.trim() || entry.senderUserId || "Người dùng";
-              const senderCode = entry.userSystemCode?.trim() || "";
-              const time = entryDate ? clockFormatter.format(entryDate) : "";
-
-              return (
-                <Fragment key={entry.id}>
-                  {showDayDivider && (
-                    <li className="notification-conv__dayDivider" aria-hidden="true">
-                      <span>{formatDayLabel(entryDate)}</span>
-                    </li>
-                  )}
-                  <li
-                    className="notification-conv__msg"
-                    data-mine={isMine}
-                    data-grouped={sameAsPrev ? "true" : undefined}
-                    data-has-next={sameAsNext ? "true" : undefined}
-                  >
-                    {!isMine && (
-                      <span
-                        className="notification-conv__avatar"
-                        data-hidden={sameAsPrev ? "true" : undefined}
-                        aria-hidden="true"
-                      >
-                        {!sameAsPrev && getInitials(senderName)}
-                      </span>
-                    )}
-
-                    <div className="notification-conv__content">
-                      {!isMine && !sameAsPrev && (
-                        <div className="notification-conv__senderRow">
-                          <span className="notification-conv__senderName">{senderName}</span>
-                          {senderCode && (
-                            <span className="notification-conv__senderCode">{senderCode}</span>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="notification-conv__bubble">
-                        <p className="notification-conv__text">{entry.message}</p>
-                        {time && (
-                          <time
-                            className="notification-conv__time"
-                            dateTime={entry.createdAt ?? undefined}
-                          >
-                            {time}
-                          </time>
-                        )}
-                      </div>
-                    </div>
-                  </li>
-                </Fragment>
-              );
-            })}
-          </ol>
+          </aside>
         )}
-      </div>
 
-      <form className="notification-conv__footer" onSubmit={handleSubmit}>
-        <div className="notification-conv__composer">
-          <textarea
-            ref={textareaRef}
-            rows={1}
-            aria-label="Nhập nội dung phản hồi"
-            className="notification-conv__textarea"
-            value={reply}
-            disabled={submitting}
-            placeholder="Viết phản hồi..."
-            onChange={(event) => setReply(event.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-          <button
-            type="submit"
-            className="notification-conv__submitBtn"
-            disabled={!canSend}
-          >
-            <PaperPlaneIcon aria-hidden="true" />
-            <span>{submitting ? "Đang gửi" : "Gửi"}</span>
-          </button>
-        </div>
-        <p className="notification-conv__hint">Enter để gửi · Shift + Enter để xuống dòng</p>
-      </form>
+        <section className="notification-conv__thread" aria-label="Trao đổi">
+          <div ref={bodyRef} className="notification-conv__body" aria-busy={loading} aria-label="Lịch sử tin nhắn" tabIndex={0}>
+            {loading && !messages.length ? (
+              <div className="notification-conv__empty" role="status">
+                Đang tải tin nhắn…
+              </div>
+            ) : error ? (
+              <div className="notification-conv__errorBox" role="alert">
+                <span>{error}</span>
+                <button
+                  type="button"
+                  className="notification-conv__retryBtn"
+                  onClick={() => setRevision((value) => value + 1)}
+                >
+                  Thử lại
+                </button>
+              </div>
+            ) : !thread.length ? (
+              <div className="notification-conv__empty">
+                <span className="notification-conv__emptyIcon" aria-hidden="true">
+                  <ChatBubbleIcon />
+                </span>
+                <p>Chưa có tin nhắn. Bạn có thể viết phản hồi bên dưới.</p>
+              </div>
+            ) : (
+              <ol className="notification-conv__list">
+                {thread.map((entry, index) => {
+                  const prev = thread[index - 1];
+                  const next = thread[index + 1];
+                  const entryDate = parseDate(entry.createdAt);
+                  const prevDate = prev ? parseDate(prev.createdAt) : null;
+                  const nextDate = next ? parseDate(next.createdAt) : null;
+                  const dayKey = getDayKey(entryDate);
+                  const prevDayKey = getDayKey(prevDate);
+                  const nextDayKey = getDayKey(nextDate);
+                  const showDayDivider = Boolean(dayKey) && dayKey !== prevDayKey;
+
+                  if (entry.codeNoti === EnumCodeNoti.COMPLAINT_ADMIN) {
+                    return (
+                      <Fragment key={entry.id}>
+                        {showDayDivider && (
+                          <li className="notification-conv__dayDivider" aria-hidden="true">
+                            <span>{formatDayLabel(entryDate)}</span>
+                          </li>
+                        )}
+                        <li className="notification-conv__msg" data-admin-info="true">
+                          <AdminNotice message={entry.message} />
+                        </li>
+                      </Fragment>
+                    );
+                  }
+
+                  const isMine = entry.senderUserId === currentUserId;
+                  const sameAsPrev =
+                    !showDayDivider &&
+                    Boolean(prev) &&
+                    prev.codeNoti !== EnumCodeNoti.COMPLAINT_ADMIN &&
+                    prev.senderUserId === entry.senderUserId;
+                  const sameAsNext =
+                    Boolean(next) &&
+                    next.codeNoti !== EnumCodeNoti.COMPLAINT_ADMIN &&
+                    next.senderUserId === entry.senderUserId &&
+                    dayKey === nextDayKey;
+
+                  const senderName = entry.userName?.trim() || entry.senderUserId || "Người dùng";
+                  const senderCode = entry.userSystemCode?.trim() || "";
+                  const time = entryDate ? clockFormatter.format(entryDate) : "";
+
+                  return (
+                    <Fragment key={entry.id}>
+                      {showDayDivider && (
+                        <li className="notification-conv__dayDivider" aria-hidden="true">
+                          <span>{formatDayLabel(entryDate)}</span>
+                        </li>
+                      )}
+                      <li
+                        className="notification-conv__msg"
+                        data-mine={isMine}
+                        data-grouped={sameAsPrev ? "true" : undefined}
+                        data-has-next={sameAsNext ? "true" : undefined}
+                      >
+                        {!isMine && (
+                          <span
+                            className="notification-conv__avatar"
+                            data-hidden={sameAsPrev ? "true" : undefined}
+                            aria-hidden="true"
+                          >
+                            {!sameAsPrev && getInitials(senderName)}
+                          </span>
+                        )}
+
+                        <div className="notification-conv__content">
+                          {!isMine && !sameAsPrev && (
+                            <div className="notification-conv__senderRow">
+                              <span className="notification-conv__senderName">{senderName}</span>
+                              {senderCode && (
+                                <span className="notification-conv__senderCode">{senderCode}</span>
+                              )}
+                            </div>
+                          )}
+
+                          <div className="notification-conv__bubble">
+                            <p className="notification-conv__text">{entry.message}</p>
+                            {time && (
+                              <time
+                                className="notification-conv__time"
+                                dateTime={entry.createdAt ?? undefined}
+                              >
+                                {time}
+                              </time>
+                            )}
+                          </div>
+                        </div>
+                      </li>
+                    </Fragment>
+                  );
+                })}
+              </ol>
+            )}
+          </div>
+
+          <form className="notification-conv__footer" onSubmit={handleSubmit}>
+            {replyError && <p className="notification-conv__replyError" role="alert">{replyError}</p>}
+            <div className="notification-conv__composer">
+              <textarea
+                ref={textareaRef}
+                rows={1}
+                aria-label="Nhập nội dung phản hồi"
+                className="notification-conv__textarea"
+                value={reply}
+                disabled={submitting}
+                placeholder="Viết phản hồi..."
+                onChange={(event) => {
+                  setReply(event.target.value);
+                  if (replyError) setReplyError("");
+                }}
+                onKeyDown={handleKeyDown}
+              />
+              <button
+                type="submit"
+                className="notification-conv__submitBtn"
+                disabled={!canSend}
+              >
+                <PaperPlaneIcon aria-hidden="true" />
+                <span>{submitting ? "Đang gửi" : "Gửi"}</span>
+              </button>
+            </div>
+            <p className="notification-conv__hint">Enter để gửi · Shift + Enter để xuống dòng</p>
+          </form>
+        </section>
+      </div>
     </dialog>
   );
 }

@@ -1,353 +1,358 @@
 .notification-conv__dialog {
-  width: min(820px, calc(100vw - 24px));
-  max-width: calc(100vw - 24px);
-  height: min(720px, 88dvh);
-  max-height: 88dvh;
+  --chat-header: color-mix(in srgb, var(--primary) 65%, #111a36);
+  --chat-thread: color-mix(in srgb, var(--panel-paper) 25%, rgb(var(--color-page)));
+  --chat-context: color-mix(in srgb, var(--panel-well) 98%, var(--primary));
+  --chat-bubble-out: var(--primary);
+  --chat-gutter: 24px;
+  width: min(890px, calc(100vw - 32px));
+  max-width: none;
+  height: min(620px, calc(100dvh - 48px));
+  max-height: none;
   margin: auto;
   padding: 0;
-  border: 0;
-  border-radius: 16px;
-  background: var(--panel-paper, #fff);
-  color: rgb(var(--color-text));
-  box-shadow:
-    0 0 0 1px rgb(var(--color-border) / 0.8),
-    0 24px 64px -16px rgb(9 18 40 / 0.28);
-  font-family: var(--font-ui);
   overflow: hidden;
-  animation: notification-conv-enter 180ms cubic-bezier(0.23, 1, 0.32, 1);
+  border: 0;
+  border-radius: 18px;
+  background: var(--panel-paper);
+  color: rgb(var(--color-text));
+  box-shadow: 0 24px 70px rgb(7 15 40 / 0.26);
+  font-family: var(--font-ui);
 }
 
-.notification-conv__dialog ::selection {
-  background: rgb(var(--color-brand) / 0.18);
+html.dark .notification-conv__dialog {
+  --chat-header: color-mix(in srgb, var(--primary) 55%, var(--panel-paper));
+  --chat-thread: var(--panel-well);
+  --chat-context: color-mix(in srgb, var(--panel-paper) 92%, rgb(var(--color-brand)));
+  --chat-bubble-out: color-mix(in srgb, var(--primary) 72%, rgb(var(--color-brand)));
 }
 
 .notification-conv__dialog[open] {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  animation: notification-conv-enter 200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .notification-conv__dialog::backdrop {
-  background: rgb(9 18 36 / 0.48);
-  backdrop-filter: blur(4px);
-  animation: notification-conv-fade 160ms ease-out;
+  background: rgb(10 17 36 / 0.55);
 }
 
-/* Header */
 .notification-conv__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 15px 18px 15px 20px;
-  border-bottom: 1px solid rgb(var(--color-border) / 0.72);
-  background: var(--panel-paper, #fff);
-  flex-shrink: 0;
+  padding: 16px var(--chat-gutter);
+  background: var(--chat-header);
+  color: #fff;
+}
+
+.notification-conv__heading,
+.notification-conv__actions,
+.notification-conv__contextHeading {
+  display: flex;
+  align-items: center;
 }
 
 .notification-conv__heading {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  gap: 13px;
   min-width: 0;
 }
 
 .notification-conv__icon {
   display: grid;
   place-items: center;
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: rgb(var(--color-brand) / 0.08);
-  color: rgb(var(--color-brand));
+  flex: 0 0 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 0.13);
 }
 
-.notification-conv__icon svg {
-  width: 17px;
-  height: 17px;
+.notification-conv__icon svg,
+.notification-conv__iconBtn svg {
+  width: 18px;
+  height: 18px;
 }
 
 .notification-conv__titles {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
   min-width: 0;
 }
 
 .notification-conv__header h2 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 750;
   line-height: 1.25;
-  color: rgb(var(--color-text));
-  letter-spacing: -0.015em;
+  letter-spacing: -0.025em;
 }
 
 .notification-conv__subtitle {
-  margin: 0;
-  font-size: 12.5px;
-  line-height: 1.3;
-  color: var(--panel-muted);
-  white-space: nowrap;
   overflow: hidden;
+  margin: 4px 0 0;
+  color: #ced8f5;
+  font-size: var(--text-meta);
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .notification-conv__actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
+  flex: none;
+  gap: 6px;
 }
 
 .notification-conv__iconBtn {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: 10px;
   background: transparent;
-  color: var(--panel-muted);
+  color: #e5ecff;
   cursor: pointer;
-  transition:
-    background-color 140ms ease,
-    color 140ms ease,
-    transform 120ms ease;
 }
 
 .notification-conv__iconBtn:hover:not(:disabled) {
-  background: rgb(var(--color-brand) / 0.08);
-  color: rgb(var(--color-text));
-}
-
-.notification-conv__iconBtn:active:not(:disabled) {
-  transform: scale(0.94);
+  background: rgb(255 255 255 / 0.15);
+  color: #fff;
 }
 
 .notification-conv__iconBtn:focus-visible {
-  outline: 2px solid rgb(var(--color-brand));
-  outline-offset: 2px;
+  outline: 2px solid #e5ecff;
+  outline-offset: -2px;
 }
 
 .notification-conv__iconBtn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.notification-conv__iconBtn svg {
-  width: 16px;
-  height: 16px;
+  opacity: 0.56;
+  cursor: default;
 }
 
 .notification-conv__iconBtn[data-spinning="true"] svg {
-  animation: notification-conv-spin 700ms linear infinite;
+  animation: notification-conv-spin 800ms linear infinite;
 }
 
-/* Conversation canvas */
-.notification-conv__body {
-  flex: 1 1 auto;
+.notification-conv__workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   min-height: 0;
-  padding: 20px 18px;
-  background: rgb(var(--color-page));
-  overflow-y: auto;
+}
+
+.notification-conv__workspace[data-has-notice="true"] {
+  grid-template-columns: clamp(220px, 29%, 258px) minmax(0, 1fr);
+}
+
+.notification-conv__context,
+.notification-conv__body {
+  min-height: 0;
+  overflow: auto;
   overscroll-behavior: contain;
-  scrollbar-gutter: stable both-edges;
-  display: flex;
-  flex-direction: column;
   scrollbar-width: thin;
-  scrollbar-color: rgb(var(--color-muted) / 0.35) transparent;
+  scrollbar-color: rgb(var(--color-muted) / 0.32) transparent;
 }
 
-html.dark .notification-conv__body {
-  background: var(--panel-well);
+.notification-conv__context {
+  padding: 22px var(--chat-gutter);
+  background: var(--chat-context);
 }
 
-.notification-conv__body::-webkit-scrollbar {
-  width: 6px;
+.notification-conv__contextHeading {
+  gap: 8px;
 }
 
-.notification-conv__body::-webkit-scrollbar-track {
-  background: transparent;
+.notification-conv__contextHeading > svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: rgb(var(--color-accent));
 }
 
-.notification-conv__body::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background: rgb(var(--color-muted) / 0.28);
+.notification-conv__contextHeading h3 {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: 750;
+  line-height: 1.35;
 }
 
-.notification-conv__body::-webkit-scrollbar-thumb:hover {
-  background: rgb(var(--color-muted) / 0.48);
+.notification-conv__contextDate {
+  display: block;
+  margin: 4px 0 18px 26px;
+  color: var(--panel-muted);
+  font-size: var(--text-meta);
+  font-variant-numeric: tabular-nums;
 }
 
-/* Skeleton loading */
-.notification-conv__skeletons {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding-top: 4px;
+.notification-conv__contextHeading + .notification-conv__contextDetails {
+  margin-top: 14px;
 }
 
-.notification-conv__skeletonRow {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
+.notification-conv__contextToggle {
+  display: none;
 }
 
-.notification-conv__skeletonRow[data-mine="true"] {
-  justify-content: flex-end;
+.notification-conv__adminNotice {
+  min-width: 0;
+  text-align: start;
+  overflow-wrap: anywhere;
 }
 
-.notification-conv__skeletonAvatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  background: rgb(var(--color-border) / 0.7);
-  flex-shrink: 0;
-  animation: notification-conv-pulse 1.5s ease-in-out infinite;
+.notification-conv__adminHeadline,
+.notification-conv__adminLine {
+  margin: 0;
+  font-size: var(--text-label);
+  line-height: 1.55;
 }
 
-.notification-conv__skeletonBubble {
-  height: 50px;
-  border-radius: 14px;
-  background: rgb(var(--color-border) / 0.65);
-  animation: notification-conv-pulse 1.5s ease-in-out infinite;
+.notification-conv__adminHeadline {
+  font-weight: 650;
 }
 
-.notification-conv__skeletonBubble[data-size="sm"] {
-  width: 34%;
+.notification-conv__adminIcon {
+  display: none;
 }
 
-.notification-conv__skeletonBubble[data-size="md"] {
-  width: 52%;
+.notification-conv__adminDetails {
+  display: grid;
+  gap: 9px;
+  margin-top: 10px;
 }
 
-.notification-conv__skeletonBubble[data-size="lg"] {
-  width: 64%;
-  height: 62px;
+.notification-conv__adminLabel {
+  color: var(--panel-muted);
 }
 
-.notification-conv__skeletonNotice {
-  width: min(84%, 560px);
-  margin-inline: auto;
-  height: 76px;
-  border-radius: 14px;
-  background: rgb(var(--color-border) / 0.5);
-  animation: notification-conv-pulse 1.5s ease-in-out infinite;
+.notification-conv__adminToggle,
+.notification-conv__retryBtn {
+  border: 0;
+  border-radius: 8px;
+  background: rgb(var(--color-brand) / 0.09);
+  color: rgb(var(--color-brand));
+  font: inherit;
+  font-size: var(--text-meta);
+  font-weight: 650;
+  cursor: pointer;
 }
 
-/* Empty & Error */
-.notification-conv__empty {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+.notification-conv__adminToggle {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 7px;
+  min-height: 36px;
+  padding: 6px 9px;
+  text-align: start;
+}
+
+.notification-conv__adminToggle:hover,
+.notification-conv__retryBtn:hover {
+  background: rgb(var(--color-brand) / 0.15);
+}
+
+.notification-conv__adminChevron {
+  flex: none;
+  transition: transform 160ms ease-out;
+}
+
+.notification-conv__adminChevron[data-open="true"] {
+  transform: rotate(180deg);
+}
+
+.notification-conv__recipientList {
+  display: grid;
+  gap: 5px;
+  margin: 8px 0 0;
+  padding-inline-start: 17px;
+  color: var(--panel-muted);
+  font-size: var(--text-meta);
+}
+
+.notification-conv__thread {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.notification-conv__body {
+  padding: 20px var(--chat-gutter);
+  background: var(--chat-thread);
+}
+
+.notification-conv__context:focus-visible,
+.notification-conv__body:focus-visible {
+  outline: 2px solid rgb(var(--color-brand));
+  outline-offset: -3px;
+}
+
+.notification-conv__empty {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 9px;
+  min-height: 100%;
   text-align: center;
   color: var(--panel-muted);
-  font-size: var(--text-body);
-}
-
-.notification-conv__emptyIcon {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: rgb(var(--color-border) / 0.45);
-  color: var(--panel-muted);
-}
-
-.notification-conv__emptyIcon svg {
-  width: 20px;
-  height: 20px;
 }
 
 .notification-conv__empty p {
   margin: 0;
 }
 
+.notification-conv__emptyIcon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgb(var(--color-brand) / 0.09);
+  color: rgb(var(--color-brand));
+}
+
 .notification-conv__errorBox {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border: 1px solid rgb(var(--color-accent) / 0.28);
-  border-radius: 12px;
-  background: rgb(var(--color-accent) / 0.06);
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgb(var(--color-accent) / 0.08);
   color: rgb(var(--color-accent));
-  font-size: var(--text-label);
 }
 
 .notification-conv__retryBtn {
-  flex-shrink: 0;
-  padding: 6px 12px;
-  border: 1px solid rgb(var(--color-accent) / 0.35);
-  border-radius: 8px;
-  background: var(--panel-paper, #fff);
-  color: inherit;
-  font: inherit;
-  font-size: var(--text-meta);
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background-color 140ms ease,
-    transform 120ms ease;
+  padding: 7px 10px;
 }
 
-.notification-conv__retryBtn:hover {
-  background: rgb(var(--color-accent) / 0.08);
-}
-
-.notification-conv__retryBtn:active {
-  transform: scale(0.97);
-}
-
-.notification-conv__retryBtn:focus-visible {
-  outline: 2px solid rgb(var(--color-accent));
-  outline-offset: 2px;
-}
-
-/* Message timeline */
 .notification-conv__list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .notification-conv__dayDivider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 4px 0 14px;
+  justify-self: center;
+  margin: 12px 0 8px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--chat-context);
   color: var(--panel-muted);
-  font-size: 11.5px;
-  font-weight: 500;
+  font-size: var(--text-meta);
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
 
-.notification-conv__dayDivider:not(:first-child) {
-  margin-top: 18px;
+.notification-conv__dayDivider:first-child {
+  margin-top: 0;
 }
 
-.notification-conv__dayDivider::before,
-.notification-conv__dayDivider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: rgb(var(--color-border) / 0.72);
-}
-
-/* Message rows */
 .notification-conv__msg {
   display: flex;
-  align-items: flex-end;
-  gap: 9px;
-  margin-top: 14px;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  margin-top: 12px;
 }
 
 .notification-conv__msg:first-child,
@@ -356,53 +361,51 @@ html.dark .notification-conv__body {
 }
 
 .notification-conv__msg[data-grouped="true"] {
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
 .notification-conv__msg[data-mine="true"] {
   justify-content: flex-end;
 }
 
-.notification-conv__msg[data-admin-info="true"] {
-  justify-content: center;
+.notification-conv__msg[data-admin-info="true"] .notification-conv__adminNotice {
   width: 100%;
-  margin: 16px 0 4px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: var(--chat-context);
 }
 
-.notification-conv__dayDivider + .notification-conv__msg[data-admin-info="true"] {
-  margin-top: 0;
+.notification-conv__msg[data-admin-info="true"] .notification-conv__adminIcon {
+  display: inline-block;
+  margin-inline-end: 6px;
+  vertical-align: -3px;
+  color: rgb(var(--color-brand));
 }
 
-/* Incoming avatar */
 .notification-conv__avatar {
   display: grid;
   place-items: center;
-  align-self: flex-start;
-  margin-top: 20px;
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  background: rgb(var(--color-brand) / 0.09);
+  flex: 0 0 30px;
+  height: 30px;
+  margin-top: 18px;
+  border-radius: 50%;
+  background: rgb(var(--color-brand) / 0.12);
   color: rgb(var(--color-brand));
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  user-select: none;
+  font-weight: 750;
 }
 
 .notification-conv__avatar[data-hidden="true"] {
-  background: transparent;
+  visibility: hidden;
   margin-top: 0;
 }
 
-/* Content column */
 .notification-conv__content {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  max-width: min(74%, 560px);
   min-width: 0;
+  max-width: min(84%, 470px);
 }
 
 .notification-conv__msg[data-mine="true"] .notification-conv__content {
@@ -411,290 +414,110 @@ html.dark .notification-conv__body {
 
 .notification-conv__senderRow {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  margin: 0 0 4px 2px;
-  min-width: 0;
+  flex-wrap: wrap;
+  gap: 0 6px;
+  margin: 0 0 3px 2px;
+  color: var(--panel-muted);
+  font-size: var(--text-meta);
+  overflow-wrap: anywhere;
 }
 
 .notification-conv__senderName {
-  font-size: 12px;
-  font-weight: 600;
-  color: rgb(var(--color-text) / 0.82);
-}
-
-.notification-conv__senderCode {
-  font-size: 11.5px;
-  font-weight: 500;
-  color: var(--panel-muted);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Bubbles */
-.notification-conv__bubble {
-  padding: 10px 14px 8px;
-  border-radius: 15px 15px 15px 5px;
-  border: 1px solid rgb(var(--color-border) / 0.82);
-  background: var(--panel-paper, #fff);
   color: rgb(var(--color-text));
+  font-weight: 700;
+}
+
+.notification-conv__bubble {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 72px;
-}
-
-.notification-conv__msg[data-grouped="true"] .notification-conv__bubble {
-  border-top-left-radius: 6px;
-}
-
-.notification-conv__msg[data-has-next="true"] .notification-conv__bubble {
-  border-bottom-left-radius: 6px;
-}
-
-html.dark .notification-conv__bubble {
-  background: #172336;
-  border-color: rgb(var(--color-border) / 0.85);
+  align-items: flex-end;
+  gap: 10px;
+  max-width: 100%;
+  padding: 8px 11px;
+  border-radius: 12px 12px 12px 4px;
+  background: var(--panel-paper);
 }
 
 .notification-conv__msg[data-mine="true"] .notification-conv__bubble {
-  border: 0;
-  border-radius: 15px 15px 5px 15px;
-  background: rgb(var(--deoca-primary-rgb));
-  color: #ffffff;
+  border-radius: 12px 12px 4px 12px;
+  background: var(--chat-bubble-out);
+  color: #fff;
+}
+
+.notification-conv__msg[data-grouped="true"] .notification-conv__bubble {
+  border-start-start-radius: 4px;
+}
+
+.notification-conv__msg[data-has-next="true"] .notification-conv__bubble {
+  border-end-start-radius: 4px;
 }
 
 .notification-conv__msg[data-mine="true"][data-grouped="true"] .notification-conv__bubble {
-  border-top-left-radius: 15px;
-  border-top-right-radius: 6px;
+  border-start-start-radius: 12px;
+  border-start-end-radius: 4px;
 }
 
 .notification-conv__msg[data-mine="true"][data-has-next="true"] .notification-conv__bubble {
-  border-bottom-left-radius: 15px;
-  border-bottom-right-radius: 6px;
-}
-
-html.dark .notification-conv__msg[data-mine="true"] .notification-conv__bubble {
-  background: #233b7a;
-  color: #f8fafc;
+  border-end-end-radius: 4px;
 }
 
 .notification-conv__text {
+  min-width: 0;
   margin: 0;
-  font-size: 14px;
+  font-size: var(--text-body);
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .notification-conv__time {
-  align-self: flex-end;
-  font-size: 11px;
-  line-height: 1.2;
+  flex: none;
+  padding-bottom: 2px;
   color: var(--panel-muted);
+  font-size: 11px;
+  line-height: 1.25;
   font-variant-numeric: tabular-nums;
 }
 
 .notification-conv__msg[data-mine="true"] .notification-conv__time {
-  color: rgb(255 255 255 / 0.72);
+  color: #e0e7ff;
 }
 
-/* System notice (COMPLAINT_ADMIN) */
-.notification-conv__adminNotice {
-  width: min(84%, 560px);
-  margin-inline: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border: 1px solid rgb(var(--color-border) / 0.85);
-  border-radius: 14px;
-  background: rgb(var(--color-brand) / 0.035);
-  color: rgb(var(--color-text) / 0.88);
-  text-align: center;
-}
-
-html.dark .notification-conv__adminNotice {
-  background: rgb(var(--color-brand) / 0.075);
-  border-color: rgb(var(--color-border) / 0.72);
-}
-
-.notification-conv__adminHeadline {
-  margin: 0;
-  font-size: 12.5px;
-  font-weight: 600;
-  line-height: 1.45;
-  text-wrap: balance;
-  overflow-wrap: anywhere;
-}
-
-.notification-conv__adminIcon {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  margin-right: 6px;
-  vertical-align: -2px;
-  color: rgb(var(--color-brand) / 0.82);
-}
-
-.notification-conv__adminDetails {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding-top: 8px;
-  border-top: 1px solid rgb(var(--color-border) / 0.6);
-}
-
-.notification-conv__adminLine {
-  margin: 0;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: rgb(var(--color-text) / 0.84);
-  overflow-wrap: anywhere;
-}
-
-.notification-conv__adminLabel {
-  color: var(--panel-muted);
-  font-weight: 500;
-}
-
-.notification-conv__adminValue {
-  color: rgb(var(--color-text) / 0.9);
-  font-weight: 500;
-}
-
-.notification-conv__adminRecipients {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.notification-conv__adminToggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--panel-muted);
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-  transition:
-    background-color 140ms ease,
-    border-color 140ms ease,
-    color 140ms ease;
-}
-
-.notification-conv__adminToggle strong {
-  color: rgb(var(--color-text) / 0.86);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.notification-conv__adminToggle:hover {
-  background: var(--panel-paper, #fff);
-  border-color: rgb(var(--color-border) / 0.75);
-  color: rgb(var(--color-text));
-}
-
-.notification-conv__adminToggle:focus-visible {
-  outline: 2px solid rgb(var(--color-brand));
-  outline-offset: 2px;
-}
-
-.notification-conv__adminChevron {
-  width: 13px;
-  height: 13px;
-  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-.notification-conv__adminChevron[data-open="true"] {
-  transform: rotate(180deg);
-}
-
-.notification-conv__recipientList {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 5px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  width: 100%;
-}
-
-.notification-conv__recipientChip {
-  padding: 3px 8px;
-  border: 1px solid rgb(var(--color-border) / 0.78);
-  border-radius: 6px;
-  background: var(--panel-paper, #fff);
-  color: rgb(var(--color-text) / 0.82);
-  font-size: 11.5px;
-  line-height: 1.35;
-}
-
-html.dark .notification-conv__recipientChip {
-  background: rgb(var(--color-surface) / 0.85);
-}
-
-/* Unified Composer Footer */
 .notification-conv__footer {
-  padding: 12px 18px 14px;
-  border-top: 1px solid rgb(var(--color-border) / 0.72);
-  background: var(--panel-paper, #fff);
-  flex-shrink: 0;
+  min-width: 0;
+  padding: 12px var(--chat-gutter);
+  background: var(--panel-paper);
 }
 
 .notification-conv__composer {
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  padding: 6px 6px 6px 14px;
+  padding: 5px;
   border: 1px solid rgb(var(--color-border));
   border-radius: 12px;
-  background: rgb(var(--color-page) / 0.7);
-  transition:
-    border-color 150ms ease,
-    background-color 150ms ease,
-    box-shadow 150ms ease;
-}
-
-html.dark .notification-conv__composer {
-  background: var(--panel-well);
+  background: var(--chat-thread);
 }
 
 .notification-conv__composer:focus-within {
-  border-color: rgb(var(--color-brand) / 0.75);
-  background: var(--panel-paper, #fff);
-  box-shadow: 0 0 0 3px rgb(var(--color-brand) / 0.1);
-}
-
-html.dark .notification-conv__composer:focus-within {
-  background: var(--panel-paper);
-  box-shadow: 0 0 0 3px rgb(var(--color-brand) / 0.16);
+  border-color: rgb(var(--color-brand));
 }
 
 .notification-conv__textarea {
-  flex: 1 1 auto;
-  min-height: 34px;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
   max-height: 120px;
+  padding: 9px;
   resize: none;
-  padding: 6px 0;
   border: 0;
+  outline: none;
   background: transparent;
   color: rgb(var(--color-text));
   caret-color: rgb(var(--color-brand));
   font: inherit;
-  font-size: 14px;
+  font-size: var(--text-body);
   line-height: 1.5;
-  outline: none;
 }
 
 .notification-conv__textarea::placeholder {
@@ -702,130 +525,157 @@ html.dark .notification-conv__composer:focus-within {
 }
 
 .notification-conv__submitBtn {
-  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 14px;
+  flex: none;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 13px;
   border: 0;
   border-radius: 8px;
-  background: rgb(var(--deoca-primary-rgb));
-  color: #ffffff;
+  background: var(--panel-solid);
+  color: var(--panel-on-solid);
   font: inherit;
-  font-size: 13px;
-  font-weight: 600;
+  font-weight: 750;
   cursor: pointer;
-  transition:
-    background-color 140ms ease,
-    opacity 140ms ease,
-    transform 120ms ease;
-}
-
-html.dark .notification-conv__submitBtn {
-  background: #2b4792;
 }
 
 .notification-conv__submitBtn svg {
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
 }
 
 .notification-conv__submitBtn:hover:not(:disabled) {
-  background: rgb(var(--deoca-primary-light-rgb));
+  background: color-mix(in srgb, var(--panel-solid) 88%, rgb(var(--color-brand-strong)));
 }
 
-html.dark .notification-conv__submitBtn:hover:not(:disabled) {
-  background: #3556ad;
+.notification-conv__submitBtn:disabled {
+  background: rgb(var(--color-brand) / 0.08);
+  color: var(--panel-muted);
+  cursor: default;
 }
 
-.notification-conv__submitBtn:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-.notification-conv__submitBtn:focus-visible {
+.notification-conv__submitBtn:focus-visible,
+.notification-conv__contextToggle:focus-visible,
+.notification-conv__adminToggle:focus-visible,
+.notification-conv__retryBtn:focus-visible {
   outline: 2px solid rgb(var(--color-brand));
   outline-offset: 2px;
 }
 
-.notification-conv__submitBtn:disabled {
-  background: rgb(var(--color-muted) / 0.2);
+.notification-conv__hint,
+.notification-conv__replyError {
+  margin: 5px 0 0;
   color: var(--panel-muted);
-  cursor: not-allowed;
+  font-size: var(--text-meta);
 }
 
-.notification-conv__hint {
-  margin: 6px 2px 0;
-  font-size: 11.5px;
-  color: var(--panel-muted);
-  opacity: 0.78;
+.notification-conv__replyError {
+  margin: 0 0 7px;
+  color: rgb(var(--color-accent));
 }
 
 @keyframes notification-conv-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes notification-conv-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes notification-conv-pulse {
-  0%,
-  100% {
-    opacity: 0.55;
-  }
-  50% {
-    opacity: 0.95;
-  }
+  from { opacity: 0.65; transform: translateY(5px); }
 }
 
 @keyframes notification-conv-spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 660px) {
   .notification-conv__dialog {
-    width: calc(100vw - 16px);
-    max-width: calc(100vw - 16px);
-    height: min(680px, 90dvh);
-    max-height: 90dvh;
+    --chat-gutter: 12px;
+    width: calc(100vw - 12px);
+    height: calc(100dvh - 16px);
     border-radius: 14px;
   }
 
-  .notification-conv__header {
-    padding: 13px 14px;
-  }
-
+  .notification-conv__header,
+  .notification-conv__context,
   .notification-conv__body {
-    padding: 14px;
+    padding: 12px var(--chat-gutter);
   }
 
-  .notification-conv__content {
-    max-width: 84%;
+  .notification-conv__heading {
+    gap: 8px;
   }
 
-  .notification-conv__adminNotice {
-    width: 100%;
-    padding: 11px 12px;
+  .notification-conv__icon {
+    flex-basis: 36px;
+    height: 36px;
+    border-radius: 9px;
+  }
+
+  .notification-conv__header h2 {
+    font-size: 16px;
+  }
+
+  .notification-conv__actions {
+    gap: 0;
+  }
+
+  .notification-conv__iconBtn,
+  .notification-conv__submitBtn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .notification-conv__workspace[data-has-notice="true"] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .notification-conv__context {
+    max-height: min(40dvh, 265px);
+    padding-block: 4px 8px;
+  }
+
+  .notification-conv__contextDate {
+    margin: -3px 0 5px 26px;
+  }
+
+  .notification-conv__contextDetails {
+    padding-top: 6px;
+  }
+
+  .notification-conv__context[data-expanded="false"] .notification-conv__contextDetails {
+    display: none;
+  }
+
+  .notification-conv__contextToggle {
+    display: grid;
+    place-items: center;
+    flex: 0 0 44px;
+    height: 44px;
+    margin-inline-start: auto;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: rgb(var(--color-brand));
+    cursor: pointer;
+  }
+
+  .notification-conv__contextToggle:hover {
+    background: rgb(var(--color-brand) / 0.1);
+  }
+
+  .notification-conv__contextToggle[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+  }
+
+  .notification-conv__adminToggle {
+    min-height: 44px;
   }
 
   .notification-conv__footer {
-    padding: 10px 12px 12px;
+    padding: 8px var(--chat-gutter) max(8px, env(safe-area-inset-bottom));
+  }
+
+  .notification-conv__textarea {
+    min-height: 44px;
+    font-size: 16px;
   }
 
   .notification-conv__hint {
@@ -834,21 +684,12 @@ html.dark .notification-conv__submitBtn:hover:not(:disabled) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .notification-conv__dialog,
-  .notification-conv__dialog::backdrop,
-  .notification-conv__skeletonAvatar,
-  .notification-conv__skeletonBubble,
-  .notification-conv__skeletonNotice,
+  .notification-conv__dialog[open],
   .notification-conv__iconBtn[data-spinning="true"] svg {
     animation: none;
   }
 
-  .notification-conv__iconBtn,
-  .notification-conv__retryBtn,
-  .notification-conv__adminToggle,
-  .notification-conv__adminChevron,
-  .notification-conv__composer,
-  .notification-conv__submitBtn {
+  .notification-conv__adminChevron {
     transition: none;
   }
 }
