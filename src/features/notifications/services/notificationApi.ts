@@ -1,5 +1,5 @@
 import { request as apiRequest } from "@/lib/api/request";
-import { NotificationDto, NotificationPage } from "@/features/notifications/types";
+import { NotificationDto, NotificationItem, NotificationPage } from "@/features/notifications/types";
 
 export const NOTIFICATIONS_CHANGED = "notifications:changed";
 
@@ -33,6 +33,17 @@ export const notificationApi = {
       items.push(...next.items);
     }
     return { ...data, items: Array.from(new Map(items.map((item) => [item.id, item])).values()) };
+  },
+
+  async getConversation(
+    alertGroupId: string,
+    userId: string,
+    signal?: AbortSignal
+  ): Promise<NotificationItem[]> {
+    const params = new URLSearchParams({ alertGroupId, userId });
+    return request<NotificationItem[]>(`/notifications/conversation?${params.toString()}`, {
+      signal,
+    });
   },
 
   async markRead(id: number) {

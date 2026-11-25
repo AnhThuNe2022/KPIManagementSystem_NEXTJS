@@ -1,3 +1,5 @@
+import { EnumCodeNoti, type NotificationItem } from "./types";
+
 export function searchText(value: string) {
   return value
     .toLocaleLowerCase("vi")
@@ -17,4 +19,10 @@ export function internalNotificationLink(value?: string | null) {
   } catch {
     return null;
   }
+}
+
+const COMPLAINT_CODES = new Set<string>(Object.values(EnumCodeNoti));
+
+export function isComplaintNotification(item: NotificationItem): boolean {
+  return Boolean(item.alertGroupId && item.codeNoti && COMPLAINT_CODES.has(item.codeNoti));
 }
