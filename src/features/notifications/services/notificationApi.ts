@@ -50,6 +50,19 @@ export const notificationApi = {
     };
   },
 
+  async getConversation(
+    alertGroupId: string,
+    userId: string,
+    signal?: AbortSignal,
+  ): Promise<NotificationItem[]> {
+    const params = new URLSearchParams({ alertGroupId, userId });
+    const res = await request<NotificationItem[]>(
+      `/notifications/conversation?${params.toString()}`,
+      { signal },
+    );
+    return Array.isArray(res) ? res : [];
+  },
+
   async markRead(id: number): Promise<void> {
     await request(`/notifications/mark-read/${id}`, { method: "POST" });
     emitAppEvent(NOTIFICATIONS_CHANGED_EVENT);

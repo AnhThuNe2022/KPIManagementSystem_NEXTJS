@@ -83,6 +83,7 @@ export const BACKEND_PATHS = {
   notificationsMarkAllRead: "/Notifications/mark-all-read",
   notificationsById: (id: string) => `/Notifications/${encodeURIComponent(id)}`,
   notificationsSendMessage: "/notifications/sendMessage",
+  notificationsConversation: "/notifications/conversation",
 
   // Permissions
   permissionPath: (segments: string[]) =>

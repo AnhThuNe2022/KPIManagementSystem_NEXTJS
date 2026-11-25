@@ -4084,6 +4084,652 @@
   .ds-auth-submit .astryx-button[data-variant="primary"]:hover:not(:disabled) svg {
     transform: translateX(3px);
   }
+
+  /* =========================================================================
+   * 5B. HỘP THOẠI TRAO ĐỔI KHIẾU NẠI (Wave Header + Luồng Chat Trái + Hồ Sơ Phải)
+   * ========================================================================= */
+  .ds-conv-dialog {
+    overflow: hidden;
+    border-radius: 20px;
+    border: 1px solid var(--shell-sidebar-edge);
+    box-shadow:
+      0 28px 68px -20px var(--shell-shadow-strong),
+      0 8px 20px -8px var(--shell-shadow-soft);
+  }
+
+  .ds-conv-shell {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: min(640px, calc(100dvh - 44px));
+    overflow: hidden;
+    background-color: var(--color-background-surface);
+  }
+
+  .ds-conv-hero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 20px 15px;
+    border-bottom: 1px solid var(--color-border);
+    background: linear-gradient(
+      180deg,
+      var(--color-background-surface) 0%,
+      color-mix(in srgb, var(--shell-well) 36%, var(--color-background-surface)) 100%
+    );
+  }
+
+  .ds-conv-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      var(--deoca-blue) 0%,
+      var(--deoca-sky) 64%,
+      var(--deoca-red) 100%
+    );
+  }
+
+  html[data-theme="dark"] .ds-conv-hero {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--shell-wedge-start) 48%, var(--color-background-surface)) 0%,
+      var(--color-background-surface) 100%
+    );
+  }
+
+  .ds-conv-heroIcon {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(
+      135deg,
+      var(--deoca-blue) 0%,
+      var(--shell-wedge-mid) 100%
+    );
+    color: var(--shell-on-wedge);
+    box-shadow: 0 8px 18px -8px color-mix(in srgb, var(--deoca-blue) 58%, transparent);
+  }
+
+  .ds-conv-heroTitle {
+    margin: 0;
+    font-size: 17.5px;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+  }
+
+  .ds-conv-heroSub {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+  }
+
+  .ds-conv-countPill {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 9px;
+    border-radius: 999px;
+    border: 1px solid var(--ribbon-blue-border);
+    background-color: var(--ribbon-blue-bg);
+    color: var(--ribbon-blue-ink);
+    font-size: 11.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ds-conv-heroBtn {
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background-color: var(--color-background-surface);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+  }
+
+  .ds-conv-heroBtn:hover:not(:disabled) {
+    background-color: var(--shell-hover-wash);
+    border-color: var(--ribbon-blue-border);
+    color: var(--color-text-accent);
+  }
+
+  .ds-conv-heroBtn[aria-pressed="true"] {
+    background-color: var(--ribbon-blue-bg);
+    border-color: var(--ribbon-blue-border);
+    color: var(--ribbon-blue-ink);
+  }
+
+  .ds-conv-heroBtn:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .ds-conv-heroBtn[data-spinning="true"] svg {
+    animation: dsConvSpin 780ms linear infinite;
+  }
+
+  /* Không gian 2 cột đảo chiều: Trái là Luồng chat chính, Phải là Thẻ hồ sơ khiếu nại */
+  .ds-conv-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .ds-conv-workspace[data-has-dossier="true"] {
+    grid-template-columns: minmax(0, 1fr) clamp(256px, 31%, 304px);
+  }
+
+  .ds-conv-thread {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    min-height: 0;
+    min-width: 0;
+  }
+
+  .ds-conv-body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 18px 20px;
+    background-color: color-mix(in srgb, var(--shell-well) 64%, var(--color-background-surface));
+    background-image: radial-gradient(
+      color-mix(in srgb, var(--color-border-emphasized) 48%, transparent) 1px,
+      transparent 1px
+    );
+    background-size: 18px 18px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-emphasized) transparent;
+  }
+
+  .ds-conv-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 100%;
+    padding: 28px 16px;
+  }
+
+  .ds-conv-spinner {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 2.5px solid var(--ribbon-blue-border);
+    border-top-color: var(--deoca-blue);
+    animation: dsConvSpin 760ms linear infinite;
+  }
+
+  .ds-conv-emptyOrb {
+    display: inline-grid;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    border: 1px solid var(--ribbon-blue-border);
+    background: linear-gradient(145deg, var(--ribbon-blue-bg) 0%, var(--color-background-surface) 100%);
+    color: var(--color-text-accent);
+    box-shadow: 0 10px 24px -14px var(--shell-shadow-strong);
+  }
+
+  .ds-conv-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ds-conv-dayDivider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 0 8px;
+  }
+
+  .ds-conv-dayDivider:first-child {
+    margin-top: 0;
+  }
+
+  .ds-conv-dayDivider::before,
+  .ds-conv-dayDivider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: color-mix(in srgb, var(--color-border) 82%, transparent);
+  }
+
+  .ds-conv-dayDivider > span {
+    padding: 2px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-background-surface);
+    color: var(--color-text-secondary);
+    font-size: 11.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ds-conv-systemRow {
+    margin: 10px auto;
+    width: min(100%, 480px);
+  }
+
+  .ds-conv-msg {
+    display: flex;
+    align-items: flex-end;
+    gap: 9px;
+    margin-top: 10px;
+  }
+
+  .ds-conv-msg[data-grouped="true"] {
+    margin-top: 2px;
+  }
+
+  .ds-conv-msg[data-mine="true"] {
+    justify-content: flex-end;
+  }
+
+  .ds-conv-avatarSlot {
+    width: 32px;
+    flex-shrink: 0;
+  }
+
+  .ds-conv-avatarSlot[data-hidden="true"] {
+    visibility: hidden;
+  }
+
+  .ds-conv-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: min(78%, 490px);
+    min-width: 0;
+  }
+
+  .ds-conv-msg[data-mine="true"] .ds-conv-content {
+    align-items: flex-end;
+  }
+
+  .ds-conv-senderRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 4px 4px;
+    max-width: 100%;
+  }
+
+  .ds-conv-bubble {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 6px 10px;
+    max-width: 100%;
+    padding: 10px 13px;
+    border-radius: 17px 17px 17px 5px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-background-surface);
+    color: var(--color-text-primary);
+    box-shadow: 0 3px 12px -8px var(--shell-shadow-strong);
+  }
+
+  .ds-conv-msg[data-mine="false"][data-grouped="true"] .ds-conv-bubble {
+    border-top-left-radius: 6px;
+  }
+
+  .ds-conv-msg[data-mine="false"][data-has-next="true"] .ds-conv-bubble {
+    border-bottom-left-radius: 6px;
+  }
+
+  .ds-conv-msg[data-mine="true"] .ds-conv-bubble {
+    border-color: transparent;
+    border-radius: 17px 17px 5px 17px;
+    background: linear-gradient(
+      135deg,
+      var(--deoca-blue) 0%,
+      var(--shell-wedge-mid) 100%
+    );
+    color: var(--shell-on-wedge);
+    box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--deoca-blue) 62%, transparent);
+  }
+
+  .ds-conv-msg[data-mine="true"][data-grouped="true"] .ds-conv-bubble {
+    border-top-right-radius: 6px;
+  }
+
+  .ds-conv-msg[data-mine="true"][data-has-next="true"] .ds-conv-bubble {
+    border-bottom-right-radius: 6px;
+  }
+
+  .ds-conv-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: 14px;
+    line-height: 1.52;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .ds-conv-msg[data-mine="true"] .ds-conv-text {
+    color: var(--shell-on-wedge);
+  }
+
+  .ds-conv-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: 11px;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-secondary);
+  }
+
+  .ds-conv-msg[data-mine="true"] .ds-conv-meta {
+    color: color-mix(in srgb, var(--shell-on-wedge) 80%, transparent);
+  }
+
+  /* Thanh nhập phản hồi dạng pill nổi */
+  .ds-conv-footer {
+    padding: 12px 18px 11px;
+    border-top: 1px solid var(--color-border);
+    background-color: var(--color-background-surface);
+  }
+
+  .ds-conv-composer {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 6px 6px 6px 12px;
+    border: 1px solid color-mix(in srgb, var(--color-border-emphasized) 82%, transparent);
+    border-radius: 14px;
+    background-color: color-mix(in srgb, var(--shell-well) 56%, var(--color-background-surface));
+    transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+  }
+
+  .ds-conv-composer:focus-within {
+    border-color: var(--color-accent);
+    background-color: var(--color-background-surface);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--deoca-blue) 14%, transparent);
+  }
+
+  .ds-conv-textarea {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    max-height: 120px;
+    padding: 7px 2px;
+    resize: none;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--color-text-primary);
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .ds-conv-textarea::placeholder {
+    color: var(--color-text-secondary);
+  }
+
+  .ds-conv-sendBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    gap: 6px;
+    height: 38px;
+    padding: 0 15px;
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(
+      132deg,
+      var(--deoca-blue) 0%,
+      var(--shell-wedge-mid) 100%
+    );
+    color: var(--shell-on-wedge);
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 14px -8px color-mix(in srgb, var(--deoca-blue) 68%, transparent);
+    transition: transform 130ms ease, filter 140ms ease, opacity 140ms ease;
+  }
+
+  .ds-conv-sendBtn:hover:not(:disabled) {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+  }
+
+  .ds-conv-sendBtn:disabled {
+    background: color-mix(in srgb, var(--color-border-emphasized) 55%, transparent);
+    color: var(--color-text-secondary);
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .ds-conv-hint {
+    margin: 6px 0 0 2px;
+    font-size: 11.5px;
+    color: var(--color-text-secondary);
+  }
+
+  .ds-conv-kbd {
+    display: inline-block;
+    padding: 0 5px;
+    border-radius: 5px;
+    border: 1px solid var(--color-border);
+    background-color: color-mix(in srgb, var(--shell-well) 70%, var(--color-background-surface));
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  /* Cột phải: Thẻ hồ sơ khiếu nại */
+  .ds-conv-dossier {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-left: 1px solid var(--color-border);
+    background-color: color-mix(in srgb, var(--shell-well) 36%, var(--color-background-surface));
+  }
+
+  .ds-conv-dossierHead {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .ds-conv-dossierIcon {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid var(--ribbon-orange-border);
+    background-color: var(--ribbon-orange-bg);
+    color: var(--ribbon-orange-ink);
+  }
+
+  .ds-conv-mobileDossierBtn {
+    display: none;
+  }
+
+  .ds-conv-dossierBody {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 14px 16px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-emphasized) transparent;
+  }
+
+  .ds-conv-adminNotice[data-variant="inline"] {
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--ribbon-blue-border);
+    background-color: color-mix(in srgb, var(--ribbon-blue-bg) 56%, var(--color-background-surface));
+  }
+
+  .ds-conv-dossierHeadline {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px 10px 16px;
+    border-radius: 11px;
+    border: 1px solid var(--ribbon-blue-border);
+    background-color: color-mix(in srgb, var(--ribbon-blue-bg) 45%, var(--color-background-surface));
+  }
+
+  .ds-conv-dossierHeadline::before {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 9px;
+    bottom: 9px;
+    width: 3px;
+    border-radius: 999px;
+    background-color: var(--deoca-blue);
+  }
+
+  .ds-conv-adminNotice[data-variant="inline"] .ds-conv-dossierHeadline {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .ds-conv-adminNotice[data-variant="inline"] .ds-conv-dossierHeadline::before {
+    display: none;
+  }
+
+  .ds-conv-dossierField {
+    padding: 9px 11px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-background-surface);
+  }
+
+  .ds-conv-recipientToggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 12.5px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .ds-conv-recipientToggle:hover {
+    color: var(--color-text-primary);
+  }
+
+  .ds-conv-chevron {
+    transition: transform 160ms ease;
+  }
+
+  .ds-conv-chevron[data-open="true"] {
+    transform: rotate(180deg);
+  }
+
+  .ds-conv-recipientChip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 7px;
+    border: 1px solid var(--color-border);
+    background-color: color-mix(in srgb, var(--shell-well) 65%, var(--color-background-surface));
+    color: var(--color-text-primary);
+    font-size: 11.5px;
+    font-weight: 500;
+    list-style: none;
+  }
+
+  @media (max-width: 720px) {
+    .ds-conv-shell {
+      height: calc(100dvh - 28px);
+    }
+
+    .ds-conv-hero {
+      padding: 16px 14px 12px;
+    }
+
+    .ds-conv-dossierToggleBtn {
+      display: none;
+    }
+
+    .ds-conv-workspace[data-has-dossier="true"] {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .ds-conv-dossier {
+      order: -1;
+      border-left: 0;
+      border-bottom: 1px solid var(--color-border);
+      max-height: min(38dvh, 250px);
+    }
+
+    .ds-conv-dossier[data-mobile-expanded="false"] .ds-conv-dossierBody {
+      display: none;
+    }
+
+    .ds-conv-mobileDossierBtn {
+      display: inline-grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--color-border);
+      border-radius: 9px;
+      background-color: var(--color-background-surface);
+      color: var(--color-text-primary);
+      cursor: pointer;
+    }
+
+    .ds-conv-body {
+      padding: 14px 12px;
+    }
+
+    .ds-conv-content {
+      max-width: 86%;
+    }
+
+    .ds-conv-footer {
+      padding: 10px 12px;
+    }
+
+    .ds-conv-hint {
+      display: none;
+    }
+  }
 }
 
 /* =============================================================================
@@ -4149,6 +4795,12 @@
   }
 }
 
+@keyframes dsConvSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Tự động tắt toàn bộ hoạt ảnh và chuyển động khi người dùng bật Reduce Motion trên hệ điều hành */
 @media (prefers-reduced-motion: reduce) {
   .ds-fade-in,
@@ -4157,7 +4809,9 @@
   .ds-status-ribbon-dot,
   .dcg-dock,
   .ds-auth-orb,
-  .ds-auth-clay-art {
+  .ds-auth-clay-art,
+  .ds-conv-spinner,
+  .ds-conv-heroBtn[data-spinning="true"] svg {
     animation: none;
   }
   .ds-panel-transition,

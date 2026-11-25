@@ -427,6 +427,44 @@ export function FormDrawer({
 }
 
 /**
+ * Zero-padding Astryx Dialog shell for custom-chrome modal workspaces (e.g. conversation box).
+ */
+export function SurfaceDialog({
+  isOpen,
+  onOpenChange,
+  width = 880,
+  maxHeight = "88dvh",
+  purpose = "info",
+  className,
+  labelledBy,
+  children,
+}: {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  width?: number | string;
+  maxHeight?: number | string;
+  purpose?: "info" | "form" | "required";
+  className?: string;
+  labelledBy?: string;
+  children: ReactNode;
+}) {
+  return (
+    <Dialog
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      purpose={purpose}
+      padding={0}
+      width={width}
+      maxHeight={maxHeight}
+      className={className}
+      aria-labelledby={labelledBy}
+    >
+      {children}
+    </Dialog>
+  );
+}
+
+/**
  * Left-anchored Astryx Drawer for responsive mobile navigation (replaces raw <dialog>).
  */
 export function NavigationDrawer({

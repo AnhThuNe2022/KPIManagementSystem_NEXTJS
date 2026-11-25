@@ -27,7 +27,7 @@ export {
   ExportProgressBar,
   type AppToastTone,
 } from "./Feedback";
-export { ConfirmDialog, DetailDialog, FormDialog, FormDrawer, NavigationDrawer } from "./Overlays";
+export { ConfirmDialog, DetailDialog, FormDialog, FormDrawer, NavigationDrawer, SurfaceDialog } from "./Overlays";
 export {
   AppForm,
   AppField,

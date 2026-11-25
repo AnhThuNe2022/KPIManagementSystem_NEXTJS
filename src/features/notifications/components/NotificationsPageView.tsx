@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ExternalLink,
   MailOpen,
+  MessageSquare,
   RefreshCw,
   Trash2,
 } from "lucide-react";
@@ -25,18 +26,22 @@ import {
   PageHeader,
   ReadStatusBadge,
   StatusFilterTabs,
+  TagBadge,
   useAppToast,
 } from "@/components/ds";
 import { NOTIFICATIONS_CHANGED_EVENT, subscribeAppEvent } from "@/lib/events/appEvents";
 import { formatDate, formatDateTime, normalizeVietnamese } from "@/lib/format/formatters";
 import { ApiRequestError, getErrorMessage, isAbortError } from "@/lib/http/request";
 import { resolveInternalLink } from "@/lib/security/redirect";
+import { isComplaintNotification } from "../notificationUtils";
 import { notificationApi } from "../services/notificationApi";
 import type { NotificationItem } from "../types";
+import { NotificationConversationDialog } from "./NotificationConversationDialog";
 
 type ReadFilter = "all" | "unread" | "read";
 
-function formatDayGroupLabel(iso: string): string {
+function formatDayGroupLabel(iso: string | null): string {
+  if (!iso) return "Khác";
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "Khác";
   const today = new Date();
@@ -73,6 +78,7 @@ export function NotificationsPageView() {
   const [isMarkingAll, setIsMarkingAll] = useState(false);
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [activeComplaint, setActiveComplaint] = useState<NotificationItem | null>(null);
 
   const fetchCtrlRef = useRef<AbortController | null>(null);
   const needsAllFetch = readFilter !== "all" || Boolean(keyword.trim());
@@ -203,6 +209,13 @@ export function NotificationsPageView() {
       showToast("error", getErrorMessage(err, "Không thể xóa toàn bộ thông báo."));
     } finally {
       setIsDeletingAll(false);
+    }
+  };
+
+  const openConversation = (item: NotificationItem) => {
+    setActiveComplaint(item);
+    if (!item.isRead) {
+      void notificationApi.markRead(item.id).catch(() => {});
     }
   };
 
@@ -343,6 +356,7 @@ export function NotificationsPageView() {
                 <ul className="divide-y divide-border">
                   {groupItems.map((item) => {
                     const internalHref = resolveInternalLink(item.linkNoti);
+                    const complaint = isComplaintNotification(item);
                     const isBusy = busyIds.has(item.id);
                     return (
                       <li
@@ -354,6 +368,7 @@ export function NotificationsPageView() {
                         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                           <div className="flex flex-wrap items-center gap-2">
                             <ReadStatusBadge isRead={item.isRead} />
+                            {complaint ? <TagBadge label="Khiếu nại" tone="orange" /> : null}
                             <span className="text-xs text-secondary">
                               {formatDateTime(item.createdAt)}
                             </span>
@@ -369,6 +384,16 @@ export function NotificationsPageView() {
 
                         {/* Always visible on BOTH desktop and mobile */}
                         <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                          {complaint ? (
+                            <AppButton
+                              label="Trao đổi"
+                              variant="secondary"
+                              size="sm"
+                              icon={<MessageSquare className="h-3.5 w-3.5" />}
+                              isDisabled={isBusy}
+                              onClick={() => openConversation(item)}
+                            />
+                          ) : null}
                           {internalHref ? (
                             <AppButton
                               label="Mở"
@@ -433,6 +458,14 @@ export function NotificationsPageView() {
         isLoading={isDeletingAll}
         onConfirm={handleDeleteAll}
       />
+
+      {activeComplaint ? (
+        <NotificationConversationDialog
+          key={activeComplaint.id}
+          notification={activeComplaint}
+          onClose={() => setActiveComplaint(null)}
+        />
+      ) : null}
     </PageFrame>
   );
 }

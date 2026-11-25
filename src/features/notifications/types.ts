@@ -1,15 +1,20 @@
 export enum EnumCodeNoti {
-  COMPLAINT = 0,
-  RESOLVED = 1,
-  COMPLAINT_ADMIN = 2,
+  COMPLAINT = "COMPLAINT",
+  RESOLVED = "RESOLVED",
+  COMPLAINT_ADMIN = "COMPLAINT_ADMIN",
 }
 
 export interface NotificationItem {
   id: number;
   message: string;
   isRead: boolean;
-  createdAt: string;
+  createdAt: string | null;
   linkNoti?: string | null;
+  userName?: string | null;
+  userSystemCode?: string | null;
+  codeNoti?: string | null;
+  senderUserId?: string | null;
+  alertGroupId?: string | null;
 }
 
 export interface NotificationPage {
@@ -26,4 +31,6 @@ export interface NotificationDto {
   senderUserId?: string;
   codeNoti?: string;
   message?: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
 }

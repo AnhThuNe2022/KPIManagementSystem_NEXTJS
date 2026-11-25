@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Popover } from "@astryxdesign/core/Popover";
-import { Bell, Check, CheckCheck, Trash2 } from "lucide-react";
+import { Bell, Check, CheckCheck, MessageSquare, Trash2 } from "lucide-react";
 import {
   AppButton,
   AppIconButton,
@@ -15,8 +15,10 @@ import { NOTIFICATIONS_CHANGED_EVENT, subscribeAppEvent } from "@/lib/events/app
 import { formatDateTime, normalizeVietnamese } from "@/lib/format/formatters";
 import { getErrorMessage, isAbortError } from "@/lib/http/request";
 import { resolveInternalLink } from "@/lib/security/redirect";
+import { isComplaintNotification } from "../notificationUtils";
 import { notificationApi } from "../services/notificationApi";
 import type { NotificationItem } from "../types";
+import { NotificationConversationDialog } from "./NotificationConversationDialog";
 
 export function NotificationBell({ triggerClassName }: { triggerClassName?: string } = {}) {
   const router = useRouter();
@@ -28,6 +30,7 @@ export function NotificationBell({ triggerClassName }: { triggerClassName?: stri
   const [filter, setFilter] = useState<"all" | "unread">("all");
   const [query, setQuery] = useState("");
   const [revision, setRevision] = useState(0);
+  const [activeComplaint, setActiveComplaint] = useState<NotificationItem | null>(null);
 
   const loadRecent = useCallback((signal?: AbortSignal) => {
     setLoading(true);
@@ -83,9 +86,18 @@ export function NotificationBell({ triggerClassName }: { triggerClassName?: stri
     }
   };
 
+  const openConversation = (item: NotificationItem) => {
+    setIsOpen(false);
+    setActiveComplaint(item);
+    if (!item.isRead) {
+      void notificationApi.markRead(item.id).catch(() => {});
+    }
+  };
+
   const unreadDisplay = unreadCount > 99 ? "99+" : String(unreadCount);
 
   return (
+    <>
     <Popover
       isOpen={isOpen}
       onOpenChange={(next) => {
@@ -145,7 +157,8 @@ export function NotificationBell({ triggerClassName }: { triggerClassName?: stri
             <ul className="flex max-h-80 flex-col divide-y divide-border overflow-y-auto">
               {visibleItems.map((item) => {
                 const target = resolveInternalLink(item.linkNoti);
-                const interactive = !item.isRead || Boolean(target);
+                const complaint = isComplaintNotification(item);
+                const interactive = !item.isRead || Boolean(target) || complaint;
                 return (
                   <li
                     key={item.id}
@@ -156,7 +169,13 @@ export function NotificationBell({ triggerClassName }: { triggerClassName?: stri
                     <button
                       type="button"
                       disabled={!interactive}
-                      onClick={() => void handleOpenItem(item)}
+                      onClick={() => {
+                        if (complaint && !target) {
+                          openConversation(item);
+                        } else {
+                          void handleOpenItem(item);
+                        }
+                      }}
                       className="flex flex-1 flex-col gap-1 text-left disabled:cursor-default"
                     >
                       <span
@@ -171,7 +190,14 @@ export function NotificationBell({ triggerClassName }: { triggerClassName?: stri
                       </span>
                     </button>
                     <div className="flex shrink-0 items-center gap-0.5">
-                      {!item.isRead ? (
+                      {complaint ? (
+                        <AppIconButton
+                          label={`Mở trao đổi khiếu nại: ${item.message}`}
+                          tooltip="Trao đổi khiếu nại"
+                          icon={<MessageSquare className="h-3.5 w-3.5 text-accent" />}
+                          onClick={() => openConversation(item)}
+                        />
+                      ) : !item.isRead ? (
                         <AppIconButton
                           label="Đánh dấu đã đọc"
                           icon={<Check className="h-3.5 w-3.5" />}
@@ -226,5 +252,14 @@ export function NotificationBell({ triggerClassName }: { triggerClassName?: stri
         </button>
       )}
     </Popover>
+
+    {activeComplaint ? (
+      <NotificationConversationDialog
+        key={activeComplaint.id}
+        notification={activeComplaint}
+        onClose={() => setActiveComplaint(null)}
+      />
+    ) : null}
+    </>
   );
 }
