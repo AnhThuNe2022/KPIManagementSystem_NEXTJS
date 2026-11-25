@@ -489,7 +489,7 @@
   width: 30px;
   height: 30px;
 }
-.notification-bell__readButton {
+.notification-bell__chatButton {
   color: rgb(var(--color-brand));
 }
 .notification-bell__error {

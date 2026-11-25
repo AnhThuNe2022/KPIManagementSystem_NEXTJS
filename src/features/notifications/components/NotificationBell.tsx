@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   BellIcon,
+  ChatBubbleIcon,
   CheckIcon,
   ClockIcon,
   Cross2Icon,
@@ -18,7 +19,12 @@ import {
 import { notificationApi, NOTIFICATIONS_CHANGED } from "@/features/notifications/services/notificationApi";
 import type { NotificationItem, NotificationPage } from "@/features/notifications/types";
 import "./NotificationBell.css";
-import { searchText, internalNotificationLink } from "@/features/notifications/notificationUtils";
+import {
+  isComplaintNotification,
+  searchText,
+  internalNotificationLink,
+} from "@/features/notifications/notificationUtils";
+import { NotificationConversationDialog } from "./NotificationConversationDialog";
 
 const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
   hour: "2-digit",
@@ -57,6 +63,7 @@ export function NotificationBell() {
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const [activeComplaint, setActiveComplaint] = useState<NotificationItem | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const unread = data?.unreadCount ?? 0;
   const disabled = loading || busy;
@@ -166,7 +173,16 @@ export function NotificationBell() {
     else void mutate(() => notificationApi.markRead(item.id), navigate);
   }
 
+  function openConversation(item: NotificationItem) {
+    setOpen(false);
+    setActiveComplaint(item);
+    if (!item.isRead) {
+      void notificationApi.markRead(item.id).catch(() => {});
+    }
+  }
+
   return (
+    <>
     <div
       ref={rootRef}
       className="notification-bell__root"
@@ -332,6 +348,7 @@ export function NotificationBell() {
             <ul className="notification-bell__list">
               {visibleItems.map((item) => {
                 const date = notificationDate(item.createdAt);
+                const complaint = isComplaintNotification(item);
                 return (
                   <li key={item.id} className="notification-bell__row" data-unread={!item.isRead}>
                     <span className="notification-bell__itemIcon">
@@ -366,16 +383,16 @@ export function NotificationBell() {
                       </span>
                     </button>
                     <div className="notification-bell__rowActions">
-                      {!item.isRead && (
+                      {complaint && (
                         <button
                           type="button"
-                          className={`notification-bell__iconButton notification-bell__readButton`}
+                          className="notification-bell__iconButton notification-bell__chatButton"
                           disabled={disabled}
-                          aria-label={`Đánh dấu đã đọc: ${item.message}`}
-                          title="Đánh dấu đã đọc"
-                          onClick={() => void mutate(() => notificationApi.markRead(item.id))}
+                          title="Trao đổi khiếu nại"
+                          aria-label={`Mở trao đổi khiếu nại: ${item.message}`}
+                          onClick={() => openConversation(item)}
                         >
-                          <CheckIcon aria-hidden="true" />
+                          <ChatBubbleIcon aria-hidden="true" />
                         </button>
                       )}
                       <button
@@ -450,5 +467,13 @@ export function NotificationBell() {
         </div>
       </section>
     </div>
+    {activeComplaint && (
+      <NotificationConversationDialog
+        key={activeComplaint.id}
+        notification={activeComplaint}
+        onClose={() => setActiveComplaint(null)}
+      />
+    )}
+    </>
   );
 }

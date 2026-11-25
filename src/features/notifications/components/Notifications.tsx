@@ -7,6 +7,7 @@ import {
   ArrowRightIcon,
   BellIcon,
   CalendarIcon,
+  ChatBubbleIcon,
   CheckIcon,
   ClockIcon,
   Cross2Icon,
@@ -22,7 +23,12 @@ import {
 import { notificationApi, NOTIFICATIONS_CHANGED } from "@/features/notifications/services/notificationApi";
 import type { NotificationItem, NotificationPage } from "@/features/notifications/types";
 import "./Notifications.css";
-import { searchText, internalNotificationLink } from "@/features/notifications/notificationUtils";
+import {
+  isComplaintNotification,
+  searchText,
+  internalNotificationLink,
+} from "@/features/notifications/notificationUtils";
+import { NotificationConversationDialog } from "./NotificationConversationDialog";
 import { Pagination } from "@/components/ui/Pagination";
 import { notify } from "@/components/ui/Toaster";
 
@@ -63,6 +69,7 @@ export function Notifications() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [activeComplaint, setActiveComplaint] = useState<NotificationItem | null>(null);
   const term = searchText(query);
   const filtering = status !== "all" || term.length > 0;
   const requestPage = filtering ? 1 : page;
@@ -154,6 +161,13 @@ export function Notifications() {
     };
     if (item.isRead) navigate();
     else void mutate(() => notificationApi.markRead(item.id), "Đã đánh dấu thông báo là đã đọc.", navigate);
+  }
+
+  function openConversation(item: NotificationItem) {
+    setActiveComplaint(item);
+    if (!item.isRead) {
+      void notificationApi.markRead(item.id).catch(() => {});
+    }
   }
 
   return (
@@ -363,6 +377,7 @@ export function Notifications() {
                     <ul className="notifications__list">
                       {dayItems.map((item) => {
                         const date = notificationDate(item.createdAt);
+                        const complaint = isComplaintNotification(item);
                         return (
                           <li key={item.id} className="notifications__row" data-unread={!item.isRead}>
                             <span className="notifications__itemIcon">
@@ -402,6 +417,18 @@ export function Notifications() {
                               </div>
                             </div>
                             <div className="notifications__rowActions">
+                              {complaint && (
+                                <button
+                                  type="button"
+                                  className="notifications__iconButton notifications__chatButton"
+                                  disabled={disabled}
+                                  title="Trao đổi khiếu nại"
+                                  aria-label={`Mở trao đổi khiếu nại: ${item.message}`}
+                                  onClick={() => openConversation(item)}
+                                >
+                                  <ChatBubbleIcon aria-hidden="true" />
+                                </button>
+                              )}
                               {!item.isRead && (
                                 <button
                                   type="button"
@@ -545,6 +572,14 @@ export function Notifications() {
           </p>
         )}
       </dialog>
+
+      {activeComplaint && (
+        <NotificationConversationDialog
+          key={activeComplaint.id}
+          notification={activeComplaint}
+          onClose={() => setActiveComplaint(null)}
+        />
+      )}
     </div>
   );
 }

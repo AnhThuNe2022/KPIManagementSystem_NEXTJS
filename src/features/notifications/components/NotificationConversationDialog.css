@@ -1,0 +1,315 @@
+.notification-conv__dialog {
+  width: min(760px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  max-height: min(88dvh, 720px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid rgb(var(--color-border) / 0.85);
+  border-radius: 14px;
+  background: var(--panel-paper, #fff);
+  color: rgb(var(--color-text));
+  box-shadow: 0 24px 60px -16px rgb(8 18 42 / 0.36);
+  font-family: var(--font-ui);
+  overflow: hidden;
+}
+
+.notification-conv__dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-conv__dialog::backdrop {
+  background: rgb(9 19 40 / 0.5);
+  backdrop-filter: blur(3px);
+}
+
+.notification-conv__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 22px 14px;
+}
+
+.notification-conv__header h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: rgb(var(--color-text));
+  letter-spacing: -0.015em;
+}
+
+.notification-conv__close {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--panel-muted);
+  cursor: pointer;
+}
+
+.notification-conv__close:hover:not(:disabled) {
+  background: rgb(var(--color-brand) / 0.08);
+  color: rgb(var(--color-text));
+}
+
+.notification-conv__close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.notification-conv__body {
+  flex: 1 1 auto;
+  min-height: 260px;
+  margin: 0 20px;
+  padding: 16px 18px;
+  border-radius: 10px;
+  background: #f4f6fa;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--deoca-primary-rgb) / 0.65) transparent;
+}
+
+html.dark .notification-conv__body {
+  background: rgb(15 23 42 / 0.65);
+}
+
+.notification-conv__state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 180px;
+  color: var(--panel-muted);
+  font-size: var(--text-body);
+}
+
+.notification-conv__errorBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgb(var(--color-accent) / 0.3);
+  border-radius: 10px;
+  background: rgb(var(--color-accent) / 0.08);
+  color: rgb(var(--color-accent));
+  font-size: var(--text-meta);
+}
+
+.notification-conv__retryBtn {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border: 1px solid rgb(var(--color-accent) / 0.4);
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  font-size: var(--text-meta);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.notification-conv__list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notification-conv__msg {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.notification-conv__msg[data-mine="true"] {
+  align-items: flex-end;
+}
+
+.notification-conv__msg[data-admin-info="true"] {
+  align-items: center;
+}
+
+.notification-conv__bubble {
+  max-width: min(78%, 520px);
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #1e293b;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+html.dark .notification-conv__bubble {
+  background: rgb(30 41 59);
+  color: #f1f5f9;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.3);
+}
+
+.notification-conv__msg[data-mine="true"] .notification-conv__bubble {
+  background: #dcf8c6;
+  color: #1e293b;
+}
+
+html.dark .notification-conv__msg[data-mine="true"] .notification-conv__bubble {
+  background: rgb(22 101 52 / 0.48);
+  color: #ecfdf5;
+}
+
+.notification-conv__sender {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2c3e8c;
+}
+
+html.dark .notification-conv__sender {
+  color: #93c5fd;
+}
+
+.notification-conv__text {
+  font-size: 14.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.notification-conv__time {
+  font-size: 12px;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+}
+
+html.dark .notification-conv__time {
+  color: #94a3b8;
+}
+
+.notification-conv__adminBanner {
+  width: min(92%, 620px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-left: 4px solid #2196f3;
+  border-radius: 10px;
+  background: #e3f2fd;
+  color: #1e293b;
+  box-shadow: 0 2px 6px rgb(33 150 243 / 0.12);
+  font-size: 13.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+html.dark .notification-conv__adminBanner {
+  background: rgb(30 58 138 / 0.35);
+  border-left-color: #60a5fa;
+  color: #e2e8f0;
+}
+
+.notification-conv__adminIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #2196f3;
+  color: #fff;
+}
+
+.notification-conv__adminIcon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.notification-conv__footer {
+  padding: 14px 20px 18px;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.notification-conv__textarea {
+  flex: 1 1 auto;
+  min-height: 70px;
+  max-height: 150px;
+  resize: vertical;
+  padding: 11px 13px;
+  border: 1px solid rgb(var(--color-border) / 0.9);
+  border-radius: 8px;
+  background: var(--panel-paper, #fff);
+  color: rgb(var(--color-text));
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  outline: none;
+}
+
+.notification-conv__textarea:focus {
+  border-color: rgb(var(--color-brand));
+  box-shadow: 0 0 0 2px rgb(var(--color-brand) / 0.15);
+}
+
+.notification-conv__submitBtn {
+  flex-shrink: 0;
+  min-width: 72px;
+  min-height: 40px;
+  padding: 8px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: rgb(var(--deoca-primary-rgb, 24 43 129));
+  color: #fff;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.notification-conv__submitBtn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.notification-conv__submitBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .notification-conv__dialog {
+    width: calc(100vw - 16px);
+    max-width: calc(100vw - 16px);
+    max-height: 92dvh;
+  }
+
+  .notification-conv__header {
+    padding: 14px 16px 12px;
+  }
+
+  .notification-conv__body {
+    margin: 0 12px;
+    padding: 12px;
+  }
+
+  .notification-conv__footer {
+    padding: 12px;
+  }
+
+  .notification-conv__bubble {
+    max-width: 88%;
+  }
+
+  .notification-conv__adminBanner {
+    width: 100%;
+  }
+}

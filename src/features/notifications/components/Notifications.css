@@ -1043,7 +1043,7 @@ html.dark .notifications__summary {
     align-items: center;
     padding: 0;
   }
-  .notifications__rowActions .notifications__iconButton:not(.notifications__danger) {
+  .notifications__rowActions .notifications__iconButton:not(.notifications__danger):not(.notifications__chatButton) {
     display: none;
   }
   .notifications__iconButton {
