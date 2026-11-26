@@ -3,8 +3,19 @@ export interface LookupOption {
   name: string;
 }
 
+export interface TemplatePeriodLookupDto {
+  id?: number;
+  templateId: number;
+  isActive?: boolean | null;
+  name?: string | null;
+}
+
+export interface EvaluationPeriodLookupOption extends LookupOption {
+  templatePeriodDtos?: TemplatePeriodLookupDto[];
+}
+
 export interface EvaluationTypeOption extends LookupOption {
-  periods: LookupOption[];
+  periods: EvaluationPeriodLookupOption[];
 }
 
 export interface EvaluationDto {

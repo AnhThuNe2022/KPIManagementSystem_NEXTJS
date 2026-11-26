@@ -4,23 +4,51 @@ import { companyApi } from "@/features/company/services/companyApi";
 import { departmentApi } from "@/features/department/services/departmentApi";
 import { request } from "@/lib/http/request";
 import { unwrapApiData, type ApiResponse } from "@/server/api/types";
-import type { EvaluationTypeOption, LookupOption } from "../types";
+import type {
+  EvaluationPeriodLookupOption,
+  EvaluationTypeOption,
+  LookupOption,
+  TemplatePeriodLookupDto,
+} from "../types";
 
-function toLookupOptions(raw: unknown, labelKey: string): LookupOption[] {
+function mapNamedRows<T extends LookupOption = LookupOption>(
+  raw: unknown,
+  labelKey = "name",
+  extend?: (rec: Record<string, unknown>, base: LookupOption) => T,
+): T[] {
   const list = unwrapApiData(raw as unknown[] | ApiResponse<unknown[]> | null);
   if (!Array.isArray(list)) return [];
-  const options: LookupOption[] = [];
+  const options: T[] = [];
   for (const row of list) {
     if (!row || typeof row !== "object") continue;
     const rec = row as Record<string, unknown>;
     const id = rec.id;
-    const label = rec[labelKey];
     if (id === undefined || id === null) continue;
+    const label = rec[labelKey];
     const name = typeof label === "string" ? label.trim() : String(label ?? "").trim();
     if (!name) continue;
-    options.push({ id: String(id), name });
+    const base: LookupOption = { id: String(id), name };
+    options.push(extend ? extend(rec, base) : (base as T));
   }
   return options;
+}
+
+function toTemplatePeriodDtos(raw: unknown): TemplatePeriodLookupDto[] {
+  if (!Array.isArray(raw)) return [];
+  const items: TemplatePeriodLookupDto[] = [];
+  for (const tp of raw) {
+    if (!tp || typeof tp !== "object") continue;
+    const rec = tp as Record<string, unknown>;
+    const templateId = Number(rec.templateId);
+    if (!Number.isFinite(templateId)) continue;
+    items.push({
+      id: typeof rec.id === "number" ? rec.id : undefined,
+      templateId,
+      isActive: typeof rec.isActive === "boolean" ? rec.isActive : rec.isActive === null ? null : undefined,
+      name: typeof rec.name === "string" ? rec.name : typeof rec.templateName === "string" ? rec.templateName : null,
+    });
+  }
+  return items;
 }
 
 export const evaluationLookupApi = {
@@ -56,7 +84,7 @@ export const evaluationLookupApi = {
       }),
       signal,
     });
-    return toLookupOptions(raw, "name");
+    return mapNamedRows(raw);
   },
 
   async getTypes(signal?: AbortSignal): Promise<EvaluationTypeOption[]> {
@@ -65,21 +93,16 @@ export const evaluationLookupApi = {
       body: "{}",
       signal,
     });
-    const list = unwrapApiData(raw as unknown[] | ApiResponse<unknown[]> | null);
-    if (!Array.isArray(list)) return [];
-    return list
-      .map((item): EvaluationTypeOption | null => {
-        if (!item || typeof item !== "object") return null;
-        const rec = item as Record<string, unknown>;
-        if (rec.id === undefined || rec.id === null) return null;
-        const name = String(rec.name ?? "").trim();
-        if (!name) return null;
-        return {
-          id: String(rec.id),
-          name,
-          periods: toLookupOptions(rec.listKPIEvaluationPeriodDto, "name"),
-        };
-      })
-      .filter((item): item is EvaluationTypeOption => item !== null);
+    return mapNamedRows<EvaluationTypeOption>(raw, "name", (rec, base) => ({
+      ...base,
+      periods: mapNamedRows<EvaluationPeriodLookupOption>(
+        rec.listKPIEvaluationPeriodDto,
+        "name",
+        (pRec, pBase) => ({
+          ...pBase,
+          templatePeriodDtos: toTemplatePeriodDtos(pRec.templatePeriodDtos),
+        }),
+      ),
+    }));
   },
 };

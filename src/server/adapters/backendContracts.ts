@@ -52,6 +52,8 @@ export const BACKEND_PATHS = {
   evaluationApprovalFilter: "/KPIEvaluationApproval/filter",
   evaluationSteps: (id: string) => `/KPIEvaluation/GetListSteps/${encodeURIComponent(id)}`,
   evaluationDefByIds: "/KPIEvaluation/GetListEvalautionAndDefByIds",
+  kpiEmailAlert: "/kpi/email-alert",
+  evaluationSendEmailAlert: "/kpievaluation/SendEmailAlert",
 
   // Export File
   exportEvaluationZip: "/ExportFile/ExportEvaluationZip",
