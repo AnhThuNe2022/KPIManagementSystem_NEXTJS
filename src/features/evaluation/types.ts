@@ -29,8 +29,9 @@ export enum EvaluationStatus {
   Imported = "Imported",
   DeputyDirector = "DeputyDirector",
   DepartmentDirector = "DepartmentDirector",
-  Over = "Over",
+  HRContractReviewing = "HRContractReviewing",
   HRDepartmentReviewing = "HRDepartmentReviewing",
+  Over = "Over",
 }
 
 export interface PendingEvaluationDto {
@@ -157,9 +158,22 @@ export interface EvaluationApprover {
 }
 
 
-export type EvaluationPeriodDto = { id: number | string; name: string };
+export type TemplatePeriodDto = {
+  id?: number;
+  templateId: number;
+  isActive?: boolean | null;
+  name?: string | null;
+};
 
-export type EvaluationTypeDto = EvaluationPeriodDto & { listKPIEvaluationPeriodDto: EvaluationPeriodDto[] };
+export type EvaluationPeriodDto = {
+  id: number | string;
+  name: string;
+  templatePeriodDtos?: TemplatePeriodDto[] | null;
+};
+
+export type EvaluationTypeDto = EvaluationPeriodDto & {
+  listKPIEvaluationPeriodDto: EvaluationPeriodDto[];
+};
 
 export const generalHrStatusOptions = [
   { value: EvaluationStatus.Unknown, label: "Không xác định" },

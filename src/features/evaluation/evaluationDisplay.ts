@@ -48,15 +48,28 @@ export function evaluationTypeOptions(rows: EvaluationTypeDto[]): EvaluationType
 }
 
 const labels: Record<string, string> = {
-  Unknown: "Không xác định", Drafted: "Lưu nháp", Submitted: "Đã gửi",
-  DirectManagerReviewing: "Quản lý trực tiếp đang duyệt", ManagerMidReviewing: "Quản lý cấp trung đang duyệt",
-  HRReviewing: "HR đang duyệt", ManagerSeniorReviewing: "Quản lý cấp cao đang duyệt",
-  ChairManReviewing: "Chủ tịch đang duyệt", Rejected: "Bị từ chối", SentHR: "QLCC đã duyệt",
-  CompileHRList: "Đã đánh giá xong", DirectorReviewCompileHRList: "Giám đốc duyệt tổng hợp HR",
-  CompileChiefOfStaffList: "Tổng hợp văn phòng", ChairManReviewCompile: "Chủ tịch duyệt tổng hợp",
-  DepartmentHeadReviewing: "Trưởng phòng đang duyệt", DirectorReviewing: "Tổng giám đốc đang duyệt",
-  Imported: "Đã được import", DeputyDirector: "Phó giám đốc ban đang duyệt", DepartmentDirector: "Giám đốc ban đang duyệt",
-  Over: "Hoàn tất", HRDepartmentReviewing: "Phòng/Ban NS đang duyệt",
+  Unknown: "Không xác định",
+  Drafted: "Lưu nháp",
+  Submitted: "Đã gửi",
+  DirectManagerReviewing: "Quản lý trực tiếp đang duyệt",
+  ManagerMidReviewing: "Quản lý đang duyệt",
+  HRReviewing: "HR đang duyệt",
+  ManagerSeniorReviewing: "Quản lý cấp cao đang duyệt",
+  ChairManReviewing: "Chủ tịch đang duyệt",
+  Rejected: "Bị từ chối",
+  SentHR: "QLCC đã duyệt",
+  CompileHRList: "Đã đánh giá xong",
+  DirectorReviewCompileHRList: "Giám đốc đang duyệt",
+  CompileChiefOfStaffList: "Chánh VP đang tổng hợp",
+  ChairManReviewCompile: "Chủ tịch đang duyệt",
+  DepartmentHeadReviewing: "Giám đốc ban đang duyệt",
+  DirectorReviewing: "Tổng giám đốc đang duyệt",
+  Imported: "Đã được import",
+  DeputyDirector: "Phó giám đốc ban đang duyệt",
+  DepartmentDirector: "Giám đốc ban đang duyệt",
+  HRContractReviewing: "HR đang rà soát hợp đồng",
+  HRDepartmentReviewing: "Phòng/Ban NS đang duyệt",
+  Over: "Hoàn tất",
 };
 
 const lowerLabels = Object.fromEntries(
@@ -84,6 +97,8 @@ const numericStatusKeys: Record<number, string> = {
   16: EvaluationStatus.Imported,
   17: EvaluationStatus.DeputyDirector,
   18: EvaluationStatus.DepartmentDirector,
+  19: EvaluationStatus.HRContractReviewing,
+  20: EvaluationStatus.HRDepartmentReviewing,
   21: EvaluationStatus.Over,
 };
 export function statusKey(value: string | number) {
