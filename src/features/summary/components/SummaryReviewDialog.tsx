@@ -78,6 +78,10 @@ export function SummaryReviewDialog({
 
   const handleSubmit = async () => {
     if (!target || isSubmitting || remaining.length === 0) return;
+    if (isApproving && managerIds.length === 0) {
+      setSubmitError("Vui lòng chọn ít nhất một người duyệt.");
+      return;
+    }
     if (!isApproving && !comment.trim()) {
       setSubmitError("Vui lòng nhập lý do trả về.");
       return;
@@ -157,14 +161,15 @@ export function SummaryReviewDialog({
       title={isApproving ? "Gửi duyệt hồ sơ tổng hợp" : "Trả về hồ sơ tổng hợp"}
       subtitle={
         isApproving
-          ? "Chọn quản lý cấp cao nhận duyệt (không bắt buộc) và xác nhận chuyển bước."
+          ? "Chọn quản lý cấp cao nhận duyệt và xác nhận chuyển bước."
           : "Ghi rõ nội dung cần điều chỉnh hoặc bổ sung."
       }
       isDirty={Boolean(comment.trim() || managerIds.length > 0)}
       isSubmitting={isSubmitting}
       submitLabel={isApproving ? "Xác nhận gửi duyệt" : "Xác nhận trả về"}
       submitDisabled={
-        remaining.length === 0 || (isApproving && loadingManagers) || (!isApproving && !comment.trim())
+        remaining.length === 0 ||
+        (isApproving ? loadingManagers || managerIds.length === 0 : !comment.trim())
       }
       onSubmit={handleSubmit}
     >
@@ -197,17 +202,21 @@ export function SummaryReviewDialog({
           <AppForm>
             {isApproving ? (
               <AppMultiSelect
-                label="Quản lý cấp cao nhận duyệt (không bắt buộc)"
+                label="Quản lý cấp cao nhận duyệt"
                 value={managerIds}
-                onChange={setManagerIds}
+                onChange={(vals) => {
+                  setManagerIds(vals);
+                  if (submitError) setSubmitError(null);
+                }}
                 options={managers.map((m) => ({
                   value: String(m.id),
                   label: m.departmentName ? `${m.userName} · ${m.departmentName}` : m.userName,
                 }))}
                 placeholder="Chọn người duyệt tiếp theo..."
+                isRequired
                 isLoading={loadingManagers}
                 isDisabled={isSubmitting || loadingManagers}
-                description="Có thể chọn nhiều quản lý hoặc để trống để dùng luồng duyệt mặc định."
+                description="Bắt buộc chọn ít nhất một người duyệt (có thể chọn nhiều)."
               />
             ) : (
               <AppTextArea

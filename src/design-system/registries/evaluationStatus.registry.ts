@@ -20,7 +20,7 @@ export enum EvaluationStatus {
   Imported = "Imported",
   DeputyDirector = "DeputyDirector",
   DepartmentDirector = "DepartmentDirector",
-  HRDepartmentReviewing = "HRDepartmentReviewing",
+  HRContractReviewing = "HRContractReviewing",
   Over = "Over",
 }
 
@@ -75,8 +75,8 @@ export const EVALUATION_STATUS_REGISTRY: Record<EvaluationStatusKey, EvaluationS
   },
   [EvaluationStatus.ManagerMidReviewing]: {
     key: EvaluationStatus.ManagerMidReviewing,
-    label: "Quản lý cấp trung đang duyệt",
-    shortLabel: "QLCT đang duyệt",
+    label: "Quản lý đang duyệt",
+    shortLabel: "QL đang duyệt",
     badgeVariant: "orange",
     group: "waiting",
     isReviewingStep: true,
@@ -89,10 +89,10 @@ export const EVALUATION_STATUS_REGISTRY: Record<EvaluationStatusKey, EvaluationS
     group: "waiting",
     isReviewingStep: true,
   },
-  [EvaluationStatus.HRDepartmentReviewing]: {
-    key: EvaluationStatus.HRDepartmentReviewing,
-    label: "Phòng HR đang duyệt",
-    shortLabel: "Phòng HR duyệt",
+  [EvaluationStatus.HRContractReviewing]: {
+    key: EvaluationStatus.HRContractReviewing,
+    label: "HR đang rà soát hợp đồng",
+    shortLabel: "HR rà soát HĐ",
     badgeVariant: "purple",
     group: "waiting",
     isReviewingStep: true,
@@ -115,8 +115,8 @@ export const EVALUATION_STATUS_REGISTRY: Record<EvaluationStatusKey, EvaluationS
   },
   [EvaluationStatus.DepartmentHeadReviewing]: {
     key: EvaluationStatus.DepartmentHeadReviewing,
-    label: "Trưởng phòng đang duyệt",
-    shortLabel: "Trưởng phòng duyệt",
+    label: "Giám đốc ban đang duyệt",
+    shortLabel: "GĐ ban duyệt",
     badgeVariant: "orange",
     group: "waiting",
     isReviewingStep: true,
@@ -155,32 +155,32 @@ export const EVALUATION_STATUS_REGISTRY: Record<EvaluationStatusKey, EvaluationS
   },
   [EvaluationStatus.CompileHRList]: {
     key: EvaluationStatus.CompileHRList,
-    label: "Tổng hợp HR",
-    shortLabel: "Tổng hợp HR",
+    label: "Đã đánh giá xong",
+    shortLabel: "Đã đánh giá xong",
     badgeVariant: "green",
     group: "done",
     isReviewingStep: false,
   },
   [EvaluationStatus.DirectorReviewCompileHRList]: {
     key: EvaluationStatus.DirectorReviewCompileHRList,
-    label: "Giám đốc duyệt tổng hợp HR",
-    shortLabel: "GĐ duyệt tổng hợp",
+    label: "Giám đốc đang duyệt",
+    shortLabel: "GĐ đang duyệt",
     badgeVariant: "blue",
     group: "waiting",
     isReviewingStep: true,
   },
   [EvaluationStatus.CompileChiefOfStaffList]: {
     key: EvaluationStatus.CompileChiefOfStaffList,
-    label: "Tổng hợp văn phòng",
-    shortLabel: "Tổng hợp VP",
+    label: "Chánh VP đang tổng hợp",
+    shortLabel: "Chánh VP tổng hợp",
     badgeVariant: "cyan",
     group: "waiting",
     isReviewingStep: false,
   },
   [EvaluationStatus.ChairManReviewCompile]: {
     key: EvaluationStatus.ChairManReviewCompile,
-    label: "Chủ tịch duyệt tổng hợp",
-    shortLabel: "CT duyệt tổng hợp",
+    label: "Chủ tịch đang duyệt",
+    shortLabel: "Chủ tịch duyệt",
     badgeVariant: "blue",
     group: "waiting",
     isReviewingStep: true,
@@ -247,8 +247,8 @@ export const NUMERIC_EVALUATION_STATUS_MAP: Record<number, EvaluationStatus> = {
   16: EvaluationStatus.Imported,
   17: EvaluationStatus.DeputyDirector,
   18: EvaluationStatus.DepartmentDirector,
-  19: EvaluationStatus.HRDepartmentReviewing,
-  21: EvaluationStatus.Over,
+  19: EvaluationStatus.HRContractReviewing,
+  20: EvaluationStatus.Over,
 };
 
 /** Exact 9 status filter options preserved from legacy GeneralHrEvaluations (/admin/evaluationList). */
@@ -267,9 +267,10 @@ export const GENERAL_HR_FILTER_STATUS_KEYS: EvaluationStatus[] = [
 /** Status IDs excluded in Change Status modal per legacy business rule (Drafted = 1, SentHR = 9). */
 export const CHANGE_STATUS_EXCLUDED_IDS = new Set<number>([1, 9]);
 
-const LOWER_LOOKUP = new Map<string, EvaluationStatusSpec>(
-  Object.values(EVALUATION_STATUS_REGISTRY).map((spec) => [spec.key.toLowerCase(), spec]),
-);
+const LOWER_LOOKUP = new Map<string, EvaluationStatusSpec>([
+  ...Object.values(EVALUATION_STATUS_REGISTRY).map((spec) => [spec.key.toLowerCase(), spec] as const),
+  ["hrdepartmentreviewing", EVALUATION_STATUS_REGISTRY[EvaluationStatus.HRContractReviewing]],
+]);
 
 export function resolveEvaluationStatus(
   status: string | number | null | undefined,
