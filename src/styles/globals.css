@@ -4730,6 +4730,22 @@
       display: none;
     }
   }
+
+  /* Chip người nhận email nhắc duyệt (/admin/sendEmailAlert) */
+  .ds-recipient-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 100%;
+    padding: 3px 9px;
+    border-radius: 9999px;
+    border: 1px solid var(--vibrant-identity-border);
+    background-color: var(--vibrant-identity-bg);
+    color: var(--vibrant-identity-ink);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    line-height: 1.35;
+  }
 }
 
 /* =============================================================================

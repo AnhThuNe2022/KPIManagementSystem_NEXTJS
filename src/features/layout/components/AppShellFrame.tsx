@@ -22,6 +22,7 @@ const FALLBACK_BREADCRUMBS: Record<string, HeaderBreadcrumb[]> = {
   "/admin/permission": [{ label: "Quản trị" }, { label: "Phân quyền RBAC" }],
   "/admin/userinfor": [{ label: "Quản trị hệ thống" }, { label: "Quản lý nhân viên" }],
   "/admin/evaluationlist": [{ label: "Nhân sự" }, { label: "Danh sách đánh giá toàn hệ thống" }],
+  "/admin/sendemailalert": [{ label: "Quản trị" }, { label: "Gửi email thông báo" }],
   "/manager/pending": [{ label: "Quản lý" }, { label: "Chờ quản lý duyệt" }],
   "/manager/reviewed": [{ label: "Quản lý" }, { label: "Quản lý đã duyệt" }],
   "/manager/kpi-evaluation-periods": [{ label: "Quản lý" }, { label: "Kỳ đánh giá KPI" }],
