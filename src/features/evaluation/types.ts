@@ -30,7 +30,6 @@ export enum EvaluationStatus {
   DeputyDirector = "DeputyDirector",
   DepartmentDirector = "DepartmentDirector",
   HRContractReviewing = "HRContractReviewing",
-  HRDepartmentReviewing = "HRDepartmentReviewing",
   Over = "Over",
 }
 

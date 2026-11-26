@@ -68,7 +68,6 @@ const labels: Record<string, string> = {
   DeputyDirector: "Phó giám đốc ban đang duyệt",
   DepartmentDirector: "Giám đốc ban đang duyệt",
   HRContractReviewing: "HR đang rà soát hợp đồng",
-  HRDepartmentReviewing: "Phòng/Ban NS đang duyệt",
   Over: "Hoàn tất",
 };
 
@@ -98,8 +97,7 @@ const numericStatusKeys: Record<number, string> = {
   17: EvaluationStatus.DeputyDirector,
   18: EvaluationStatus.DepartmentDirector,
   19: EvaluationStatus.HRContractReviewing,
-  20: EvaluationStatus.HRDepartmentReviewing,
-  21: EvaluationStatus.Over,
+  20: EvaluationStatus.Over,
 };
 export function statusKey(value: string | number) {
   if (typeof value === "number") return numericStatusKeys[value] ?? "Unknown";
@@ -110,8 +108,7 @@ export function statusKey(value: string | number) {
 export function hrStatusLabel(value: string | number, separator = " / ") {
   const key = statusKey(value);
   const labelOf = (part: string) => {
-    const clean = part.trim();
-    const resolved = /^\d+$/.test(clean) ? (numericStatusKeys[Number(clean)] ?? clean) : clean;
+    const resolved = statusKey(part);
     return labels[resolved] ?? lowerLabels[resolved.toLowerCase()] ?? resolved;
   };
   if (key.includes(";")) return key.split(";").filter(Boolean).map(labelOf).join(separator);

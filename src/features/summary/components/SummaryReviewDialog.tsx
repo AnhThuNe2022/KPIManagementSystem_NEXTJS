@@ -73,7 +73,7 @@ export function SummaryReviewDialog({ target, level, onClose, onProcessed }: Pro
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (submitting.current || closing.current || !remaining.length || (!approving && !comment.trim())) return;
+    if (submitting.current || closing.current || !remaining.length || (approving ? !managerIds.length : !comment.trim())) return;
     submitting.current = true;
     setBusy(true);
     setError("");
@@ -152,11 +152,12 @@ export function SummaryReviewDialog({ target, level, onClose, onProcessed }: Pro
             </div>
           </div>
           {approving ? <div className="summary-detail__field">
-            <label htmlFor="summary-review-managers">Quản lý cấp cao nhận duyệt <span>Không bắt buộc</span></label>
-            <SearchableSelect id="summary-review-managers" label="Người duyệt" multiple value={managerIds}
+            <label htmlFor="summary-review-managers">Quản lý cấp cao nhận duyệt <span aria-hidden="true">*</span></label>
+            <SearchableSelect id="summary-review-managers" label="Người duyệt" multiple required value={managerIds}
               options={managers.map(manager => ({ id: String(manager.id), name: manager.userName + (manager.departmentName ? " · " + manager.departmentName : "") }))}
-              placeholder="Chọn người duyệt tiếp theo…" disabled={busy || loading} loading={loading} onChange={setManagerIds} />
-            <p className="summary-detail__hint">{loading ? "Đang tải người duyệt…" : "Có thể chọn nhiều người duyệt."}</p>
+              placeholder="Chọn người duyệt tiếp theo…" disabled={busy || loading} loading={loading}
+              onChange={value => { setManagerIds(value); if (error) setError(""); }} />
+            <p className="summary-detail__hint">{loading ? "Đang tải người duyệt…" : "Bắt buộc chọn ít nhất một người duyệt (có thể chọn nhiều)."}</p>
             {lookupError && <p className="summary-detail__error" role="alert">{lookupError} <button type="button" onClick={() => setRevision(value => value + 1)} disabled={busy}>Thử lại</button></p>}
           </div> : <div className="summary-detail__field">
             <label htmlFor="summary-return-reason">Lý do trả về <span aria-hidden="true">*</span></label>
@@ -168,7 +169,7 @@ export function SummaryReviewDialog({ target, level, onClose, onProcessed }: Pro
         <footer className="summary-detail__dialogFooter">
           <button type="button" className="summary-detail__button" onClick={close} disabled={busy}>Hủy</button>
           <button type="submit" className="summary-detail__button summary-detail__primary" data-reject={!approving}
-            disabled={busy || loading || (!approving && !comment.trim())}>
+            disabled={busy || loading || (approving ? !managerIds.length : !comment.trim())}>
             {busy ? <ReloadIcon className="summary-detail__spin" aria-hidden="true" /> : <CheckIcon aria-hidden="true" />}
             {busy ? "Đang xử lý…" : approving ? "Xác nhận gửi duyệt" : "Xác nhận trả về"}
           </button>
