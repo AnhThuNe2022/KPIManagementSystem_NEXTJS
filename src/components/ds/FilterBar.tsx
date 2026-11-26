@@ -72,6 +72,7 @@ export function FilterBar({
     setUncontrolledOpen(next);
     onAdvancedOpenChange?.(next);
   };
+  const hasActions = Boolean(advancedControls || onReset || onApply || trailingActions);
 
   return (
     <form
@@ -81,45 +82,47 @@ export function FilterBar({
       }}
       className="flex flex-col gap-3.5 rounded-xl border border-border bg-surface p-4 shadow-sm"
     >
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="flex min-w-[260px] flex-1 flex-wrap items-end gap-3">{primaryControls}</div>
+      <div className="flex flex-wrap items-start gap-3">
+        <div className="flex min-w-[260px] flex-1 flex-wrap items-start gap-3">{primaryControls}</div>
 
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-          {advancedControls ? (
-            <AppButton
-              label="Lọc thêm"
-              variant={isAdvancedOpen ? "primary" : "secondary"}
-              size="md"
-              icon={<Filter className="h-4 w-4" />}
-              endContent={
-                advancedActiveCount > 0 ? (
-                  <Badge variant="info" label={advancedActiveCount} />
-                ) : undefined
-              }
-              onClick={() => setAdvancedOpen(!isAdvancedOpen)}
-            />
-          ) : null}
-          {onReset ? (
-            <AppButton
-              label="Xóa lọc"
-              variant="secondary"
-              size="md"
-              icon={<RotateCcw className="h-4 w-4" />}
-              onClick={onReset}
-            />
-          ) : null}
-          {onApply ? (
-            <AppButton
-              type="submit"
-              label={applyLabel}
-              variant="primary"
-              size="md"
-              icon={<Search className="h-4 w-4" />}
-              isDisabled={isApplyDisabled}
-            />
-          ) : null}
-          {trailingActions}
-        </div>
+        {hasActions ? (
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2 sm:pt-[calc(var(--text-label-size)*var(--text-label-leading)+var(--spacing-1))]">
+            {advancedControls ? (
+              <AppButton
+                label="Lọc thêm"
+                variant={isAdvancedOpen ? "primary" : "secondary"}
+                size="md"
+                icon={<Filter className="h-4 w-4" />}
+                endContent={
+                  advancedActiveCount > 0 ? (
+                    <Badge variant="info" label={advancedActiveCount} />
+                  ) : undefined
+                }
+                onClick={() => setAdvancedOpen(!isAdvancedOpen)}
+              />
+            ) : null}
+            {onReset ? (
+              <AppButton
+                label="Xóa lọc"
+                variant="secondary"
+                size="md"
+                icon={<RotateCcw className="h-4 w-4" />}
+                onClick={onReset}
+              />
+            ) : null}
+            {onApply ? (
+              <AppButton
+                type="submit"
+                label={applyLabel}
+                variant="primary"
+                size="md"
+                icon={<Search className="h-4 w-4" />}
+                isDisabled={isApplyDisabled}
+              />
+            ) : null}
+            {trailingActions}
+          </div>
+        ) : null}
       </div>
 
       {advancedControls ? (

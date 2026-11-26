@@ -3,6 +3,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import NextLink from "next/link";
 import { Theme, type ThemeMode } from "@astryxdesign/core/theme";
+import { InternationalizationProvider } from "@astryxdesign/core/i18n";
+import viVN from "@astryxdesign/core/locales/vi-VN.generated.js";
 import { LayerProvider } from "@astryxdesign/core/Layer";
 import { LinkProvider } from "@astryxdesign/core/Link";
 import { ToastViewport } from "@astryxdesign/core/Toast";
@@ -101,12 +103,14 @@ export function DesignSystemProvider({ children }: { children: React.ReactNode }
   return (
     <ColorModeContext.Provider value={ctxValue}>
       <Theme theme={deocaTheme} mode={resolvedMode}>
-        <LayerProvider>
-          <LinkProvider component={NextLinkAdapter}>
-            {children}
-            <ToastViewport position="topEnd" />
-          </LinkProvider>
-        </LayerProvider>
+        <InternationalizationProvider locale="vi-VN" messages={{ "vi-VN": viVN }}>
+          <LayerProvider>
+            <LinkProvider component={NextLinkAdapter}>
+              {children}
+              <ToastViewport position="topEnd" />
+            </LinkProvider>
+          </LayerProvider>
+        </InternationalizationProvider>
       </Theme>
     </ColorModeContext.Provider>
   );

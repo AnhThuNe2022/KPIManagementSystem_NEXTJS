@@ -32,6 +32,8 @@ export type SelectOption = {
   icon?: ReactNode;
 };
 
+export type FieldStatusVariant = "attached" | "detached" | "tooltip";
+
 export function AppForm({
   children,
   className = "",
@@ -50,6 +52,7 @@ export function AppField({
   label,
   description,
   error,
+  statusVariant = "detached",
   isRequired,
   inputID,
   children,
@@ -57,6 +60,7 @@ export function AppField({
   label: string;
   description?: string;
   error?: string;
+  statusVariant?: FieldStatusVariant;
   isRequired?: boolean;
   inputID?: string;
   children: ReactNode;
@@ -69,6 +73,7 @@ export function AppField({
       description={description}
       isRequired={isRequired}
       status={error ? { type: "error", message: error } : undefined}
+      statusVariant={statusVariant}
       width="100%"
     >
       {children}
@@ -81,6 +86,7 @@ export function AppTextInput({
   value,
   onChange,
   error,
+  statusVariant = "detached",
   type = "text",
   placeholder,
   description,
@@ -100,6 +106,7 @@ export function AppTextInput({
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  statusVariant?: FieldStatusVariant;
   type?: "text" | "password" | "email" | "search" | "tel" | "url";
   placeholder?: string;
   description?: string;
@@ -149,6 +156,7 @@ export function AppTextInput({
       size={size}
       width={width}
       status={error ? { type: "error", message: error } : undefined}
+      statusVariant={statusVariant}
     />
   );
 }
@@ -262,6 +270,7 @@ export function AppTextArea({
   value,
   onChange,
   error,
+  statusVariant = "detached",
   placeholder,
   description,
   rows = 3,
@@ -275,6 +284,7 @@ export function AppTextArea({
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  statusVariant?: FieldStatusVariant;
   placeholder?: string;
   description?: string;
   rows?: number;
@@ -298,6 +308,7 @@ export function AppTextArea({
       isReadOnly={isReadOnly}
       isLabelHidden={isLabelHidden}
       status={error ? { type: "error", message: error } : undefined}
+      statusVariant={statusVariant}
     />
   );
 }
@@ -307,6 +318,7 @@ export function AppNumberInput({
   value,
   onChange,
   error,
+  statusVariant = "detached",
   min,
   max,
   step = 1,
@@ -321,6 +333,7 @@ export function AppNumberInput({
   value: number | null;
   onChange: (value: number | null) => void;
   error?: string;
+  statusVariant?: FieldStatusVariant;
   min?: number;
   max?: number;
   step?: number;
@@ -346,6 +359,7 @@ export function AppNumberInput({
       isReadOnly={isReadOnly}
       size={size}
       status={error ? { type: "error", message: error } : undefined}
+      statusVariant={statusVariant}
     />
   );
 }
@@ -355,6 +369,7 @@ export function AppDateInput({
   value,
   onChange,
   error,
+  statusVariant = "detached",
   min,
   max,
   placeholder = "Chọn ngày...",
@@ -369,6 +384,7 @@ export function AppDateInput({
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  statusVariant?: FieldStatusVariant;
   min?: string;
   max?: string;
   placeholder?: string;
@@ -394,6 +410,7 @@ export function AppDateInput({
       hasClear={hasClear}
       size={size}
       status={error ? { type: "error", message: error } : undefined}
+      statusVariant={statusVariant}
     />
   );
 }
@@ -404,6 +421,7 @@ export function AppSelect({
   value,
   onChange,
   error,
+  statusVariant = "detached",
   placeholder = "Chọn...",
   description,
   disabledMessage,
@@ -421,6 +439,7 @@ export function AppSelect({
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  statusVariant?: FieldStatusVariant;
   placeholder?: string;
   description?: string;
   disabledMessage?: string;
@@ -462,6 +481,7 @@ export function AppSelect({
     size,
     width,
     status: error ? ({ type: "error", message: error } as const) : undefined,
+    statusVariant,
   };
 
   if (hasClear) {
@@ -491,6 +511,7 @@ export function AppMultiSelect({
   value,
   onChange,
   error,
+  statusVariant = "detached",
   placeholder = "Chọn nhiều...",
   description,
   disabledMessage,
@@ -506,6 +527,7 @@ export function AppMultiSelect({
   value: string[];
   onChange: (value: string[]) => void;
   error?: string;
+  statusVariant?: FieldStatusVariant;
   placeholder?: string;
   description?: string;
   disabledMessage?: string;
@@ -548,6 +570,7 @@ export function AppMultiSelect({
       size={size}
       width={width}
       status={error ? { type: "error", message: error } : undefined}
+      statusVariant={statusVariant}
     />
   );
 }
@@ -563,6 +586,7 @@ export function AppAsyncCombobox<TAux = unknown>({
   placeholder = "Nhập để tìm kiếm...",
   description,
   error,
+  statusVariant = "detached",
   disabledMessage,
   isRequired,
   isDisabled,
@@ -578,6 +602,7 @@ export function AppAsyncCombobox<TAux = unknown>({
   placeholder?: string;
   description?: string;
   error?: string;
+  statusVariant?: FieldStatusVariant;
   disabledMessage?: string;
   isRequired?: boolean;
   isDisabled?: boolean;
@@ -634,6 +659,7 @@ export function AppAsyncCombobox<TAux = unknown>({
       emptySearchText="Không tìm thấy kết quả phù hợp"
       renderItem={renderItem}
       status={error ? { type: "error", message: error } : undefined}
+      statusVariant={statusVariant}
     />
   );
 }
