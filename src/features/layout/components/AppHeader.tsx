@@ -6,7 +6,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRightIcon, HomeIcon } from "@radix-ui/react-icons";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { HeaderSnowman } from "@/components/ui/HeaderSnowman";
 import { UserMenu } from "@/features/auth/components/UserMenu";
 import { menuHref, useMyMenus } from "@/features/menus/components/MenuAccessGuard";
 import type { MenuDto } from "@/features/menus/types";
@@ -90,7 +89,6 @@ export function AppHeader({ userName }: { userName: string }) {
       )}
 
       <div className="app-header__actions">
-        <HeaderSnowman />
         <div className="app-header__tools">
           <NotificationBell />
           <ThemeToggle />
