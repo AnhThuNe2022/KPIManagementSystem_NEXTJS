@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -20,6 +21,15 @@ import {
 import type { MenuDto } from "@/features/menus/types";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { menuApi, MENUS_CHANGED } from "@/features/menus/services/menuApi";
+import {
+  extractWorkspaces,
+  filterMenusByWorkspace,
+  readActiveWorkspaceId,
+  readCachedMenus,
+  sortMenus,
+  writeActiveWorkspaceId,
+  writeCachedMenus,
+} from "@/features/workspace/workspaces";
 import { notify } from "@/components/ui/Toaster";
 
 // These backend URLs predate the Next.js routes.
@@ -53,12 +63,6 @@ export function menuHref(url?: string | null) {
   } catch {
     return "#";
   }
-}
-
-function sortMenus(menus: MenuDto[]): MenuDto[] {
-  return [...menus]
-    .sort((a, b) => a.orderNo - b.orderNo)
-    .map((menu) => ({ ...menu, children: sortMenus(menu.children ?? []) }));
 }
 
 function normalizePath(path: string): string {
@@ -100,6 +104,10 @@ function isPathAllowed(pathname: string, allowedPaths: Set<string>): boolean {
 
 type MenuAccessContextValue = {
   navigation: MenuDto[];
+  allMenus: MenuDto[];
+  activeWorkspaceId: number | null;
+  activeWorkspaceName: string;
+  switchWorkspace: (workspaceId: number) => void;
   loading: boolean;
   error: string;
   reload: () => void;
@@ -108,16 +116,35 @@ type MenuAccessContextValue = {
 const MenuAccessContext = createContext<MenuAccessContextValue | null>(null);
 
 export function MenuProvider({ children }: { children: ReactNode }) {
-  const [navigation, setNavigation] = useState<MenuDto[]>([]);
+  const { user, isLoading: authLoading } = useAuth();
+  const [allMenus, setAllMenus] = useState<MenuDto[]>([]);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
+  const forceRefreshRef = useRef(false);
 
   const reload = useCallback(() => {
+    forceRefreshRef.current = true;
     setRevision((value) => value + 1);
   }, []);
 
   useEffect(() => {
+    if (authLoading) return;
+    const userId = user?.id ?? "";
+    const force = forceRefreshRef.current;
+
+    if (!force && userId) {
+      const cached = readCachedMenus(userId);
+      if (cached) {
+        setAllMenus(cached);
+        setError("");
+        setLoading(false);
+        return;
+      }
+    }
+
+    forceRefreshRef.current = false;
     const controller = new AbortController();
     setLoading(true);
     setError("");
@@ -125,7 +152,9 @@ export function MenuProvider({ children }: { children: ReactNode }) {
       .my(controller.signal)
       .then((menus) => {
         if (controller.signal.aborted) return;
-        setNavigation(sortMenus(menus));
+        const sorted = sortMenus(menus);
+        if (userId) writeCachedMenus(userId, sorted);
+        setAllMenus(sorted);
       })
       .catch((cause) => {
         if (controller.signal.aborted) return;
@@ -133,7 +162,7 @@ export function MenuProvider({ children }: { children: ReactNode }) {
           cause instanceof Error && cause.message === "UNAUTHORIZED"
             ? "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
             : "Chưa tải được menu. Vui lòng thử lại.";
-        setNavigation([]);
+        setAllMenus([]);
         setError(message);
         notify("error", message, "sidebar-menus");
       })
@@ -141,16 +170,62 @@ export function MenuProvider({ children }: { children: ReactNode }) {
         if (!controller.signal.aborted) setLoading(false);
       });
 
+    return () => controller.abort();
+  }, [authLoading, user?.id, revision]);
+
+  useEffect(() => {
     window.addEventListener(MENUS_CHANGED, reload);
-    return () => {
-      controller.abort();
-      window.removeEventListener(MENUS_CHANGED, reload);
-    };
-  }, [revision, reload]);
+    return () => window.removeEventListener(MENUS_CHANGED, reload);
+  }, [reload]);
+
+  const workspaces = useMemo(() => extractWorkspaces(allMenus), [allMenus]);
+
+  useEffect(() => {
+    if (!workspaces.length) return;
+    const saved = readActiveWorkspaceId();
+    const nextId = saved && workspaces.some((ws) => ws.id === saved) ? saved : workspaces[0].id;
+    setActiveWorkspaceId(nextId);
+    if (saved !== nextId) writeActiveWorkspaceId(nextId);
+  }, [workspaces]);
+
+  const resolvedWorkspaceId =
+    activeWorkspaceId && workspaces.some((ws) => ws.id === activeWorkspaceId)
+      ? activeWorkspaceId
+      : (workspaces[0]?.id ?? null);
+
+  const navigation = useMemo(
+    () => filterMenusByWorkspace(allMenus, resolvedWorkspaceId),
+    [allMenus, resolvedWorkspaceId],
+  );
+  const activeWorkspaceName = workspaces.find((ws) => ws.id === resolvedWorkspaceId)?.name ?? "";
+
+  // Switch workspace in localStorage + sidebar state only, keeping the active page untouched.
+  const switchWorkspace = useCallback((workspaceId: number) => {
+    writeActiveWorkspaceId(workspaceId);
+    setActiveWorkspaceId(workspaceId);
+  }, []);
 
   const value = useMemo(
-    () => ({ navigation, loading, error, reload }),
-    [navigation, loading, error, reload],
+    () => ({
+      navigation,
+      allMenus,
+      activeWorkspaceId: resolvedWorkspaceId,
+      activeWorkspaceName,
+      switchWorkspace,
+      loading,
+      error,
+      reload,
+    }),
+    [
+      navigation,
+      allMenus,
+      resolvedWorkspaceId,
+      activeWorkspaceName,
+      switchWorkspace,
+      loading,
+      error,
+      reload,
+    ],
   );
 
   return <MenuAccessContext.Provider value={value}>{children}</MenuAccessContext.Provider>;
@@ -349,9 +424,9 @@ export function MenuRouteGuard({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useAuth();
-  const { navigation, loading, error, reload } = useMyMenus();
+  const { allMenus, loading, error, reload } = useMyMenus();
   const [logoutBusy, setLogoutBusy] = useState(false);
-  const allowedPaths = useMemo(() => collectAllowedPaths(navigation), [navigation]);
+  const allowedPaths = useMemo(() => collectAllowedPaths(allMenus), [allMenus]);
 
   const handleLogout = useCallback(async () => {
     setLogoutBusy(true);

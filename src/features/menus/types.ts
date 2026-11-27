@@ -7,8 +7,9 @@ export type MenuDto = {
   parentId?: number | null;
   orderNo: number;
   isActive: boolean;
+  workspaceId?: number | null;
+  workspaceName?: string | null;
   children: MenuDto[];
 };
-
 
 export type MenuDraft = Omit<MenuDto, "children">;

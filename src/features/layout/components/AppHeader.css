@@ -115,7 +115,49 @@
 }
 .app-header__actions {
   flex-shrink: 0;
-  gap: 20px;
+  gap: 14px;
+}
+.app-header__workspaceBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--panel-paper);
+  color: rgb(var(--color-text));
+  font: inherit;
+  font-size: var(--text-label);
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow:
+    0 0 0 1px rgb(var(--color-border) / 0.8),
+    0 3px 7px rgb(var(--panel-shadow) / 0.06);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease,
+    transform 120ms ease;
+}
+.app-header__workspaceBtn svg {
+  width: var(--icon-control);
+  height: var(--icon-control);
+  color: rgb(var(--color-brand));
+  flex-shrink: 0;
+}
+.app-header__workspaceBtn:active {
+  transform: scale(0.97);
+}
+.app-header__workspaceBtn:focus-visible {
+  outline: 2px solid rgb(var(--color-brand));
+  outline-offset: 2px;
 }
 .app-header__tools {
   gap: 8px;
@@ -144,6 +186,13 @@
   border-left: 1px solid rgb(var(--color-border) / .7);
 }
 @media (hover: hover) and (pointer: fine) {
+  .app-header__workspaceBtn:hover {
+    color: rgb(var(--color-brand));
+    background: rgb(var(--color-brand) / 0.06);
+    box-shadow:
+      0 0 0 1px rgb(var(--color-brand) / 0.35),
+      0 4px 10px rgb(var(--panel-shadow) / 0.08);
+  }
   .app-header__tools > button:hover,
   .app-header__tools > div > button:hover {
     color: rgb(var(--color-brand));
@@ -183,6 +232,15 @@
   }
   .app-header__account {
     padding-left: 16px;
+  }
+}
+@media (max-width: 760px) {
+  .app-header__workspaceBtn {
+    width: 44px;
+    padding: 0;
+  }
+  .app-header__workspaceBtn span {
+    display: none;
   }
 }
 @media (max-width: 700px) {

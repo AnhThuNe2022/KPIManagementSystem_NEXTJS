@@ -10,6 +10,7 @@ import { UserMenu } from "@/features/auth/components/UserMenu";
 import { menuHref, useMyMenus } from "@/features/menus/components/MenuAccessGuard";
 import type { MenuDto } from "@/features/menus/types";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
+import { WorkspaceSwitcherButton } from "@/features/workspace/components/WorkspacePortal";
 import "./AppHeader.css";
 
 // Only for routes not directly listed in /api/menus/my or dynamic detail pages.
@@ -54,11 +55,11 @@ function findFallbackTrail(targetPath: string): readonly string[] | null {
 
 export function AppHeader({ userName }: { userName: string }) {
   const pathname = usePathname();
-  const { navigation } = useMyMenus();
+  const { navigation, allMenus } = useMyMenus();
   const trail = useMemo(() => {
     const target = cleanRoutePath(pathname);
-    return findMenuTrail(navigation, target) ?? findFallbackTrail(target);
-  }, [navigation, pathname]);
+    return findMenuTrail(navigation, target) ?? findMenuTrail(allMenus, target) ?? findFallbackTrail(target);
+  }, [allMenus, navigation, pathname]);
   return (
     <header className="app-header__header">
       <Link href="/dashboard" className="app-header__brand" aria-label="Đèo Cả KPI — Trang tổng quan">
@@ -89,6 +90,7 @@ export function AppHeader({ userName }: { userName: string }) {
       )}
 
       <div className="app-header__actions">
+        <WorkspaceSwitcherButton />
         <div className="app-header__tools">
           <NotificationBell />
           <ThemeToggle />

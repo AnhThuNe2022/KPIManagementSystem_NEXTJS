@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import type { AuthContextValue, AuthUser } from "./types";
+import { clearWorkspaceCache } from "@/features/workspace/workspaces";
 
 const AuthContext =
   createContext<AuthContextValue | null>(
@@ -44,6 +45,7 @@ export function AuthProvider({
 
       if (version !== refreshVersion.current) return;
       if (!response.ok) {
+        clearWorkspaceCache();
         setUser(null);
         return;
       }
@@ -79,6 +81,7 @@ export function AuthProvider({
 
     if (!response.ok) throw new Error("Logout failed");
 
+    clearWorkspaceCache();
     refreshVersion.current++;
     setUser(null);
     setIsLoading(false);

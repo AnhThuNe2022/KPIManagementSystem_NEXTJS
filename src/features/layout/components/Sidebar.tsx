@@ -37,7 +37,7 @@ function DcgSparkIcon() {
 }
 
 export function Sidebar() {
-  const { navigation, loading, error, reload } = useMyMenus();
+  const { navigation, activeWorkspaceName, loading, error, reload } = useMyMenus();
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const pathname = usePathname();
   const router = useRouter();
@@ -62,7 +62,8 @@ export function Sidebar() {
   const navRef = useRef<HTMLElement>(null);
   const itemRefs = useRef<(HTMLElement | null)[]>([]);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const highlightedIndex = hoveredIndex ?? focusedIndex ?? Math.max(activeIndex, 0);
+  const highlightedIndex = hoveredIndex ?? focusedIndex ?? activeIndex;
+  const showIndicator = highlightedIndex >= 0;
   const visiblyCollapsed = collapsed && !mobileOpen;
   const visiblyFullscreen = fullscreen && collapsed && !mobileOpen;
   const flyoutIndex = visiblyCollapsed && !visiblyFullscreen ? (hoveredIndex ?? focusedIndex) : null;
@@ -292,7 +293,7 @@ export function Sidebar() {
         <div className="sidebar__surface">
           <div className="sidebar__header">
             <p className="sidebar__sectionLabel">
-              <span>Công việc</span>
+              <span>{activeWorkspaceName || "Công việc"}</span>
               <i aria-hidden="true" />
             </p>
             <button
@@ -356,7 +357,7 @@ export function Sidebar() {
               <p>{error || (loading ? "Đang tải menu…" : "Tài khoản chưa có menu được cấp.")}</p>
               {error && <button type="button" onClick={reload}>Thử lại</button>}
             </div>}
-            {!!navigation.length && <div className="sidebar__indicator" aria-hidden="true">
+            {!!navigation.length && showIndicator && <div className="sidebar__indicator" aria-hidden="true">
               <span className="sidebar__cutout">
                 <span className="sidebar__recessShadow" />
               </span>
